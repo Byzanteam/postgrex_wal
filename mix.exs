@@ -19,7 +19,8 @@ defmodule PostgrexWal.MixProject do
 
   defp deps do
     [
-      {:postgrex, "~> 0.16"}
+      {:postgrex, "~> 0.16"},
+      {:typed_struct, "~> 0.3.0"}
     ]
   end
 end

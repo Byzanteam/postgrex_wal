@@ -1,6 +1,14 @@
 # PostgrexWal
 
-**TODO: Add description**
+## Prerequisite
+1. echo "wal_level=logical" >> /var/lib/postgresql/data/postgresql.conf'
+2. ALTER SYSTEM SET wal_level = 'logical';
+3. CREATE PUBLICATION postgrex_example FOR ALL TABLES;
+
+**TODO:**
+1. fulfill more test
+2. optimized
+3. stability
 
 ## Installation
 

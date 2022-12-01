@@ -13,14 +13,24 @@ defmodule PostgrexWal.MixProject do
 
   def application do
     [
-      extra_applications: [:logger]
+      env: [
+        db_conn_info: [
+          host: "localhost",
+          database: "r704_development",
+          username: "jswk"
+        ]
+      ],
+      extra_applications: [:logger],
+      mod: {PostgrexWal.Application, []}
     ]
   end
 
   defp deps do
     [
       {:postgrex, "~> 0.16"},
-      {:typed_struct, "~> 0.3.0"}
+      {:typed_struct, "~> 0.3.0"},
+      {:gen_stage, "~> 1.0.0"},
+      {:pgoutput_decoder, "~> 0.1.0"}
     ]
   end
 end

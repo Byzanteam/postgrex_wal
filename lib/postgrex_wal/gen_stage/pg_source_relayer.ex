@@ -21,8 +21,8 @@ defmodule PostgrexWal.GenStage.PgSourceRelayer do
   @impl true
   def handle_cast({:async_event, event}, state) do
     event
-    |> PgoutputDecoder.decode_message
-    |> PostgrexWal.GenStage.Producer.sync_notify
+      |> PgoutputDecoder.decode_message
+      |> PostgrexWal.GenStage.Producer.sync_notify
     {:noreply, state}
   end
 end

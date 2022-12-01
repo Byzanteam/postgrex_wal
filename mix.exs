@@ -13,15 +13,7 @@ defmodule PostgrexWal.MixProject do
 
   def application do
     [
-      env: [
-        db_conn_info: [
-          host: "localhost",
-          database: "r704_development",
-          username: "jswk"
-        ]
-      ],
       extra_applications: [:logger],
-      mod: {PostgrexWal.Application, []}
     ]
   end
 

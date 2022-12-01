@@ -1,50 +1,39 @@
 defmodule PostgrexWalTest do
   use ExUnit.Case
 
-  setup do
-    {:ok, conn} = Application.fetch_env!(:postgrex_wal, :db_conn_info) |> Postgrex.start_link
-    #prepare test data in table
-    conn |> pg_query("INSERT INTO users (name, age) VALUES ('test_user', 20)")
-    consumer_received_events()
-
-    {:ok, [conn: conn]}
-  end
-
-  test "can fetch events from consumer", context do
-    context[:conn] |> pg_query("INSERT INTO users (name, age) VALUES ('test_user', 21)")
+  test "Consumer can receive: Xlogs "do
+    pg_query("INSERT INTO users (name, age) VALUES ('abc', 21)")
     events = consumer_received_events()
     assert is_list(events)
     assert length(events) > 0
   end
 
-  test "consumer can receive Inert Xlog", context do
-    context[:conn] |> pg_query("INSERT INTO users (name, age) VALUES ('test_user', 22)")
+  test "Consumer can receive Insert" do
+    pg_query("INSERT INTO users (name, age) VALUES ('abc', 22)")
     assert events_is_a?("Insert")
   end
 
-  test "consumer can receive Update Xlog", context do
-    context[:conn] |> pg_query("UPDATE users SET age = 23 WHERE name = 'test_user'")
+  test "Consumer can receive Update" do
+    pg_query("UPDATE users SET age = 23 WHERE name = 'abc'")
     assert events_is_a?("Update")
   end
 
-  test "consumer can receive Delete Xlog", context do
-    context[:conn] |> pg_query("DELETE FROM users WHERE name = 'test_user'")
+  test "Consumer can receive Delete" do
+    pg_query("DELETE FROM users WHERE name = 'abc'")
     assert events_is_a?("Delete")
   end
 
-  defp consumer_received_events() do
-    alias PostgrexWal.GenStage.MockedConsumer, as: C
-    #sleep 1second wait for events
-    Process.sleep(:timer.seconds(1))
-    C.events_fetch() |> Enum.reverse
-  end
-
-  defp pg_query(conn, qstr) do
-    conn |> Postgrex.query(qstr, [])
+  defp pg_query(qstr) do
+    Process.whereis(PgConn) |> Postgrex.query(qstr, [])
   end
 
   defp events_is_a?(str) do
     consumer_received_events()
-    |> Enum.any?(&(&1 |> Map.get(:__struct__) |> Atom.to_string |> String.ends_with?(str)))
+      |> Enum.any?(&(&1 |> Map.get(:__struct__) |> Atom.to_string |> String.ends_with?(str)))
+  end
+
+  defp consumer_received_events() do
+    Process.sleep(:timer.seconds(1)) #wait for events
+    MockedConsumer.events_fetch() |> Enum.reverse
   end
 end

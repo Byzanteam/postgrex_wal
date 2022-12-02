@@ -1,20 +1,19 @@
 defmodule PostgrexWal.GenStage.PgSource do
   use Postgrex.ReplicationConnection
-  @publication_name "postgrex_example"
 
-  def start_link(pg_conn_opts) do
+  def start_link({pub_name, pg_conn_opts}) do
     # Automatically reconnect if we lose connection.
     extra_opts = [
       auto_reconnect: true,
       name: __MODULE__
     ]
 
-    Postgrex.ReplicationConnection.start_link(__MODULE__, :ok, extra_opts ++ pg_conn_opts)
+    Postgrex.ReplicationConnection.start_link(__MODULE__, pub_name, extra_opts ++ pg_conn_opts)
   end
 
   @impl true
-  def init(:ok) do
-    {:ok, %{step: :disconnected}}
+  def init(pub_name) do
+    {:ok, %{step: :disconnected, pub_name: pub_name}}
   end
 
   @impl true
@@ -25,7 +24,7 @@ defmodule PostgrexWal.GenStage.PgSource do
 
   @impl true
   def handle_result(results, %{step: :create_slot} = state) when is_list(results) do
-    query = "START_REPLICATION SLOT postgrex LOGICAL 0/0 (proto_version '1', publication_names '#{@publication_name}')"
+    query = "START_REPLICATION SLOT postgrex LOGICAL 0/0 (proto_version '1', publication_names '#{state.pub_name}')"
     {:stream, query, [], %{state | step: :streaming}}
   end
 

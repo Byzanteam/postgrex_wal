@@ -13,6 +13,6 @@ defmodule PostgrexWal do
       {PostgrexWal.GenStage.PgSource, pg_conn_opts}
     ]
 
-    Supervisor.init(children, strategy: :one_for_one) #strategy, max_restarts, max_seconds.
+    Supervisor.init(children, strategy: :one_for_one)
   end
 end

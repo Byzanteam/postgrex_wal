@@ -1,6 +1,11 @@
 defmodule PostgrexWalTest do
   use ExUnit.Case
 
+  setup do
+    Process.register self(), Tester
+    :ok
+  end
+
   test "Consumer can receive: Xlogs "do
     pg_query("INSERT INTO users (name, age) VALUES ('abc', 21)")
     events = consumer_received_events()
@@ -29,11 +34,10 @@ defmodule PostgrexWalTest do
 
   defp events_is_a?(str) do
     consumer_received_events()
-      |> Enum.any?(&(&1 |> Map.get(:__struct__) |> Atom.to_string |> String.ends_with?(str)))
+    |> Enum.any?(&(&1 |> Map.get(:__struct__) |> Atom.to_string |> String.ends_with?(str)))
   end
 
   defp consumer_received_events() do
-    Process.sleep(:timer.seconds(1)) #wait for events
-    MockedConsumer.events_fetch() |> Enum.reverse
+    receive do events -> events end
   end
 end

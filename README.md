@@ -35,59 +35,312 @@ iex> PostgrexWal.start_link(pg_conn_opts)
 4. In your project, you can put `{PostgrexWal.GenStage.Producer, pg_conn_opts}` as a child under your Supervision tree to auto-start before your consumer.
 5. `mix test --seed 0` passed.
 
+## Transaction events sample(Insert, Update, Delete)
+
+`INSERT INTO users (name, age) VALUES ('abc', 22) `
 ```elixir
-defmodule PostgrexWal.GenStage.PgSource do
-  use Postgrex.ReplicationConnection
-  @publication_name "postgrex_example"
 
-  def start_link(pg_conn_opts) do
-    # Automatically reconnect if we lose connection.
-    extra_opts = [
-      auto_reconnect: true,
-      name: __MODULE__
+[
+  %PgoutputDecoder.Messages.Begin{
+    final_lsn: {0, 48156952},
+    commit_timestamp: ~U[2022-12-02 01:28:02Z],
+    xid: 3403
+  },
+  %PgoutputDecoder.Messages.Relation{
+    id: 22887,
+    namespace: "public",
+    name: "users",
+    replica_identity: :default,
+    columns: [
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [:key],
+        name: "id",
+        type: :int8,
+        type_modifier: 4294967295
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "name",
+        type: :varchar,
+        type_modifier: 4294967295
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "age",
+        type: :int4,
+        type_modifier: 4294967295
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "email",
+        type: :varchar,
+        type_modifier: 4294967295
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "password_digest",
+        type: :varchar,
+        type_modifier: 4294967295
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "salary",
+        type: :unknown,
+        type_modifier: 393222
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "sex",
+        type: :bool,
+        type_modifier: 4294967295
+      }
     ]
-
-    Postgrex.ReplicationConnection.start_link(__MODULE__, :ok, extra_opts ++ pg_conn_opts)
-  end
-
-  @impl true
-  def init(:ok) do
-    {:ok, %{step: :disconnected}}
-  end
-
-  @impl true
-  def handle_connect(state) do
-    query = "CREATE_REPLICATION_SLOT postgrex TEMPORARY LOGICAL pgoutput NOEXPORT_SNAPSHOT"
-    {:query, query, %{state | step: :create_slot}}
-  end
-
-  @impl true
-  def handle_result(results, %{step: :create_slot} = state) when is_list(results) do
-    query = "START_REPLICATION SLOT postgrex LOGICAL 0/0 (proto_version '1', publication_names '#{@publication_name}')"
-    {:stream, query, [], %{state | step: :streaming}}
-  end
-
-  @impl true
-  def handle_data(<<?w, _wal_start::64, _wal_end::64, _clock::64, rest::binary>>, state) do
-    PostgrexWal.GenStage.PgSourceRelayer.async_notify(rest)
-    {:noreply, state}
-  end
-
-  # keep-alive msg
-  def handle_data(<<?k, wal_end::64, _clock::64, reply>>, state) do
-    messages =
-      case reply do
-        1 -> [<<?r, wal_end + 1::64, wal_end + 1::64, wal_end + 1::64, current_time()::64, 0>>]
-        0 -> []
-      end
-
-    {:noreply, messages, state}
-  end
-
-  @epoch DateTime.to_unix(~U[2000-01-01 00:00:00Z], :microsecond)
-  defp current_time(), do: System.os_time(:microsecond) - @epoch
-end
-
+  },
+  %PgoutputDecoder.Messages.Insert{
+    relation_id: 22887,
+    tuple_data: {"980191166", "abc", "21", nil, nil, nil, nil}
+  },
+  %PgoutputDecoder.Messages.Commit{
+    flags: [],
+    lsn: {0, 48156952},
+    end_lsn: {0, 48157000},
+    commit_timestamp: ~U[2022-12-02 01:28:02Z]
+  }
+]
 ```
+
+`UPDATE users SET age = 23 WHERE name = 'abc'` 
+```elixir
+[
+  %PgoutputDecoder.Messages.Begin{
+    final_lsn: {0, 48207232},
+    commit_timestamp: ~U[2022-12-02 02:05:48Z],
+    xid: 3413
+  },
+  %PgoutputDecoder.Messages.Relation{
+    id: 22887,
+    namespace: "public",
+    name: "users",
+    replica_identity: :default,
+    columns: [
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [:key],
+        name: "id",
+        type: :int8,
+        type_modifier: 4294967295
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "name",
+        type: :varchar,
+        type_modifier: 4294967295
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "age",
+        type: :int4,
+        type_modifier: 4294967295
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "email",
+        type: :varchar,
+        type_modifier: 4294967295
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "password_digest",
+        type: :varchar,
+        type_modifier: 4294967295
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "salary",
+        type: :unknown,
+        type_modifier: 393222
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "sex",
+        type: :bool,
+        type_modifier: 4294967295
+      }
+    ]
+  },
+  %PgoutputDecoder.Messages.Update{
+    relation_id: 22887,
+    changed_key_tuple_data: nil,
+    old_tuple_data: nil,
+    tuple_data: {"980191166", "abc", "23", nil, nil, nil, nil}
+  },
+  %PgoutputDecoder.Messages.Update{
+    relation_id: 22887,
+    changed_key_tuple_data: nil,
+    old_tuple_data: nil,
+    tuple_data: {"980191167", "abc", "23", nil, nil, nil, nil}
+  },
+  %PgoutputDecoder.Messages.Update{
+    relation_id: 22887,
+    changed_key_tuple_data: nil,
+    old_tuple_data: nil,
+    tuple_data: {"980191168", "abc", "23", nil, nil, nil, nil}
+  },
+  %PgoutputDecoder.Messages.Update{
+    relation_id: 22887,
+    changed_key_tuple_data: nil,
+    old_tuple_data: nil,
+    tuple_data: {"980191169", "abc", "23", nil, nil, nil, nil}
+  },
+  %PgoutputDecoder.Messages.Update{
+    relation_id: 22887,
+    changed_key_tuple_data: nil,
+    old_tuple_data: nil,
+    tuple_data: {"980191170", "abc", "23", nil, nil, nil, nil}
+  },
+  %PgoutputDecoder.Messages.Update{
+    relation_id: 22887,
+    changed_key_tuple_data: nil,
+    old_tuple_data: nil,
+    tuple_data: {"980191171", "abc", "23", nil, nil, nil, nil}
+  },
+  %PgoutputDecoder.Messages.Update{
+    relation_id: 22887,
+    changed_key_tuple_data: nil,
+    old_tuple_data: nil,
+    tuple_data: {"980191172", "abc", "23", nil, nil, nil, nil}
+  },
+  %PgoutputDecoder.Messages.Update{
+    relation_id: 22887,
+    changed_key_tuple_data: nil,
+    old_tuple_data: nil,
+    tuple_data: {"980191173", "abc", "23", nil, nil, nil, nil}
+  },
+  %PgoutputDecoder.Messages.Update{
+    relation_id: 22887,
+    changed_key_tuple_data: nil,
+    old_tuple_data: nil,
+    tuple_data: {"980191174", "abc", "23", nil, nil, nil, nil}
+  },
+  %PgoutputDecoder.Messages.Commit{
+    flags: [],
+    lsn: {0, 48207232},
+    end_lsn: {0, 48207280},
+    commit_timestamp: ~U[2022-12-02 02:05:48Z]
+  }
+]
+```
+`DELETE FROM users WHERE name = 'abc'`
+
+```elixir
+[
+  %PgoutputDecoder.Messages.Begin{
+    final_lsn: {0, 48208112},
+    commit_timestamp: ~U[2022-12-02 02:06:17Z],
+    xid: 3414
+  },
+  %PgoutputDecoder.Messages.Relation{
+    id: 22887,
+    namespace: "public",
+    name: "users",
+    replica_identity: :default,
+    columns: [
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [:key],
+        name: "id",
+        type: :int8,
+        type_modifier: 4294967295
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "name",
+        type: :varchar,
+        type_modifier: 4294967295
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "age",
+        type: :int4,
+        type_modifier: 4294967295
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "email",
+        type: :varchar,
+        type_modifier: 4294967295
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "password_digest",
+        type: :varchar,
+        type_modifier: 4294967295
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "salary",
+        type: :unknown,
+        type_modifier: 393222
+      },
+      %PgoutputDecoder.Messages.Relation.Column{
+        flags: [],
+        name: "sex",
+        type: :bool,
+        type_modifier: 4294967295
+      }
+    ]
+  },
+  %PgoutputDecoder.Messages.Delete{
+    relation_id: 22887,
+    changed_key_tuple_data: {"980191166", nil, nil, nil, nil, nil, nil},
+    old_tuple_data: nil
+  },
+  %PgoutputDecoder.Messages.Delete{
+    relation_id: 22887,
+    changed_key_tuple_data: {"980191167", nil, nil, nil, nil, nil, nil},
+    old_tuple_data: nil
+  },
+  %PgoutputDecoder.Messages.Delete{
+    relation_id: 22887,
+    changed_key_tuple_data: {"980191168", nil, nil, nil, nil, nil, nil},
+    old_tuple_data: nil
+  },
+  %PgoutputDecoder.Messages.Delete{
+    relation_id: 22887,
+    changed_key_tuple_data: {"980191169", nil, nil, nil, nil, nil, nil},
+    old_tuple_data: nil
+  },
+  %PgoutputDecoder.Messages.Delete{
+    relation_id: 22887,
+    changed_key_tuple_data: {"980191170", nil, nil, nil, nil, nil, nil},
+    old_tuple_data: nil
+  },
+  %PgoutputDecoder.Messages.Delete{
+    relation_id: 22887,
+    changed_key_tuple_data: {"980191171", nil, nil, nil, nil, nil, nil},
+    old_tuple_data: nil
+  },
+  %PgoutputDecoder.Messages.Delete{
+    relation_id: 22887,
+    changed_key_tuple_data: {"980191172", nil, nil, nil, nil, nil, nil},
+    old_tuple_data: nil
+  },
+  %PgoutputDecoder.Messages.Delete{
+    relation_id: 22887,
+    changed_key_tuple_data: {"980191173", nil, nil, nil, nil, nil, nil},
+    old_tuple_data: nil
+  },
+  %PgoutputDecoder.Messages.Delete{
+    relation_id: 22887,
+    changed_key_tuple_data: {"980191174", nil, nil, nil, nil, nil, nil},
+    old_tuple_data: nil
+  },
+  %PgoutputDecoder.Messages.Commit{
+    flags: [],
+    lsn: {0, 48208112},
+    end_lsn: {0, 48208160},
+    commit_timestamp: ~U[2022-12-02 02:06:17Z]
+  }
+]
+```
+
 ## License
     Copyright © 2022-present

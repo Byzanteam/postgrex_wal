@@ -6,12 +6,7 @@ defmodule MockedConsumer do
   ## Client API
 
   def start_link() do
-    GenStage.start_link(__MODULE__, [], name: __MODULE__)
-  end
-
-  # for test only
-  def events_fetch() do
-    GenStage.call(__MODULE__, :fetch_state)
+    GenStage.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
   ## Server Callback
@@ -22,15 +17,9 @@ defmodule MockedConsumer do
   end
 
   @impl true
-  # for test only
-  def handle_call(:fetch_state, from, state) do
-    GenStage.reply(from, state)
-    {:noreply, [], []}
-  end
-
-  @impl true
   def handle_events(events, _from, state) do
-    {:noreply, [], events ++ state}
+    send Tester, List.flatten(events)
+    {:noreply, [], state}
   end
 end
 

@@ -29,7 +29,7 @@ opts = [
   username: "jswk"
 ]
 
-PostgrexWal.start_link(opts)
+PostgrexWal.start_link("postgrex_example", opts)
 MockedConsumer.start_link()
 {:ok, pg_pid} = Postgrex.start_link(opts)
 Process.register(pg_pid, PgConn)

@@ -24,15 +24,16 @@ and run `$ mix deps.get`.
 ## Usage
 
 ```elixir
-iex> pg_conn_opts = [host: "your pg_host", database: "your pg_database", username: "your pg_username"]
-iex> PostgrexWal.start_link(pg_conn_opts)
+iex> pub_name = "your_publication_name"
+iex> pg_conn_opts = [host: "your_pg_host", database: "your_pg_database", username: "your_pg_username"]
+iex> PostgrexWal.start_link(pub_name, pg_conn_opts)
 ```
 ## FYI
 
 1. Start the producer as above.The Producer(source) local-register name:  `PostgrexWal.GenStage.Producer`
-2. Start your consumer, and make your consumer `subscribe_to: [PostgrexWal.GenStage.Producer]`
+2. Start your consumer, and make your consumer `subscribe_to: [pub_name]`(pub_name assigned by you)
 3. The Replication events would down-stream to your consumer just-in-time.
-4. In your project, you can put `{PostgrexWal.GenStage.Producer, pg_conn_opts}` as a child under your Supervision tree to auto-start before your consumer.
+4. In your project, you can put `{PostgrexWal.GenStage.Producer, {pub_name, pg_conn_opts}}` as a child under your Supervision tree to auto-start before your consumer.
 5. `mix test --seed 0` passed.
 
 ## Transaction events sample(Insert, Update, Delete)

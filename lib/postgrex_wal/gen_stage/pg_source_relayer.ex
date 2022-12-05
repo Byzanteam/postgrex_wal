@@ -21,13 +21,13 @@ defmodule PostgrexWal.GenStage.PgSourceRelayer do
   def handle_cast({:async_event, event}, {list, producer_name}) do
     event = PgoutputDecoder.decode_message(event)
 
-    if event_is_a?(event, "Begin") and length(list) > 0 do
+    if event_is?(event, "Begin") and length(list) > 0 do
       Logger.info("residual events exists")
     end
 
     list = [event | list]
 
-    if event_is_a?(event, "Commit") do
+    if event_is?(event, "Commit") do
       Enum.reverse(list) |> PostgrexWal.GenStage.Producer.sync_notify(producer_name)
       {:noreply, {[], producer_name}}
     else
@@ -35,10 +35,8 @@ defmodule PostgrexWal.GenStage.PgSourceRelayer do
     end
   end
 
-  defp event_is_a?(event, str) do
-    event
-    |> Map.get(:__struct__)
-    |> Atom.to_string()
-    |> String.ends_with?(str)
+  defp event_is?(event, str) do
+    name = String.to_atom "Elixir.PgoutputDecoder.Messages.#{str}"
+    is_struct(event, name)
   end
 end

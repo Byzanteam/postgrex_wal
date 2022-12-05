@@ -3,17 +3,17 @@ defmodule PostgrexWal.GenStage.Producer do
 
   ## Client API
 
-  def start_link(_) do
-    GenStage.start_link(__MODULE__, :ok, name: __MODULE__)
+  def start_link(producer_name) do
+    GenStage.start_link(__MODULE__, nil, name: producer_name)
   end
 
-  def sync_notify(event, timeout \\ 5000) do
-    GenStage.call(__MODULE__, {:notify, event}, timeout)
+  def sync_notify(event, producer_name, timeout \\ 5000) do
+    GenStage.call(producer_name, {:notify, event}, timeout)
   end
 
   ## Server Callbacks
 
-  def init(:ok) do
+  def init(_) do
     {:producer, {:queue.new, 0}, dispatcher: GenStage.BroadcastDispatcher}
   end
 

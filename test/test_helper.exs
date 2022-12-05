@@ -1,35 +1,13 @@
-ExUnit.start()
+ExUnit.start(timeout: 5_000)
 
-defmodule MockedConsumer do
-  use GenStage
-
-  ## Client API
-
-  def start_link() do
-    GenStage.start_link(__MODULE__, :ok, name: __MODULE__)
-  end
-
-  ## Server Callback
-
-  @impl true
-  def init(state) do
-    {:consumer, state, subscribe_to: [PostgrexWal.GenStage.Producer]}
-  end
-
-  @impl true
-  def handle_events(events, _from, state) do
-    send Tester, List.flatten(events)
-    {:noreply, [], state}
-  end
-end
-
-opts = [
+pg_conn_opts = [
   host: "localhost",
   database: "r704_development",
   username: "jswk"
 ]
 
-PostgrexWal.start_link("postgrex_example", opts)
-MockedConsumer.start_link()
-{:ok, pg_pid} = Postgrex.start_link(opts)
+producer_name = :my_prod
+PostgrexWal.start_link(producer_name: producer_name, publication_name: "postgrex_example", pg_conn_opts: pg_conn_opts)
+Support.MockedConsumer.start_link(producer_name)
+{:ok, pg_pid} = Postgrex.start_link(pg_conn_opts)
 Process.register(pg_pid, PgConn)

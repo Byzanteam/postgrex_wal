@@ -1,14 +1,19 @@
 defmodule PostgrexWal.GenStage.PgSource do
   use Postgrex.ReplicationConnection
 
-  def start_link({pub_name, pg_conn_opts}) do
+  def start_link(pg_source_opts) do
     # Automatically reconnect if we lose connection.
+
     extra_opts = [
       auto_reconnect: true,
       name: __MODULE__
     ]
 
-    Postgrex.ReplicationConnection.start_link(__MODULE__, pub_name, extra_opts ++ pg_conn_opts)
+    Postgrex.ReplicationConnection.start_link(
+      __MODULE__,
+      pg_source_opts[:publication_name],
+      extra_opts ++ pg_source_opts[:pg_conn_opts]
+    )
   end
 
   @impl true

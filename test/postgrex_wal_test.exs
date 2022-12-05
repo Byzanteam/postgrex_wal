@@ -1,5 +1,6 @@
 defmodule PostgrexWalTest do
   use ExUnit.Case
+  @moduletag timeout: 5_000
 
   setup do
     Process.register self(), Tester
@@ -38,6 +39,6 @@ defmodule PostgrexWalTest do
   end
 
   defp consumer_received_events() do
-    receive do events -> events end
+    receive do {:consumer_events, events} -> events end
   end
 end

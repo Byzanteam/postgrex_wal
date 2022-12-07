@@ -11,7 +11,7 @@ defmodule Support.MockedConsumer do
 
   @impl true
   def init(producer_name) do
-    {:consumer, producer_name, subscribe_to: [producer_name]}
+    {:consumer, :unused_state, subscribe_to: [producer_name]}
   end
 
   @impl true

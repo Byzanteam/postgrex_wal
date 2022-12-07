@@ -12,7 +12,7 @@ defmodule PostgrexWal.GenStage.PgSource do
     Postgrex.ReplicationConnection.start_link(
       __MODULE__,
       pg_source_opts[:publication_name],
-      extra_opts ++ pg_source_opts[:pg_conn_opts]
+      Keyword.merge(extra_opts, pg_source_opts[:pg_conn_opts])
     )
   end
 

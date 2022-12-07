@@ -1,4 +1,4 @@
-ExUnit.start(timeout: 5_000)
+ExUnit.start(timeout: 10_000)
 
 pg_conn_opts = [
   host: "localhost",

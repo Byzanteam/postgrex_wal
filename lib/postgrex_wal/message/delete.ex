@@ -13,7 +13,7 @@ defmodule PostgrexWal.Message.Delete do
   def decode(<<relation_id::32, ?K, tuple_data::binary>>) do
     %__MODULE__{
       relation_id: relation_id,
-      data: PostgrexWal.Message.TupleData.decode(tuple_data |> IO.inspect())
+      data: PostgrexWal.Message.TupleData.decode(tuple_data)
     }
   end
 

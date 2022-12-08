@@ -4,7 +4,7 @@ defmodule PostgrexWal.Message.Update do
   """
 
   use PostgrexWal.Message
-  defstruct ~W[relation_id, tuple_data]a
+  defstruct ~W[relation_id tuple_data]a
 
   def decode(<<relation_id::integer-32, _key_or_old::binary-1, tuple_data::binary>>) do
     %__MODULE__{

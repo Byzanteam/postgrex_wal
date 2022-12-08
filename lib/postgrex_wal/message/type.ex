@@ -1,6 +1,6 @@
 defmodule PostgrexWal.Message.Type do
   @moduledoc """
-  A begin message
+  A Type message
   """
   use PostgrexWal.Message
   defstruct ~W[id namespace name]a

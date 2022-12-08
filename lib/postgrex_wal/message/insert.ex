@@ -11,7 +11,7 @@ defmodule PostgrexWal.Message.Insert do
     field :data, {:text, binary()} | {:binary, bitstring()}, enforce: false
   end
 
-  def decode(<<ransaction_id::32, oid::32, ?N, tuple_data::binary>>) do
+  def decode(<<transaction_id::32, oid::32, ?N, tuple_data::binary>>) do
     %__MODULE__{
       transaction_id: transaction_id,
       oid: oid,

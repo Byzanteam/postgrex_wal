@@ -1,13 +1,13 @@
 defmodule PostgrexWal.Message.Origin do
   @moduledoc """
-  A commit message
+  A Origin message
   """
 
   use PostgrexWal.Message
 
   typedstruct enforce: true do
-    field :origin_commit_lsn, integer()
-    field :name, string()
+    field :origin_commit_lsn, Integer
+    field :name, String.t
   end
 
   def decode(<<lsn::8, name::binary>>) do

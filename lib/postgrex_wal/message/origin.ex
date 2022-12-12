@@ -7,7 +7,7 @@ defmodule PostgrexWal.Message.Origin do
 
   typedstruct enforce: true do
     field :origin_commit_lsn, Integer
-    field :name, String.t
+    field :name, String.t()
   end
 
   def decode(<<lsn::8, name::binary>>) do

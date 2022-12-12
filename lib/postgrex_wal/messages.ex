@@ -1,7 +1,18 @@
 defmodule PostgrexWal.Messages do
   @moduledoc false
 
-  alias PostgrexWal.Message.{Begin, Commit, Relation, Insert, Delete, Truncate, Type, Update, Origin}
+  alias PostgrexWal.Message.{
+    Begin,
+    Commit,
+    Delete,
+    Insert,
+    Origin,
+    Relation,
+    Truncate,
+    Type,
+    Update
+  }
+
   def decode(<<key::binary-1, rest::binary>>) do
     modules = %{
       "B" => Begin,
@@ -14,6 +25,7 @@ defmodule PostgrexWal.Messages do
       "U" => Update,
       "O" => Origin
     }
-    apply(modules[key], :decode, [rest])
+
+    modules[key].decode(rest)
   end
 end

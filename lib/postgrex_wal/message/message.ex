@@ -4,7 +4,7 @@ defmodule PostgrexWal.Message do
   https://www.postgresql.org/docs/15/protocol-logicalrep-message-formats.html
   """
 
-  @callback decode(pg_msg::binary()) :: struct()
+  @callback decode(pg_msg :: binary()) :: struct()
 
   defmacro __using__(_opts) do
     quote location: :keep do

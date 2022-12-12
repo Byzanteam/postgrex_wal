@@ -4,6 +4,7 @@ defmodule PostgrexWal.Message.DeleteMessage do
   """
 
   use PostgrexWal.Message
+  alias PostgrexWal.Message.TupleData
 
   typedstruct enforce: true do
     field :relation_id, integer()
@@ -15,13 +16,13 @@ defmodule PostgrexWal.Message.DeleteMessage do
       <<?D, relation_id::32, ?K, tuple_data::binary>> ->
         %unquote(__MODULE__){
           relation_id: relation_id,
-          data: PostgrexWal.Message.TupleData.decode(tuple_data)
+          data: TupleData.decode(tuple_data)
         }
 
       <<?D, relation_id::32, ?O, tuple_data::binary>> ->
         %unquote(__MODULE__){
           relation_id: relation_id,
-          data: PostgrexWal.Message.TupleData.decode(tuple_data)
+          data: TupleData.decode(tuple_data)
         }
     end
   end

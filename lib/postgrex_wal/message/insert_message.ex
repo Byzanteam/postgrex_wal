@@ -4,6 +4,7 @@ defmodule PostgrexWal.Message.InsertMessage do
   """
 
   use PostgrexWal.Message
+  alias PostgrexWal.Message.TupleData
 
   typedstruct enforce: true do
     field :transaction_id, integer(), enforce: false
@@ -17,13 +18,13 @@ defmodule PostgrexWal.Message.InsertMessage do
         %unquote(__MODULE__){
           transaction_id: transaction_id,
           oid: oid,
-          data: PostgrexWal.Message.TupleData.decode(tuple_data)
+          data: TupleData.decode(tuple_data)
         }
 
       <<?I, oid::32, ?N, tuple_data::binary>> ->
         %unquote(__MODULE__){
           oid: oid,
-          data: PostgrexWal.Message.TupleData.decode(tuple_data)
+          data: TupleData.decode(tuple_data)
         }
     end
   end

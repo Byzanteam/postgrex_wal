@@ -27,51 +27,76 @@ defmodule DecodersTest do
   alias PostgrexWal.Message.{Begin, Commit, Delete, Insert, Relation, Update}
 
   test "decode begin event" do
-    assert %Begin{
-             final_lsn: _,
-             commit_timestamp: _,
-             xid: _
-           } = Begin.decode(@binary_events[:Begin])
+    assert match?(
+             %Begin{
+               final_lsn: a,
+               commit_timestamp: b,
+               xid: c
+             }
+             when a > 0 and b > 0 and c > 0,
+             Begin.decode(@binary_events[:Begin])
+           )
   end
 
   test "decode commit event" do
-    assert %Commit{
-             commit_timestamp: _,
-             end_lsn: _,
-             lsn: _
-           } = Commit.decode(@binary_events[:Commit])
+    assert match?(
+             %Commit{
+               commit_timestamp: a,
+               end_lsn: b,
+               lsn: c
+             }
+             when a > 0 and b > 0 and c > 0,
+             Commit.decode(@binary_events[:Commit])
+           )
   end
 
   test "decode relation event" do
-    assert %Relation{
-             data: _,
-             number_of_columns: _,
-             replica_identity_setting: _,
-             relation_name: _,
-             namespace: _,
-             id: _
-           } = Relation.decode(@binary_events[:Relation])
+    assert match?(
+             %Relation{
+               data: a,
+               number_of_columns: b,
+               replica_identity_setting: c,
+               relation_name: d,
+               namespace: e,
+               id: f
+             }
+             when is_list(a) and length(a) > 0 and b > 0 and c > 0 and d == "users" and
+                    e == "public" and f > 0,
+             Relation.decode(@binary_events[:Relation])
+           )
   end
 
   test "decode insert event" do
-    assert %Insert{
-             data: _,
-             oid: _,
-             transaction_id: _
-           } = Insert.decode(@binary_events[:Insert])
+    assert match?(
+             %Insert{
+               data: a,
+               oid: b,
+               transaction_id: c
+             }
+             when is_list(a) and length(a) == 7 and b > 0 and is_nil(c),
+             Insert.decode(@binary_events[:Insert])
+           )
   end
 
   test "decode delete event" do
-    assert %Delete{
-             data: _,
-             relation_id: _
-           } = Delete.decode(@binary_events[:Delete])
+    assert match?(
+             %Delete{
+               data: a,
+               relation_id: b
+             }
+             when is_list(a) and length(a) == 7 and b > 0,
+             Delete.decode(@binary_events[:Delete])
+           )
   end
 
   test "decode update event" do
-    assert %Update{
-             relation_id: _,
-             tuple_data: _
-           } = Update.decode(@binary_events[:Update])
+    assert match?(
+             %Update{
+               relation_id: a,
+               tuple_data: b
+             }
+             when a > 0 and is_list(b) and length(b) == 7,
+             Update.decode(@binary_events[:Update])
+           )
   end
 end

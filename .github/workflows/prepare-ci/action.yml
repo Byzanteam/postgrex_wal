@@ -1,0 +1,28 @@
+name: Prepare CI
+
+on:
+  workflow_call:
+    outputs:
+      cache-hit:
+        description: A boolean value to indicate an exact cache was found
+
+runs:
+  using: composite
+  steps:
+    - uses: erlef/setup-beam@v1
+      with:
+        otp-version: 25.0
+        elixir-version: 1.14.0-otp-25
+
+    - id: cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          deps
+          _build
+        key: ${{ runner.os }}-mix-${{ hashFiles('.tool-versions') }}-${{ hashFiles('**/mix.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-mix-${{ hashFiles('.tool-versions') }}-
+
+    - run: echo echo "cache-hit=${{ steps.cache.outputs.cache-hit }}" >> $GITHUB_OUTPUT
+      shell: bash

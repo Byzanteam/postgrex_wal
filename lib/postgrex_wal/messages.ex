@@ -1,7 +1,7 @@
 defmodule PostgrexWal.Messages do
   @moduledoc false
 
-  @modules = %{
+  @modules %{
     "B" => Begin,
     "C" => Commit,
     "D" => Delete,

@@ -12,20 +12,18 @@ defmodule PostgrexWal.Message.Insert do
     field :data, {:text, binary()} | {:binary, bitstring()}, enforce: false
   end
 
-  def decode(_state) do
-    quote location: :keep do
-      <<?I, transaction_id::32, oid::32, ?N, tuple_data::binary>> ->
-        %unquote(__MODULE__){
-          transaction_id: transaction_id,
-          oid: oid,
-          data: TupleData.decode(tuple_data)
-        }
+  def decode(<<transaction_id::32, oid::32, ?N, tuple_data::binary>>) do
+    %__MODULE__{
+      transaction_id: transaction_id,
+      oid: oid,
+      data: TupleData.decode(tuple_data)
+    }
+  end
 
-      <<?I, oid::32, ?N, tuple_data::binary>> ->
-        %unquote(__MODULE__){
-          oid: oid,
-          data: TupleData.decode(tuple_data)
-        }
-    end
+  def decode(<<oid::32, ?N, tuple_data::binary>>) do
+    %__MODULE__{
+      oid: oid,
+      data: TupleData.decode(tuple_data)
+    }
   end
 end

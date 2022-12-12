@@ -14,24 +14,21 @@ defmodule PostgrexWal.Message.Relation do
     field :data, [map()]
   end
 
-  def decode(_state) do
-    quote location: :keep do
-      <<?R, id::32, rest::binary>> ->
-        [namespace, rest] = unquote(__MODULE__).split(rest)
-        [relation_name, rest] = unquote(__MODULE__).split(rest)
-        <<replica_identity_setting::8, number_of_columns::16, rest::binary>> = rest
+  def decode(<<id::32, rest::binary>>) do
+    [namespace, rest] = split(rest)
+    [relation_name, rest] = split(rest)
+    <<replica_identity_setting::8, number_of_columns::16, rest::binary>> = rest
 
-        data = unquote(__MODULE__).extract_columns(rest)
+    data = extract_columns(rest)
 
-        %unquote(__MODULE__){
-          id: id,
-          namespace: namespace,
-          relation_name: relation_name,
-          replica_identity_setting: replica_identity_setting,
-          number_of_columns: number_of_columns,
-          data: data
-        }
-    end
+    %__MODULE__{
+      id: id,
+      namespace: namespace,
+      relation_name: relation_name,
+      replica_identity_setting: replica_identity_setting,
+      number_of_columns: number_of_columns,
+      data: data
+    }
   end
 
   @null_terminator <<0>>

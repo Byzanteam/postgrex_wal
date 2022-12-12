@@ -11,19 +11,17 @@ defmodule PostgrexWal.Message.Delete do
     field :data, [map()]
   end
 
-  def decode(_state) do
-    quote location: :keep do
-      <<?D, relation_id::32, ?K, tuple_data::binary>> ->
-        %unquote(__MODULE__){
-          relation_id: relation_id,
-          data: TupleData.decode(tuple_data)
-        }
+  def decode(<<relation_id::32, ?K, tuple_data::binary>>) do
+    %__MODULE__{
+      relation_id: relation_id,
+      data: TupleData.decode(tuple_data)
+    }
+  end
 
-      <<?D, relation_id::32, ?O, tuple_data::binary>> ->
-        %unquote(__MODULE__){
-          relation_id: relation_id,
-          data: TupleData.decode(tuple_data)
-        }
-    end
+  def decode(<<relation_id::32, ?O, tuple_data::binary>>) do
+    %__MODULE__{
+      relation_id: relation_id,
+      data: TupleData.decode(tuple_data)
+    }
   end
 end

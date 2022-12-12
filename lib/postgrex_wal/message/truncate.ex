@@ -3,7 +3,6 @@ defmodule PostgrexWal.Message.Truncate do
   A Truncate message
   """
   use PostgrexWal.Message
-  defstruct ~W[number_of_relations options truncated_relations]a
 
   typedstruct enforce: true do
     field :number_of_relations, integer()

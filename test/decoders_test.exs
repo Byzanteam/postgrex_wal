@@ -29,11 +29,10 @@ defmodule DecodersTest do
   test "decode begin event" do
     assert match?(
              %Begin{
-               final_lsn: a,
-               commit_timestamp: b,
-               xid: c
-             }
-             when a == 48_453_656 and b == 723_794_924_203_137 and c == 3_557,
+               final_lsn: 48_453_656,
+               commit_timestamp: 723_794_924_203_137,
+               xid: 3_557
+             },
              Begin.decode(@binary_events[:Begin])
            )
   end
@@ -41,11 +40,10 @@ defmodule DecodersTest do
   test "decode commit event" do
     assert match?(
              %Commit{
-               commit_timestamp: a,
-               end_lsn: b,
-               lsn: c
-             }
-             when a == 723_794_924_203_137 and b == 48_453_704 and c == 48_453_656,
+               commit_timestamp: 723_794_924_203_137,
+               end_lsn: 48_453_704,
+               lsn: 48_453_656
+             },
              Commit.decode(@binary_events[:Commit])
            )
   end
@@ -54,14 +52,13 @@ defmodule DecodersTest do
     assert match?(
              %Relation{
                data: a,
-               number_of_columns: b,
-               replica_identity_setting: c,
-               relation_name: d,
-               namespace: e,
-               id: f
+               number_of_columns: 7,
+               replica_identity_setting: 100,
+               relation_name: "users",
+               namespace: "public",
+               id: 22_887
              }
-             when is_list(a) and length(a) > 0 and b == 7 and c == 100
-             when d == "users" and e == "public" and f == 22_887,
+             when is_list(a) and length(a) == 7,
              Relation.decode(@binary_events[:Relation])
            )
   end
@@ -70,10 +67,10 @@ defmodule DecodersTest do
     assert match?(
              %Insert{
                data: a,
-               oid: b,
-               transaction_id: c
+               oid: 22_887,
+               transaction_id: b
              }
-             when is_list(a) and length(a) == 7 and b == 22_887 and is_nil(c),
+             when is_list(a) and length(a) == 7 and is_nil(b),
              Insert.decode(@binary_events[:Insert])
            )
   end
@@ -82,9 +79,9 @@ defmodule DecodersTest do
     assert match?(
              %Delete{
                data: a,
-               relation_id: b
+               relation_id: 22_887
              }
-             when is_list(a) and length(a) == 7 and b == 22_887,
+             when is_list(a) and length(a) == 7,
              Delete.decode(@binary_events[:Delete])
            )
   end
@@ -92,10 +89,10 @@ defmodule DecodersTest do
   test "decode update event" do
     assert match?(
              %Update{
-               relation_id: a,
-               tuple_data: b
+               relation_id: 22_887,
+               tuple_data: a
              }
-             when a == 22_887 and is_list(b) and length(b) == 7,
+             when is_list(a) and length(a) == 7,
              Update.decode(@binary_events[:Update])
            )
   end

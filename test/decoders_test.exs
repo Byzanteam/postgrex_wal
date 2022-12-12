@@ -49,6 +49,16 @@ defmodule DecodersTest do
   end
 
   test "decode relation event" do
+    data = [
+      %{column_name: "id", flags: 1, type_modifier: 4_294_967_295, type_oid: 20},
+      %{column_name: "name", flags: 0, type_modifier: 4_294_967_295, type_oid: 1043},
+      %{column_name: "age", flags: 0, type_modifier: 4_294_967_295, type_oid: 23},
+      %{column_name: "email", flags: 0, type_modifier: 4_294_967_295, type_oid: 1043},
+      %{column_name: "password_digest", flags: 0, type_modifier: 4_294_967_295, type_oid: 1043},
+      %{column_name: "salary", flags: 0, type_modifier: 393_222, type_oid: 1700},
+      %{column_name: "sex", flags: 0, type_modifier: 4_294_967_295, type_oid: 16}
+    ]
+
     assert match?(
              %Relation{
                data: a,
@@ -58,41 +68,47 @@ defmodule DecodersTest do
                namespace: "public",
                id: 22_887
              }
-             when is_list(a) and length(a) == 7,
+             when a == data,
              Relation.decode(@binary_events[:Relation])
            )
   end
 
   test "decode insert event" do
+    data = [{:text, "980191243"}, {:text, "abc"}, {:text, "22"}, nil, nil, nil, nil]
+
     assert match?(
              %Insert{
                data: a,
                oid: 22_887,
                transaction_id: b
              }
-             when is_list(a) and length(a) == 7 and is_nil(b),
+             when a == data and is_nil(b),
              Insert.decode(@binary_events[:Insert])
            )
   end
 
   test "decode delete event" do
+    data = [{:text, "980191241"}, nil, nil, nil, nil, nil, nil]
+
     assert match?(
              %Delete{
                data: a,
                relation_id: 22_887
              }
-             when is_list(a) and length(a) == 7,
+             when a == data,
              Delete.decode(@binary_events[:Delete])
            )
   end
 
   test "decode update event" do
+    data = [{:text, "980191244"}, {:text, "abc"}, {:text, "23"}, nil, nil, nil, nil]
+
     assert match?(
              %Update{
                relation_id: 22_887,
                tuple_data: a
              }
-             when is_list(a) and length(a) == 7,
+             when a == data,
              Update.decode(@binary_events[:Update])
            )
   end

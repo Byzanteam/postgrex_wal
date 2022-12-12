@@ -33,7 +33,7 @@ defmodule DecodersTest do
                commit_timestamp: b,
                xid: c
              }
-             when a > 0 and b > 0 and c > 0,
+             when a == 48_453_656 and b == 723_794_924_203_137 and c == 3_557,
              Begin.decode(@binary_events[:Begin])
            )
   end
@@ -45,7 +45,7 @@ defmodule DecodersTest do
                end_lsn: b,
                lsn: c
              }
-             when a > 0 and b > 0 and c > 0,
+             when a == 723_794_924_203_137 and b == 48_453_704 and c == 48_453_656,
              Commit.decode(@binary_events[:Commit])
            )
   end
@@ -60,8 +60,8 @@ defmodule DecodersTest do
                namespace: e,
                id: f
              }
-             when is_list(a) and length(a) > 0 and b > 0 and c > 0 and d == "users" and
-                    e == "public" and f > 0,
+             when is_list(a) and length(a) > 0 and b == 7 and c == 100
+             when d == "users" and e == "public" and f == 22_887,
              Relation.decode(@binary_events[:Relation])
            )
   end
@@ -73,7 +73,7 @@ defmodule DecodersTest do
                oid: b,
                transaction_id: c
              }
-             when is_list(a) and length(a) == 7 and b > 0 and is_nil(c),
+             when is_list(a) and length(a) == 7 and b == 22_887 and is_nil(c),
              Insert.decode(@binary_events[:Insert])
            )
   end
@@ -84,7 +84,7 @@ defmodule DecodersTest do
                data: a,
                relation_id: b
              }
-             when is_list(a) and length(a) == 7 and b > 0,
+             when is_list(a) and length(a) == 7 and b == 22_887,
              Delete.decode(@binary_events[:Delete])
            )
   end
@@ -95,7 +95,7 @@ defmodule DecodersTest do
                relation_id: a,
                tuple_data: b
              }
-             when a > 0 and is_list(b) and length(b) == 7,
+             when a == 22_887 and is_list(b) and length(b) == 7,
              Update.decode(@binary_events[:Update])
            )
   end

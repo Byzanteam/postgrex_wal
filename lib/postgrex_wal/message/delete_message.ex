@@ -15,7 +15,7 @@ defmodule PostgrexWal.Message.DeleteMessage do
       <<?D, relation_id::32, ?K, tuple_data::binary>> ->
         %unquote(__MODULE__){
           relation_id: relation_id,
-          data: PostgrexWal.Message.TupleData.decode(tuple_data |> IO.inspect())
+          data: PostgrexWal.Message.TupleData.decode(tuple_data)
         }
 
       <<?D, relation_id::32, ?O, tuple_data::binary>> ->

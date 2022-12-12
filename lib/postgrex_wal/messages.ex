@@ -1,25 +1,15 @@
 defmodule PostgrexWal.Messages do
   @moduledoc false
 
-  @message_mods [
-    PostgrexWal.Message.Begin,
-    PostgrexWal.Message.Insert,
-    PostgrexWal.Message.Delete,
-    PostgrexWal.Message.Relation,
-    PostgrexWal.Message.Commit
-  ]
-
-  clauses =
-    Enum.flat_map(@message_mods, fn mod ->
-      mod.decode(true)
-    end)
-
-  decoding_ast =
-    quote location: :keep do
-      def decode(msg) do
-        case msg, do: unquote(clauses)
-      end
-    end
-
-  Module.eval_quoted(__MODULE__, decoding_ast)
+  alias PostgrexWal.Message.{Begin, Commit, Relation, Insert, Delete}
+  def decode(<<key::binary-1, rest::binary>>) do
+    modules = %{
+      "B" => Begin,
+      "C" => Commit,
+      "R" => Relation,
+      "I" => Insert,
+      "D" => Delete
+    }
+    apply(modules[key], :decode, [rest])
+  end
 end

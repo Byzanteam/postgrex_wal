@@ -5,6 +5,7 @@ defmodule PostgrexWal.Message.Truncate do
   use PostgrexWal.Message
   defstruct ~W[number_of_relations options truncated_relations]a
 
+  @impl true
   def decode(<<number_of_relations::integer-32, options::integer-8, column_ids::binary>>) do
     truncated_relations =
       for relation_id_bin <- column_ids |> :binary.bin_to_list() |> Enum.chunk_every(4),

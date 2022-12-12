@@ -7,6 +7,7 @@ defmodule PostgrexWal.Message.Update do
   alias PostgrexWal.Message.TupleData
   defstruct ~W[relation_id tuple_data]a
 
+  @impl true
   def decode(<<relation_id::integer-32, _key_or_old::binary-1, tuple_data::binary>>) do
     %__MODULE__{
       relation_id: relation_id,

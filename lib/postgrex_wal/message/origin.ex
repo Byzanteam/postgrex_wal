@@ -10,6 +10,7 @@ defmodule PostgrexWal.Message.Origin do
     field :name, String.t()
   end
 
+  @impl true
   def decode(<<lsn::8, name::binary>>) do
     %__MODULE__{
       origin_commit_lsn: lsn,

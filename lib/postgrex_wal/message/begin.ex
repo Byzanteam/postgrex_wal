@@ -10,6 +10,7 @@ defmodule PostgrexWal.Message.Begin do
     field :xid, integer()
   end
 
+  @impl true
   def decode(<<final_lsn::64, commit_timestamp::64, xid::32>>) do
     %__MODULE__{
       final_lsn: final_lsn,

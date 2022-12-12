@@ -11,6 +11,7 @@ defmodule PostgrexWal.Message.Delete do
     field :data, [map()]
   end
 
+  @impl true
   def decode(<<relation_id::32, ?K, tuple_data::binary>>) do
     %__MODULE__{
       relation_id: relation_id,

@@ -5,6 +5,7 @@ defmodule PostgrexWal.Message.Type do
   use PostgrexWal.Message
   defstruct ~W[id namespace name]a
 
+  @impl true
   def decode(<<data_type_id::integer-32, namespace_and_name::binary>>) do
     [namespace, name_with_null] = :binary.split(namespace_and_name, <<0>>)
     name = String.slice(name_with_null, 0..-2)

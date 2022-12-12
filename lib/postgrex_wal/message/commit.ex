@@ -11,6 +11,7 @@ defmodule PostgrexWal.Message.Commit do
     field :commit_timestamp, integer()
   end
 
+  @impl true
   def decode(<<0::8, lsn::64, end_lsn::64, commit_timestamp::64>>) do
     %__MODULE__{
       lsn: lsn,

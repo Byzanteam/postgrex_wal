@@ -1,4 +1,4 @@
-defmodule PostgrexWal.Message.InsertMessage do
+defmodule PostgrexWal.Message.Insert do
   @moduledoc """
   An insert message
   """

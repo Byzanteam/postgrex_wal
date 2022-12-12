@@ -1,4 +1,4 @@
-defmodule PostgrexWal.Message.BeginMessage do
+defmodule PostgrexWal.Message.Begin do
   @moduledoc """
   A begin message
   """

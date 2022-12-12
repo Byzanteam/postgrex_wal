@@ -1,4 +1,4 @@
-defmodule PostgrexWal.Message.CommitMessage do
+defmodule PostgrexWal.Message.Commit do
   @moduledoc """
   A commit message
   """

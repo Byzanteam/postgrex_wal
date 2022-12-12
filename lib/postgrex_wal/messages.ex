@@ -2,11 +2,11 @@ defmodule PostgrexWal.Messages do
   @moduledoc false
 
   @message_mods [
-    PostgrexWal.Message.BeginMessage,
-    PostgrexWal.Message.InsertMessage,
-    PostgrexWal.Message.DeleteMessage,
-    PostgrexWal.Message.RelationMessage,
-    PostgrexWal.Message.CommitMessage
+    PostgrexWal.Message.Begin,
+    PostgrexWal.Message.Insert,
+    PostgrexWal.Message.Delete,
+    PostgrexWal.Message.Relation,
+    PostgrexWal.Message.Commit
   ]
 
   clauses =

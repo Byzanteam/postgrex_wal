@@ -1,4 +1,4 @@
-defmodule PostgrexWal.Message.RelationMessage do
+defmodule PostgrexWal.Message.Relation do
   @moduledoc """
   A relation message.
   """

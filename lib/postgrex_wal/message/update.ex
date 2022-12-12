@@ -5,7 +5,11 @@ defmodule PostgrexWal.Message.Update do
 
   use PostgrexWal.Message
   alias PostgrexWal.Message.TupleData
-  defstruct ~W[relation_id tuple_data]a
+
+  typedstruct enforce: true do
+    field :relation_id, integer()
+    field :tuple_data, {:text, binary()} | {:binary, bitstring()}, enforce: false
+  end
 
   @impl true
   def decode(<<relation_id::integer-32, _key_or_old::binary-1, tuple_data::binary>>) do

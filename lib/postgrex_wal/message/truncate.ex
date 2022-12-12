@@ -5,6 +5,12 @@ defmodule PostgrexWal.Message.Truncate do
   use PostgrexWal.Message
   defstruct ~W[number_of_relations options truncated_relations]a
 
+  typedstruct enforce: true do
+    field :number_of_relations, integer()
+    field :options, [map()]
+    field :truncated_relations, integer()
+  end
+
   @impl true
   def decode(<<number_of_relations::integer-32, options::integer-8, column_ids::binary>>) do
     truncated_relations =

@@ -3,7 +3,12 @@ defmodule PostgrexWal.Message.Type do
   A Type message
   """
   use PostgrexWal.Message
-  defstruct ~W[id namespace name]a
+
+  typedstruct enforce: true do
+    field :id, integer()
+    field :namespace, String.t()
+    field :name, String.t()
+  end
 
   @impl true
   def decode(<<data_type_id::integer-32, namespace_and_name::binary>>) do

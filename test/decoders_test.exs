@@ -61,14 +61,13 @@ defmodule DecodersTest do
 
     assert match?(
              %Relation{
-               data: a,
+               data: ^data,
                number_of_columns: 7,
                replica_identity_setting: 100,
                relation_name: "users",
                namespace: "public",
                id: 22_887
-             }
-             when a == data,
+             },
              Relation.decode(@binary_events[:Relation])
            )
   end
@@ -78,11 +77,10 @@ defmodule DecodersTest do
 
     assert match?(
              %Insert{
-               data: a,
+               data: ^data,
                oid: 22_887,
                transaction_id: b
-             }
-             when a == data and is_nil(b),
+             },
              Insert.decode(@binary_events[:Insert])
            )
   end
@@ -92,10 +90,9 @@ defmodule DecodersTest do
 
     assert match?(
              %Delete{
-               data: a,
+               data: ^data,
                relation_id: 22_887
-             }
-             when a == data,
+             },
              Delete.decode(@binary_events[:Delete])
            )
   end
@@ -106,9 +103,8 @@ defmodule DecodersTest do
     assert match?(
              %Update{
                relation_id: 22_887,
-               tuple_data: a
-             }
-             when a == data,
+               tuple_data: ^data
+             },
              Update.decode(@binary_events[:Update])
            )
   end

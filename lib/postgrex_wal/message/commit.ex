@@ -9,7 +9,7 @@ defmodule PostgrexWal.Message.Commit do
     field :flags, []
     field :lsn, Helper.lsn()
     field :end_lsn, Helper.lsn()
-    field :commit_timestamp, Helper.ts()
+    field :commit_timestamp, DateTime.t()
   end
 
   @impl true

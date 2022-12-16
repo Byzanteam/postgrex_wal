@@ -6,7 +6,7 @@ defmodule PostgrexWal.Message.Begin do
 
   typedstruct enforce: true do
     field :final_lsn, Helper.lsn()
-    field :commit_timestamp, Helper.ts()
+    field :commit_timestamp, DateTime.t()
     field :xid, integer()
   end
 

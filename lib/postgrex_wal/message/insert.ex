@@ -4,27 +4,27 @@ defmodule PostgrexWal.Message.Insert do
   """
 
   use PostgrexWal.Message
-  alias PostgrexWal.Message.TupleData
 
   typedstruct enforce: true do
     field :transaction_id, integer(), enforce: false
-    field :oid, integer()
-    field :data, {:text, binary()} | {:binary, bitstring()}, enforce: false
+    field :relation_id, integer()
+    field :tuple_data, [Helper.tuple_data()]
   end
 
   @impl true
-  def decode(<<transaction_id::32, oid::32, ?N, tuple_data::binary>>) do
+  # seems unused
+  def decode(<<transaction_id::32, relation_id::32, ?N, tuple_data::binary>>) do
     %__MODULE__{
       transaction_id: transaction_id,
-      oid: oid,
-      data: TupleData.decode(tuple_data)
+      relation_id: relation_id,
+      tuple_data: Helper.decode_tuple_data!(tuple_data)
     }
   end
 
-  def decode(<<oid::32, ?N, tuple_data::binary>>) do
+  def decode(<<relation_id::32, ?N, tuple_data::binary>>) do
     %__MODULE__{
-      oid: oid,
-      data: TupleData.decode(tuple_data)
+      relation_id: relation_id,
+      tuple_data: Helper.decode_tuple_data!(tuple_data)
     }
   end
 end

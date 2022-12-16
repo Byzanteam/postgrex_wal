@@ -11,8 +11,8 @@ defmodule PostgrexWal.Message.Type do
   end
 
   @impl true
-  def decode(<<data_type_id::integer-32, namespace_and_name::binary>>) do
-    [namespace, name_with_null] = :binary.split(namespace_and_name, <<0>>)
+  def decode(<<data_type_id::32, namespace_and_name::binary>>) do
+    [namespace, name_with_null] = Helper.binary_split(namespace_and_name)
     name = String.slice(name_with_null, 0..-2)
 
     %__MODULE__{

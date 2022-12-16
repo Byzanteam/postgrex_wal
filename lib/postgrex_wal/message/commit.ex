@@ -6,17 +6,20 @@ defmodule PostgrexWal.Message.Commit do
   use PostgrexWal.Message
 
   typedstruct enforce: true do
-    field :lsn, integer()
-    field :end_lsn, integer()
-    field :commit_timestamp, integer()
+    field :flags, []
+    field :lsn, Helper.lsn()
+    field :end_lsn, Helper.lsn()
+    field :commit_timestamp, Helper.ts()
   end
 
   @impl true
-  def decode(<<0::8, lsn::64, end_lsn::64, commit_timestamp::64>>) do
+  def decode(<<_flag::8, lsn::binary-8, end_lsn::binary-8, timestamp::64>>) do
     %__MODULE__{
-      lsn: lsn,
-      end_lsn: end_lsn,
-      commit_timestamp: commit_timestamp
+      # _flags alwary is 0 ?
+      flags: [],
+      lsn: Helper.decode_lsn(lsn),
+      end_lsn: Helper.decode_lsn(end_lsn),
+      commit_timestamp: Helper.decode_timestamp(timestamp)
     }
   end
 end

@@ -24,7 +24,7 @@ defmodule PostgrexWal.Message.Helper do
     decoded_tuple_data
   end
 
-  @spec decode_tuple_data(binary()) :: [tuple_data()]
+  @spec decode_tuple_data(binary()) :: tuple()
   def decode_tuple_data(<<number_of_columns::16, data::binary>>) do
     _decode_tuple_data(data, number_of_columns, [])
   end

@@ -1,6 +1,8 @@
 defmodule PostgrexWal.Message.Relation.Column do
   @moduledoc false
-  use PostgrexWal.Message
+
+  alias PostgrexWal.Message.Helper
+  use TypedStruct
 
   typedstruct enforce: true do
     field :flags, integer()
@@ -44,6 +46,7 @@ defmodule PostgrexWal.Message.Relation.Column do
     17_063 => :geometry
   }
 
+  @spec decode(columns :: binary, acc :: list()) :: [struct()]
   def decode(columns, acc \\ [])
   def decode(<<>>, acc), do: Enum.reverse(acc)
 

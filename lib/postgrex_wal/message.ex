@@ -1,5 +1,15 @@
-defmodule PostgrexWal.Messages do
+defmodule PostgrexWal.Message do
   @moduledoc false
+
+  @callback decode(message :: binary()) :: struct()
+
+  defmacro __using__(_opts) do
+    quote do
+      @behaviour PostgrexWal.Message
+      use TypedStruct
+      alias PostgrexWal.Message.Helper
+    end
+  end
 
   alias PostgrexWal.Message.{
     Begin,

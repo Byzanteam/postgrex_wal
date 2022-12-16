@@ -1,111 +1,183 @@
 defmodule DecodersTest do
   @binary_events %{
-    Begin: <<0, 0, 0, 0, 2, 227, 88, 24, 0, 2, 146, 73, 163, 88, 236, 129, 0, 0, 13, 229>>,
+    Begin: <<66, 0, 0, 0, 0, 2, 227, 251, 232, 0, 2, 146, 234, 159, 209, 83, 66, 0, 0, 13, 247>>,
     Commit:
-      <<0, 0, 0, 0, 0, 2, 227, 88, 24, 0, 0, 0, 0, 2, 227, 88, 72, 0, 2, 146, 73, 163, 88, 236,
-        129>>,
+      <<67, 0, 0, 0, 0, 0, 2, 227, 251, 232, 0, 0, 0, 0, 2, 227, 252, 24, 0, 2, 146, 234, 159,
+        209, 83, 66>>,
     Relation:
-      <<0, 0, 89, 103, 112, 117, 98, 108, 105, 99, 0, 117, 115, 101, 114, 115, 0, 100, 0, 7, 1,
-        105, 100, 0, 0, 0, 0, 20, 255, 255, 255, 255, 0, 110, 97, 109, 101, 0, 0, 0, 4, 19, 255,
-        255, 255, 255, 0, 97, 103, 101, 0, 0, 0, 0, 23, 255, 255, 255, 255, 0, 101, 109, 97, 105,
-        108, 0, 0, 0, 4, 19, 255, 255, 255, 255, 0, 112, 97, 115, 115, 119, 111, 114, 100, 95,
-        100, 105, 103, 101, 115, 116, 0, 0, 0, 4, 19, 255, 255, 255, 255, 0, 115, 97, 108, 97,
-        114, 121, 0, 0, 0, 6, 164, 0, 6, 0, 6, 0, 115, 101, 120, 0, 0, 0, 0, 16, 255, 255, 255,
+      <<82, 0, 0, 89, 103, 112, 117, 98, 108, 105, 99, 0, 117, 115, 101, 114, 115, 0, 102, 0, 7,
+        1, 105, 100, 0, 0, 0, 0, 20, 255, 255, 255, 255, 1, 110, 97, 109, 101, 0, 0, 0, 4, 19,
+        255, 255, 255, 255, 1, 97, 103, 101, 0, 0, 0, 0, 23, 255, 255, 255, 255, 1, 101, 109, 97,
+        105, 108, 0, 0, 0, 4, 19, 255, 255, 255, 255, 1, 112, 97, 115, 115, 119, 111, 114, 100,
+        95, 100, 105, 103, 101, 115, 116, 0, 0, 0, 4, 19, 255, 255, 255, 255, 1, 115, 97, 108, 97,
+        114, 121, 0, 0, 0, 6, 164, 0, 6, 0, 6, 1, 115, 101, 120, 0, 0, 0, 0, 16, 255, 255, 255,
         255>>,
     Insert:
-      <<0, 0, 89, 103, 78, 0, 7, 116, 0, 0, 0, 9, 57, 56, 48, 49, 57, 49, 50, 52, 51, 116, 0, 0,
-        0, 3, 97, 98, 99, 116, 0, 0, 0, 2, 50, 50, 110, 110, 110, 110>>,
+      <<73, 0, 0, 89, 103, 78, 0, 7, 116, 0, 0, 0, 9, 57, 56, 48, 49, 57, 49, 50, 53, 50, 116, 0,
+        0, 0, 3, 97, 98, 99, 116, 0, 0, 0, 2, 50, 50, 110, 110, 110, 110>>,
     Delete:
-      <<0, 0, 89, 103, 75, 0, 7, 116, 0, 0, 0, 9, 57, 56, 48, 49, 57, 49, 50, 52, 49, 110, 110,
-        110, 110, 110, 110>>,
+      <<68, 0, 0, 89, 103, 79, 0, 7, 116, 0, 0, 0, 9, 57, 56, 48, 49, 57, 49, 50, 52, 56, 116, 0,
+        0, 0, 3, 97, 98, 99, 116, 0, 0, 0, 2, 50, 51, 110, 110, 110, 110>>,
     Update:
-      <<0, 0, 89, 103, 78, 0, 7, 116, 0, 0, 0, 9, 57, 56, 48, 49, 57, 49, 50, 52, 52, 116, 0, 0,
-        0, 3, 97, 98, 99, 116, 0, 0, 0, 2, 50, 51, 110, 110, 110, 110>>
+      <<85, 0, 0, 89, 103, 79, 0, 7, 116, 0, 0, 0, 9, 57, 56, 48, 49, 57, 49, 50, 53, 50, 116, 0,
+        0, 0, 3, 97, 98, 99, 116, 0, 0, 0, 2, 50, 50, 110, 110, 110, 110, 78, 0, 7, 116, 0, 0, 0,
+        9, 57, 56, 48, 49, 57, 49, 50, 53, 50, 116, 0, 0, 0, 3, 97, 98, 99, 116, 0, 0, 0, 2, 50,
+        51, 110, 110, 110, 110>>
   }
 
   use ExUnit.Case
   alias PostgrexWal.Message.{Begin, Commit, Delete, Insert, Relation, Update}
+  alias PostgrexWal.Message.Relation.Column
 
   test "decode begin event" do
+    ts = %DateTime{
+      calendar: Calendar.ISO,
+      day: 16,
+      hour: 6,
+      microsecond: {719_554, 0},
+      minute: 12,
+      month: 12,
+      second: 34,
+      std_offset: 0,
+      time_zone: "Etc/UTC",
+      utc_offset: 0,
+      year: 2022,
+      zone_abbr: "UTC"
+    }
+
     assert match?(
              %Begin{
-               final_lsn: 48_453_656,
-               commit_timestamp: 723_794_924_203_137,
-               xid: 3_557
+               xid: 3_575,
+               commit_timestamp: ^ts,
+               final_lsn: {0, 48_495_592}
              },
-             Begin.decode(@binary_events[:Begin])
+             PostgrexWal.Message.decode(@binary_events[:Begin])
            )
   end
 
   test "decode commit event" do
+    ts = %DateTime{
+      calendar: Calendar.ISO,
+      day: 16,
+      hour: 6,
+      microsecond: {719_554, 0},
+      minute: 12,
+      month: 12,
+      second: 34,
+      std_offset: 0,
+      time_zone: "Etc/UTC",
+      utc_offset: 0,
+      year: 2022,
+      zone_abbr: "UTC"
+    }
+
     assert match?(
              %Commit{
-               commit_timestamp: 723_794_924_203_137,
-               end_lsn: 48_453_704,
-               lsn: 48_453_656
+               commit_timestamp: ^ts,
+               end_lsn: {0, 48_495_640},
+               lsn: {0, 48_495_592},
+               flags: []
              },
-             Commit.decode(@binary_events[:Commit])
+             PostgrexWal.Message.decode(@binary_events[:Commit])
            )
   end
 
   test "decode relation event" do
-    data = [
-      %{column_name: "id", flags: 1, type_modifier: 4_294_967_295, type_oid: 20},
-      %{column_name: "name", flags: 0, type_modifier: 4_294_967_295, type_oid: 1043},
-      %{column_name: "age", flags: 0, type_modifier: 4_294_967_295, type_oid: 23},
-      %{column_name: "email", flags: 0, type_modifier: 4_294_967_295, type_oid: 1043},
-      %{column_name: "password_digest", flags: 0, type_modifier: 4_294_967_295, type_oid: 1043},
-      %{column_name: "salary", flags: 0, type_modifier: 393_222, type_oid: 1700},
-      %{column_name: "sex", flags: 0, type_modifier: 4_294_967_295, type_oid: 16}
+    columns = [
+      %Column{
+        type_modifier: 4_294_967_295,
+        type_oid: :int8,
+        column_name: "id",
+        flags: [:key]
+      },
+      %Column{
+        type_modifier: 4_294_967_295,
+        type_oid: :varchar,
+        column_name: "name",
+        flags: [:key]
+      },
+      %Column{
+        type_modifier: 4_294_967_295,
+        type_oid: :int4,
+        column_name: "age",
+        flags: [:key]
+      },
+      %Column{
+        type_modifier: 4_294_967_295,
+        type_oid: :varchar,
+        column_name: "email",
+        flags: [:key]
+      },
+      %Column{
+        type_modifier: 4_294_967_295,
+        type_oid: :varchar,
+        column_name: "password_digest",
+        flags: [:key]
+      },
+      %Column{
+        type_modifier: 393_222,
+        type_oid: :unknown,
+        column_name: "salary",
+        flags: [:key]
+      },
+      %Column{
+        type_modifier: 4_294_967_295,
+        type_oid: :bool,
+        column_name: "sex",
+        flags: [:key]
+      }
     ]
 
     assert match?(
              %Relation{
-               data: ^data,
+               columns: ^columns,
                number_of_columns: 7,
-               replica_identity_setting: 100,
+               replica_identity_setting: :all_columns,
                relation_name: "users",
                namespace: "public",
                id: 22_887
              },
-             Relation.decode(@binary_events[:Relation])
+             PostgrexWal.Message.decode(@binary_events[:Relation])
            )
   end
 
   test "decode insert event" do
-    data = [{:text, "980191243"}, {:text, "abc"}, {:text, "22"}, nil, nil, nil, nil]
+    data = {{:text, "980191252"}, {:text, "abc"}, {:text, "22"}, nil, nil, nil, nil}
 
     assert match?(
              %Insert{
-               data: ^data,
-               oid: 22_887,
-               transaction_id: b
+               tuple_data: ^data,
+               relation_id: 22_887,
+               transaction_id: nil
              },
-             Insert.decode(@binary_events[:Insert])
+             PostgrexWal.Message.decode(@binary_events[:Insert])
            )
   end
 
   test "decode delete event" do
-    data = [{:text, "980191241"}, nil, nil, nil, nil, nil, nil]
+    data = {{:text, "980191248"}, {:text, "abc"}, {:text, "23"}, nil, nil, nil, nil}
 
     assert match?(
              %Delete{
-               data: ^data,
+               old_tuple_data: ^data,
+               changed_key_tuple_data: nil,
                relation_id: 22_887
              },
-             Delete.decode(@binary_events[:Delete])
+             PostgrexWal.Message.decode(@binary_events[:Delete])
            )
   end
 
   test "decode update event" do
-    data = [{:text, "980191244"}, {:text, "abc"}, {:text, "23"}, nil, nil, nil, nil]
-
     assert match?(
              %Update{
-               relation_id: 22_887,
-               tuple_data: ^data
+               old_tuple_data:
+                 {{:text, "980191252"}, {:text, "abc"}, {:text, "22"}, nil, nil, nil, nil},
+               changed_key_tuple_data: nil,
+               tuple_data:
+                 {{:text, "980191252"}, {:text, "abc"}, {:text, "23"}, nil, nil, nil, nil},
+               relation_id: 22_887
              },
-             Update.decode(@binary_events[:Update])
+             PostgrexWal.Message.decode(@binary_events[:Update])
            )
   end
 end

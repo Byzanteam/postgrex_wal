@@ -1,5 +1,19 @@
 defmodule PostgrexWal.Message.Relation.Column do
-  @moduledoc false
+  @moduledoc """
+  columns message.
+
+  Int8
+  Flags for the column. Currently can be either 0 for no flags or 1 which marks the column as part of the key.
+
+  String
+  Name of the column.
+
+  Int32 (Oid)
+  OID of the column's data type.
+
+  Int32
+  Type modifier of the column (atttypmod).
+  """
 
   alias PostgrexWal.Message.Helper
   use TypedStruct

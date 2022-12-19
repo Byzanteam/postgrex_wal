@@ -1,6 +1,21 @@
 defmodule PostgrexWal.Message.Commit do
   @moduledoc """
   A commit message
+
+  Byte1('C')
+  Identifies the message as a commit message.
+
+  Int8(0)
+  Flags; currently unused.
+
+  Int64 (XLogRecPtr)
+  The LSN of the commit.
+
+  Int64 (XLogRecPtr)
+  The end LSN of the transaction.
+
+  Int64 (TimestampTz)
+  Commit timestamp of the transaction. The value is in number of microseconds since PostgreSQL epoch (2000-01-01).
   """
 
   use PostgrexWal.Message

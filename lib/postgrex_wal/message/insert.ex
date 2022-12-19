@@ -1,6 +1,21 @@
 defmodule PostgrexWal.Message.Insert do
   @moduledoc """
   An insert message
+
+  Byte1('I')
+  Identifies the message as an insert message.
+
+  Int32 (TransactionId)
+  Xid of the transaction (only present for streamed transactions). This field is available since protocol version 2.
+
+  Int32 (Oid)
+  OID of the relation corresponding to the ID in the relation message.
+
+  Byte1('N')
+  Identifies the following TupleData message as a new tuple.
+
+  TupleData
+  TupleData message part representing the contents of new tuple.
   """
 
   use PostgrexWal.Message

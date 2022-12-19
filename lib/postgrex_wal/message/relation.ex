@@ -1,6 +1,41 @@
 defmodule PostgrexWal.Message.Relation do
   @moduledoc """
   A relation message.
+
+  Byte1('R')
+  Identifies the message as a relation message.
+
+  Int32 (TransactionId)
+  Xid of the transaction (only present for streamed transactions). This field is available since protocol version 2.
+
+  Int32 (Oid)
+  OID of the relation.
+
+  String
+  Namespace (empty string for pg_catalog).
+
+  String
+  Relation name.
+
+  Int8
+  Replica identity setting for the relation (same as relreplident in pg_class).
+
+  Int16
+  Number of columns.
+
+  Next, the following message part appears for each column included in the publication (except generated columns):
+
+  Int8
+  Flags for the column. Currently can be either 0 for no flags or 1 which marks the column as part of the key.
+
+  String
+  Name of the column.
+
+  Int32 (Oid)
+  OID of the column's data type.
+
+  Int32
+  Type modifier of the column (atttypmod).
   """
 
   use PostgrexWal.Message

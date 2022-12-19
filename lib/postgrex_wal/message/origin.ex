@@ -1,6 +1,17 @@
 defmodule PostgrexWal.Message.Origin do
   @moduledoc """
   A Origin message
+
+  Byte1('O')
+  Identifies the message as an origin message.
+
+  Int64 (XLogRecPtr)
+  The LSN of the commit on the origin server.
+
+  String
+  Name of the origin.
+
+  Note that there can be multiple Origin messages inside a single transaction.
   """
 
   use PostgrexWal.Message

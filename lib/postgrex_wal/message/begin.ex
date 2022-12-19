@@ -1,6 +1,18 @@
 defmodule PostgrexWal.Message.Begin do
   @moduledoc """
   A begin message
+
+  Byte1('B')
+  Identifies the message as a begin message.
+
+  Int64 (XLogRecPtr)
+  The final LSN of the transaction.
+
+  Int64 (TimestampTz)
+  Commit timestamp of the transaction. The value is in number of microseconds since PostgreSQL epoch (2000-01-01).
+
+  Int32 (TransactionId)
+  Xid of the transaction.
   """
   use PostgrexWal.Message
 

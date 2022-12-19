@@ -1,6 +1,21 @@
 defmodule PostgrexWal.Message.Truncate do
   @moduledoc """
   A Truncate message
+
+  Byte1('T')
+  Identifies the message as a truncate message.
+
+  Int32 (TransactionId)
+  Xid of the transaction (only present for streamed transactions). This field is available since protocol version 2.
+
+  Int32
+  Number of relations
+
+  Int8
+  Option bits for TRUNCATE: 1 for CASCADE, 2 for RESTART IDENTITY
+
+  Int32 (Oid)
+  OID of the relation corresponding to the ID in the relation message. This field is repeated for each relation.
   """
   use PostgrexWal.Message
 

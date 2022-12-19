@@ -1,5 +1,8 @@
 defmodule PostgrexWal.Message do
-  @moduledoc false
+  @moduledoc """
+  https://www.postgresql.org/docs/15/logicaldecoding-walsender.html
+  https://www.postgresql.org/docs/current/protocol-logicalrep-message-formats.html
+  """
 
   @callback decode(message :: binary()) :: struct()
 

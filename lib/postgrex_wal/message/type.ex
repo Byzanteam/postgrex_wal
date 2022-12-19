@@ -1,6 +1,21 @@
 defmodule PostgrexWal.Message.Type do
   @moduledoc """
   A Type message
+
+  Byte1('Y')
+  Identifies the message as a type message.
+
+  Int32 (TransactionId)
+  Xid of the transaction (only present for streamed transactions). This field is available since protocol version 2.
+
+  Int32 (Oid)
+  OID of the data type.
+
+  String
+  Namespace (empty string for pg_catalog).
+
+  String
+  Name of the data type.
   """
   use PostgrexWal.Message
 

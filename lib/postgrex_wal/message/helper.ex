@@ -25,35 +25,34 @@ defmodule PostgrexWal.Message.Helper do
 
   @spec decode_tuple_data(binary()) :: tuple()
   def decode_tuple_data(<<number_of_columns::16, data::binary>>) do
-    _decode_tuple_data(data, number_of_columns, [])
+    do_decode(data, number_of_columns, [])
   end
 
-  defp _decode_tuple_data(remaining_data, 0, acc) do
+  defp do_decode(remaining_data, 0, acc) do
     {remaining_data, acc |> Enum.reverse() |> List.to_tuple()}
   end
 
-  defp _decode_tuple_data(<<?n, rest::binary>>, columns_remaining, acc) do
-    _decode_tuple_data(rest, columns_remaining - 1, [nil | acc])
+  defp do_decode(<<?n, rest::binary>>, columns_remaining, acc) do
+    do_decode(rest, columns_remaining - 1, [nil | acc])
   end
 
-  defp _decode_tuple_data(<<?u, rest::binary>>, columns_remaining, acc) do
-    _decode_tuple_data(rest, columns_remaining - 1, [:unchanged_toast | acc])
+  defp do_decode(<<?u, rest::binary>>, columns_remaining, acc) do
+    do_decode(rest, columns_remaining - 1, [:unchanged_toast | acc])
   end
 
-  defp _decode_tuple_data(
+  defp do_decode(
          <<?t, n::32, text::binary-size(n), rest::binary>>,
          columns_remaining,
          acc
        ) do
-    _decode_tuple_data(rest, columns_remaining - 1, [{:text, text} | acc])
+    do_decode(rest, columns_remaining - 1, [{:text, text} | acc])
   end
 
-  # seems unusable
-  defp _decode_tuple_data(
+  defp do_decode(
          <<?b, n::32, binary::binary-size(n), rest::binary>>,
          columns_remaining,
          acc
        ) do
-    _decode_tuple_data(rest, columns_remaining - 1, [{:binary, binary} | acc])
+    do_decode(rest, columns_remaining - 1, [{:binary, binary} | acc])
   end
 end

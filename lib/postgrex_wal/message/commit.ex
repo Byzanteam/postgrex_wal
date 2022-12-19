@@ -30,7 +30,6 @@ defmodule PostgrexWal.Message.Commit do
   @impl true
   def decode(<<_flag::8, lsn::binary-8, end_lsn::binary-8, timestamp::64>>) do
     %__MODULE__{
-      # _flags alwary is 0 ?
       flags: [],
       lsn: Helper.decode_lsn(lsn),
       end_lsn: Helper.decode_lsn(end_lsn),

@@ -1,4 +1,4 @@
-defmodule PostgrexWal.Message.Type do
+defmodule PostgrexWal.Messages.Type do
   @moduledoc """
   A Type message
 

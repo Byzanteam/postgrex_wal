@@ -1,4 +1,4 @@
-defmodule PostgrexWal.Message.Delete do
+defmodule PostgrexWal.Messages.Delete do
   @moduledoc """
   A delete message.
 

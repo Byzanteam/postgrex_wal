@@ -1,4 +1,4 @@
-defmodule PostgrexWal.Message.Update do
+defmodule PostgrexWal.Messages.Update do
   @moduledoc """
   An insert message
 

@@ -1,4 +1,4 @@
-defmodule PostgrexWal.Message.Origin do
+defmodule PostgrexWal.Messages.Origin do
   @moduledoc """
   A Origin message
 

@@ -1,4 +1,4 @@
-defmodule PostgrexWal.Message.Relation do
+defmodule PostgrexWal.Messages.Relation do
   @moduledoc """
   A relation message.
 
@@ -39,7 +39,7 @@ defmodule PostgrexWal.Message.Relation do
   """
 
   use PostgrexWal.Message
-  alias PostgrexWal.Message.Relation.Column
+  alias PostgrexWal.Messages.Relation.Column
 
   typedstruct enforce: true do
     field :id, integer()

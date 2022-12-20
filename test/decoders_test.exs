@@ -26,8 +26,8 @@ defmodule DecodersTest do
   }
 
   use ExUnit.Case
-  alias PostgrexWal.Message.{Begin, Commit, Delete, Insert, Relation, Update}
-  alias PostgrexWal.Message.Relation.Column
+  alias PostgrexWal.Messages.{Begin, Commit, Delete, Insert, Relation, Update}
+  alias PostgrexWal.Messages.Relation.Column
 
   test "decode begin event" do
     ts = %DateTime{

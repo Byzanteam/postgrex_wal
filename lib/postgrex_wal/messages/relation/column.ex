@@ -1,4 +1,4 @@
-defmodule PostgrexWal.Message.Relation.Column do
+defmodule PostgrexWal.Messages.Relation.Column do
   @moduledoc """
   columns message.
 
@@ -15,7 +15,7 @@ defmodule PostgrexWal.Message.Relation.Column do
   Type modifier of the column (atttypmod).
   """
 
-  alias PostgrexWal.Message.Helper
+  alias PostgrexWal.Messages.Helper
   use TypedStruct
 
   typedstruct enforce: true do

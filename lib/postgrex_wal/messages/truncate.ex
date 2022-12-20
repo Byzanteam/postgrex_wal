@@ -1,4 +1,4 @@
-defmodule PostgrexWal.Message.Truncate do
+defmodule PostgrexWal.Messages.Truncate do
   @moduledoc """
   A Truncate message
 

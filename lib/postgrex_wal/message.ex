@@ -51,8 +51,6 @@ defmodule PostgrexWal.Message do
   }
 
   for {key, module} <- @modules do
-    def decode(<<unquote(key)::8, payload::binary>>) do
-      unquote(module).decode(payload)
-    end
+    def decode(<<unquote(key), payload::binary>>), do: unquote(module).decode(payload)
   end
 end

@@ -20,6 +20,7 @@ defmodule PostgrexWal.Messages.Truncate do
   use PostgrexWal.Message
 
   typedstruct enforce: true do
+    field :transaction_id, integer()
     field :number_of_relations, integer()
     field :options, [{:truncate, :cascade | :restart_identity}]
     field :relation_oids, [integer()]
@@ -32,10 +33,11 @@ defmodule PostgrexWal.Messages.Truncate do
   }
 
   @impl true
-  def decode(<<number_of_relations::32, options::8, column_ids::binary>>) do
+  def decode(<<transaction_id::32, number_of_relations::32, options::8, column_ids::binary>>) do
     relation_oids = for <<column_id::32 <- column_ids>>, do: column_id
 
     %__MODULE__{
+      transaction_id: transaction_id,
       number_of_relations: number_of_relations,
       options: [{:truncate, @dict[options]}],
       relation_oids: relation_oids

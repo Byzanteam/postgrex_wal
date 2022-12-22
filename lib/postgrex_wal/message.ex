@@ -27,27 +27,37 @@ defmodule PostgrexWal.Message do
   @type tuple_data() :: nil | :unchanged_toast | {:text, binary()} | {:binary, bitstring()}
 
   alias PostgrexWal.Messages.{
+    Abort,
     Begin,
     Commit,
     Delete,
     Insert,
+    Message,
     Origin,
     Relation,
+    Start,
+    Stop,
+    StreamCommit,
     Truncate,
     Type,
     Update
   }
 
   @modules %{
+    ?A => Abort,
     ?B => Begin,
     ?C => Commit,
     ?D => Delete,
+    ?E => Stop,
     ?I => Insert,
+    ?M => Message,
     ?O => Origin,
     ?R => Relation,
+    ?S => Start,
     ?T => Truncate,
+    ?U => Update,
     ?Y => Type,
-    ?U => Update
+    ?c => StreamCommit
   }
 
   for {key, module} <- @modules do

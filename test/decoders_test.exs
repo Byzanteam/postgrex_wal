@@ -147,7 +147,7 @@ defmodule DecodersTest do
     assert match?(
              %Insert{
                tuple_data: ^data,
-               relation_id: 22_887,
+               relation_oid: 22_887,
                transaction_id: nil
              },
              PostgrexWal.Message.decode(@binary_events[:Insert])
@@ -161,7 +161,7 @@ defmodule DecodersTest do
              %Delete{
                old_tuple_data: ^data,
                changed_key_tuple_data: nil,
-               relation_id: 22_887
+               relation_oid: 22_887
              },
              PostgrexWal.Message.decode(@binary_events[:Delete])
            )
@@ -175,7 +175,7 @@ defmodule DecodersTest do
                changed_key_tuple_data: nil,
                tuple_data:
                  {{:text, "980191252"}, {:text, "abc"}, {:text, "23"}, nil, nil, nil, nil},
-               relation_id: 22_887
+               relation_oid: 22_887
              },
              PostgrexWal.Message.decode(@binary_events[:Update])
            )

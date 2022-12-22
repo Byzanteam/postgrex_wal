@@ -32,35 +32,35 @@ defmodule PostgrexWal.Messages.Update do
   use PostgrexWal.Message
 
   typedstruct do
-    field :relation_id, integer(), enforce: true
+    field :relation_oid, integer(), enforce: true
     field :tuple_data, [Message.tuple_data()], enforce: true
     field :changed_key_tuple_data, [Message.tuple_data()]
     field :old_tuple_data, [Message.tuple_data()]
   end
 
   @impl true
-  def decode(<<relation_id::32, ?N, tuple_data::binary>>) do
+  def decode(<<relation_oid::32, ?N, tuple_data::binary>>) do
     %__MODULE__{
-      relation_id: relation_id,
+      relation_oid: relation_oid,
       tuple_data: Util.decode_tuple_data!(tuple_data)
     }
   end
 
-  def decode(<<relation_id::32, ?K, tuple_data::binary>>) do
+  def decode(<<relation_oid::32, ?K, tuple_data::binary>>) do
     {<<?N, new_tuple_data::binary>>, old_decoded_tuple_data} = Util.decode_tuple_data(tuple_data)
 
     %__MODULE__{
-      relation_id: relation_id,
+      relation_oid: relation_oid,
       tuple_data: Util.decode_tuple_data!(new_tuple_data),
       changed_key_tuple_data: old_decoded_tuple_data
     }
   end
 
-  def decode(<<relation_id::32, ?O, tuple_data::binary>>) do
+  def decode(<<relation_oid::32, ?O, tuple_data::binary>>) do
     {<<?N, new_tuple_data::binary>>, old_decoded_tuple_data} = Util.decode_tuple_data(tuple_data)
 
     %__MODULE__{
-      relation_id: relation_id,
+      relation_oid: relation_oid,
       tuple_data: Util.decode_tuple_data!(new_tuple_data),
       old_tuple_data: old_decoded_tuple_data
     }

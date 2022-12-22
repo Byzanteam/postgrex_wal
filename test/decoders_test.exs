@@ -148,7 +148,7 @@ defmodule DecodersTest do
              %Insert{
                tuple_data: ^data,
                relation_id: 22_887,
-               transaction_id: nil
+               xid: nil
              },
              PostgrexWal.Message.decode(@binary_events[:Insert])
            )

@@ -23,7 +23,7 @@ defmodule PostgrexWal.Messages.Insert do
   typedstruct enforce: true do
     field :transaction_id, integer(), enforce: false
     field :relation_id, integer()
-    field :tuple_data, [Util.tuple_data()]
+    field :tuple_data, [Message.tuple_data()]
   end
 
   @impl true

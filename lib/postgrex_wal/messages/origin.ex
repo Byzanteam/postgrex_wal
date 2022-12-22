@@ -17,7 +17,7 @@ defmodule PostgrexWal.Messages.Origin do
   use PostgrexWal.Message
 
   typedstruct enforce: true do
-    field :origin_commit_lsn, Util.lsn()
+    field :origin_commit_lsn, Message.lsn()
     field :name, String.t()
   end
 

@@ -17,7 +17,7 @@ defmodule PostgrexWal.Messages.Begin do
   use PostgrexWal.Message
 
   typedstruct enforce: true do
-    field :final_lsn, Util.lsn()
+    field :final_lsn, Message.lsn()
     field :commit_timestamp, DateTime.t()
     field :xid, integer()
   end

@@ -1,9 +1,6 @@
 defmodule PostgrexWal.Messages.Util do
   @moduledoc false
 
-  @type lsn() :: {integer(), integer()}
-  @type tuple_data() :: nil | :unchanged_toast | {:text, binary()} | {:binary, bitstring()}
-
   def decode_lsn(<<xlog_file::32, xlog_offset::32>>), do: {xlog_file, xlog_offset}
 
   @spec decode_timestamp(microsecond_offset :: integer()) :: DateTime.t()

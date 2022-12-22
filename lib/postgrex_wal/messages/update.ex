@@ -33,9 +33,9 @@ defmodule PostgrexWal.Messages.Update do
 
   typedstruct do
     field :relation_id, integer(), enforce: true
-    field :tuple_data, [Util.tuple_data()], enforce: true
-    field :changed_key_tuple_data, [Util.tuple_data()]
-    field :old_tuple_data, [Util.tuple_data()]
+    field :tuple_data, [Message.tuple_data()], enforce: true
+    field :changed_key_tuple_data, [Message.tuple_data()]
+    field :old_tuple_data, [Message.tuple_data()]
   end
 
   @impl true
@@ -47,8 +47,7 @@ defmodule PostgrexWal.Messages.Update do
   end
 
   def decode(<<relation_id::32, ?K, tuple_data::binary>>) do
-    {<<?N, new_tuple_data::binary>>, old_decoded_tuple_data} =
-      Util.decode_tuple_data(tuple_data)
+    {<<?N, new_tuple_data::binary>>, old_decoded_tuple_data} = Util.decode_tuple_data(tuple_data)
 
     %__MODULE__{
       relation_id: relation_id,
@@ -58,8 +57,7 @@ defmodule PostgrexWal.Messages.Update do
   end
 
   def decode(<<relation_id::32, ?O, tuple_data::binary>>) do
-    {<<?N, new_tuple_data::binary>>, old_decoded_tuple_data} =
-      Util.decode_tuple_data(tuple_data)
+    {<<?N, new_tuple_data::binary>>, old_decoded_tuple_data} = Util.decode_tuple_data(tuple_data)
 
     %__MODULE__{
       relation_id: relation_id,

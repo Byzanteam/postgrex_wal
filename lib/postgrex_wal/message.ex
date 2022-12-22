@@ -18,9 +18,13 @@ defmodule PostgrexWal.Message do
     quote do
       @behaviour PostgrexWal.Message
       use TypedStruct
+      alias PostgrexWal.Message
       alias PostgrexWal.Messages.Util
     end
   end
+
+  @type lsn() :: {integer(), integer()}
+  @type tuple_data() :: nil | :unchanged_toast | {:text, binary()} | {:binary, bitstring()}
 
   alias PostgrexWal.Messages.{
     Begin,

@@ -27,8 +27,8 @@ defmodule PostgrexWal.Messages.Delete do
 
   typedstruct do
     field :relation_id, integer(), enforce: true
-    field :changed_key_tuple_data, [Util.tuple_data()]
-    field :old_tuple_data, [Util.tuple_data()]
+    field :changed_key_tuple_data, [Message.tuple_data()]
+    field :old_tuple_data, [Message.tuple_data()]
   end
 
   @impl true

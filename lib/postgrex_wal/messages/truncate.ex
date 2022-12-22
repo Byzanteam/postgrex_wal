@@ -21,7 +21,7 @@ defmodule PostgrexWal.Messages.Truncate do
 
   typedstruct enforce: true do
     field :number_of_relations, integer()
-    field :options, list()
+    field :options, [{:truncate, :cascade | :restart_identity}]
     field :truncated_relations, integer()
   end
 
@@ -33,13 +33,11 @@ defmodule PostgrexWal.Messages.Truncate do
 
   @impl true
   def decode(<<number_of_relations::32, options::8, column_ids::binary>>) do
-    truncated_relations =
-      for relation_id_bin <- column_ids |> :binary.bin_to_list() |> Enum.chunk_every(4),
-          do: relation_id_bin |> :binary.list_to_bin() |> :binary.decode_unsigned()
+    truncated_relations = for <<column_id::32 <- column_ids>>, do: column_id
 
     %__MODULE__{
       number_of_relations: number_of_relations,
-      options: @dict[options],
+      options: [{:truncate, @dict[options]}],
       truncated_relations: truncated_relations
     }
   end

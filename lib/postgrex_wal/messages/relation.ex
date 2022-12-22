@@ -47,7 +47,7 @@ defmodule PostgrexWal.Messages.Relation do
     field :relation_name, String.t()
     field :replica_identity_setting, integer()
     field :number_of_columns, integer()
-    field :columns, [%Column{}, ...]
+    field :columns, [Column.t(), ...]
   end
 
   @dict %{
@@ -57,6 +57,7 @@ defmodule PostgrexWal.Messages.Relation do
     ?i => :index
   }
 
+  @impl true
   def decode(<<id::32, rest::binary>>) do
     [
       namespace,

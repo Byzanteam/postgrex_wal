@@ -17,7 +17,7 @@ defmodule PostgrexWal.Messages.Begin do
   use PostgrexWal.Message
 
   typedstruct enforce: true do
-    field :final_lsn, Helper.lsn()
+    field :final_lsn, Util.lsn()
     field :commit_timestamp, DateTime.t()
     field :xid, integer()
   end
@@ -25,8 +25,8 @@ defmodule PostgrexWal.Messages.Begin do
   @impl true
   def decode(<<lsn::binary-8, timestamp::64, xid::32>>) do
     %__MODULE__{
-      final_lsn: Helper.decode_lsn(lsn),
-      commit_timestamp: Helper.decode_timestamp(timestamp),
+      final_lsn: Util.decode_lsn(lsn),
+      commit_timestamp: Util.decode_timestamp(timestamp),
       xid: xid
     }
   end

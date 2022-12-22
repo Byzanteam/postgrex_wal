@@ -62,7 +62,7 @@ defmodule PostgrexWal.Messages.Relation do
       namespace,
       relation_name,
       <<replica_identity_setting::8, number_of_columns::16, columns::binary>>
-    ] = Helper.binary_split(rest, 3)
+    ] = Util.binary_split(rest, 3)
 
     %__MODULE__{
       id: id,

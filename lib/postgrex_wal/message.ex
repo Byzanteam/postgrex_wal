@@ -18,7 +18,7 @@ defmodule PostgrexWal.Message do
     quote do
       @behaviour PostgrexWal.Message
       use TypedStruct
-      alias PostgrexWal.Messages.Helper
+      alias PostgrexWal.Messages.Util
     end
   end
 

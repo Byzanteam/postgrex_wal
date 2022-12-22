@@ -27,22 +27,22 @@ defmodule PostgrexWal.Messages.Delete do
 
   typedstruct do
     field :relation_id, integer(), enforce: true
-    field :changed_key_tuple_data, [Helper.tuple_data()]
-    field :old_tuple_data, [Helper.tuple_data()]
+    field :changed_key_tuple_data, [Util.tuple_data()]
+    field :old_tuple_data, [Util.tuple_data()]
   end
 
   @impl true
   def decode(<<relation_id::32, ?K, tuple_data::binary>>) do
     %__MODULE__{
       relation_id: relation_id,
-      changed_key_tuple_data: Helper.decode_tuple_data!(tuple_data)
+      changed_key_tuple_data: Util.decode_tuple_data!(tuple_data)
     }
   end
 
   def decode(<<relation_id::32, ?O, tuple_data::binary>>) do
     %__MODULE__{
       relation_id: relation_id,
-      old_tuple_data: Helper.decode_tuple_data!(tuple_data)
+      old_tuple_data: Util.decode_tuple_data!(tuple_data)
     }
   end
 end

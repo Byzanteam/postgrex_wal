@@ -23,7 +23,7 @@ defmodule PostgrexWal.Messages.Insert do
   typedstruct enforce: true do
     field :transaction_id, integer(), enforce: false
     field :relation_id, integer()
-    field :tuple_data, [Helper.tuple_data()]
+    field :tuple_data, [Util.tuple_data()]
   end
 
   @impl true
@@ -32,14 +32,14 @@ defmodule PostgrexWal.Messages.Insert do
     %__MODULE__{
       transaction_id: transaction_id,
       relation_id: relation_id,
-      tuple_data: Helper.decode_tuple_data!(tuple_data)
+      tuple_data: Util.decode_tuple_data!(tuple_data)
     }
   end
 
   def decode(<<relation_id::32, ?N, tuple_data::binary>>) do
     %__MODULE__{
       relation_id: relation_id,
-      tuple_data: Helper.decode_tuple_data!(tuple_data)
+      tuple_data: Util.decode_tuple_data!(tuple_data)
     }
   end
 end

@@ -15,7 +15,7 @@ defmodule PostgrexWal.Messages.Relation.Column do
   Type modifier of the column (atttypmod).
   """
 
-  alias PostgrexWal.Messages.Helper
+  alias PostgrexWal.Messages.Util
   use TypedStruct
 
   typedstruct enforce: true do
@@ -68,7 +68,7 @@ defmodule PostgrexWal.Messages.Relation.Column do
     [
       column_name,
       <<type_oid::32, type_modifier::32, rest::binary>>
-    ] = Helper.binary_split(rest)
+    ] = Util.binary_split(rest)
 
     decode(
       rest,

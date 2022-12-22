@@ -1,4 +1,4 @@
-defmodule PostgrexWal.Messages.Helper do
+defmodule PostgrexWal.Messages.Util do
   @moduledoc false
 
   @type lsn() :: {integer(), integer()}

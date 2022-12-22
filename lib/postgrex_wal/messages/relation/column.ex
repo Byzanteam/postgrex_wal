@@ -60,7 +60,7 @@ defmodule PostgrexWal.Messages.Relation.Column do
     17_063 => :geometry
   }
 
-  @spec decode(columns :: binary, acc :: list()) :: [struct()]
+  @spec decode(columns :: binary, acc :: list()) :: [t()]
   def decode(columns, acc \\ [])
   def decode(<<>>, acc), do: Enum.reverse(acc)
 

@@ -53,4 +53,45 @@ defmodule PostgrexWal.Messages.Util do
        ) do
     do_decode(rest, columns_remaining - 1, [{:binary, binary} | acc])
   end
+
+  @dict %{
+    16 => :bool,
+    17 => :bytea,
+    18 => :char,
+    20 => :int8,
+    21 => :int2,
+    23 => :int4,
+    25 => :text,
+    114 => :json,
+    600 => :point,
+    650 => :cidr,
+    700 => :float4,
+    701 => :float8,
+    774 => :macaddr8,
+    829 => :macaddr,
+    869 => :inet,
+    1_042 => :bpchar,
+    1_043 => :varchar,
+    1_082 => :date,
+    1_083 => :time,
+    1_114 => :timestamp,
+    1_184 => :timestamptz,
+    1_186 => :interval,
+    1_266 => :timetz,
+    2_950 => :uuid,
+    3_802 => :jsonb,
+    3_904 => :int4range,
+    3_908 => :tsrange,
+    3_910 => :tstzrange,
+    3_912 => :daterange,
+    3_926 => :int8range,
+    16_935 => :hstore,
+    17_063 => :geometry
+  }
+  @spec decode_type_oid(type_oid :: integer) :: atom
+  for {type_oid, type_name} <- @dict do
+    def decode_type_oid(unquote(type_oid)), do: unquote(type_name)
+  end
+
+  def decode_type_oid(_), do: :unknown
 end

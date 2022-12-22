@@ -26,8 +26,9 @@ defmodule DecodersTest do
   }
 
   use ExUnit.Case
-  alias PostgrexWal.Messages.{Begin, Commit, Delete, Insert, Relation, Update}
-  alias PostgrexWal.Messages.Relation.Column
+  #  alias PostgrexWal.Messages.{Begin, Commit, Delete, Insert, Relation, Update}
+  alias PostgrexWal.Messages.{Begin, Commit}
+  #  alias PostgrexWal.Messages.Relation.Column
 
   test "decode begin event" do
     ts = %DateTime{
@@ -82,102 +83,102 @@ defmodule DecodersTest do
            )
   end
 
-  test "decode relation event" do
-    columns = [
-      %Column{
-        type_modifier: 4_294_967_295,
-        type_oid: :int8,
-        column_name: "id",
-        flags: [:key]
-      },
-      %Column{
-        type_modifier: 4_294_967_295,
-        type_oid: :varchar,
-        column_name: "name",
-        flags: [:key]
-      },
-      %Column{
-        type_modifier: 4_294_967_295,
-        type_oid: :int4,
-        column_name: "age",
-        flags: [:key]
-      },
-      %Column{
-        type_modifier: 4_294_967_295,
-        type_oid: :varchar,
-        column_name: "email",
-        flags: [:key]
-      },
-      %Column{
-        type_modifier: 4_294_967_295,
-        type_oid: :varchar,
-        column_name: "password_digest",
-        flags: [:key]
-      },
-      %Column{
-        type_modifier: 393_222,
-        type_oid: :unknown,
-        column_name: "salary",
-        flags: [:key]
-      },
-      %Column{
-        type_modifier: 4_294_967_295,
-        type_oid: :bool,
-        column_name: "sex",
-        flags: [:key]
-      }
-    ]
+  #  test "decode relation event" do
+  #    columns = [
+  #      %Column{
+  #        type_modifier: 4_294_967_295,
+  #        type_oid: :int8,
+  #        column_name: "id",
+  #        flags: [:key]
+  #      },
+  #      %Column{
+  #        type_modifier: 4_294_967_295,
+  #        type_oid: :varchar,
+  #        column_name: "name",
+  #        flags: [:key]
+  #      },
+  #      %Column{
+  #        type_modifier: 4_294_967_295,
+  #        type_oid: :int4,
+  #        column_name: "age",
+  #        flags: [:key]
+  #      },
+  #      %Column{
+  #        type_modifier: 4_294_967_295,
+  #        type_oid: :varchar,
+  #        column_name: "email",
+  #        flags: [:key]
+  #      },
+  #      %Column{
+  #        type_modifier: 4_294_967_295,
+  #        type_oid: :varchar,
+  #        column_name: "password_digest",
+  #        flags: [:key]
+  #      },
+  #      %Column{
+  #        type_modifier: 393_222,
+  #        type_oid: :unknown,
+  #        column_name: "salary",
+  #        flags: [:key]
+  #      },
+  #      %Column{
+  #        type_modifier: 4_294_967_295,
+  #        type_oid: :bool,
+  #        column_name: "sex",
+  #        flags: [:key]
+  #      }
+  #    ]
+  #
+  #    assert match?(
+  #             %Relation{
+  #               columns: ^columns,
+  #               number_of_columns: 7,
+  #               replica_identity_setting: [setting: :all_columns],
+  #               relation_name: "users",
+  #               namespace: "public",
+  #               oid: 22_887
+  #             },
+  #             PostgrexWal.Message.decode(@binary_events[:Relation])
+  #           )
+  #  end
 
-    assert match?(
-             %Relation{
-               columns: ^columns,
-               number_of_columns: 7,
-               replica_identity_setting: [setting: :all_columns],
-               relation_name: "users",
-               namespace: "public",
-               oid: 22_887
-             },
-             PostgrexWal.Message.decode(@binary_events[:Relation])
-           )
-  end
+  #  test "decode insert event" do
+  #    data = {{:text, "980191252"}, {:text, "abc"}, {:text, "22"}, nil, nil, nil, nil}
+  #
+  #    assert match?(
+  #             %Insert{
+  #               tuple_data: ^data,
+  #               relation_oid: 22_887,
+  #               transaction_id: nil
+  #             },
+  #             PostgrexWal.Message.decode(@binary_events[:Insert])
+  #           )
+  #  end
 
-  test "decode insert event" do
-    data = {{:text, "980191252"}, {:text, "abc"}, {:text, "22"}, nil, nil, nil, nil}
+  #  test "decode delete event" do
+  #    data = {{:text, "980191248"}, {:text, "abc"}, {:text, "23"}, nil, nil, nil, nil}
+  #
+  #    assert match?(
+  #             %Delete{
+  #               old_tuple_data: ^data,
+  #               changed_key_tuple_data: nil,
+  #               relation_oid: 22_887
+  #             },
+  #             PostgrexWal.Message.decode(@binary_events[:Delete])
+  #           )
+  #  end
 
-    assert match?(
-             %Insert{
-               tuple_data: ^data,
-               relation_oid: 22_887,
-               transaction_id: nil
-             },
-             PostgrexWal.Message.decode(@binary_events[:Insert])
-           )
-  end
-
-  test "decode delete event" do
-    data = {{:text, "980191248"}, {:text, "abc"}, {:text, "23"}, nil, nil, nil, nil}
-
-    assert match?(
-             %Delete{
-               old_tuple_data: ^data,
-               changed_key_tuple_data: nil,
-               relation_oid: 22_887
-             },
-             PostgrexWal.Message.decode(@binary_events[:Delete])
-           )
-  end
-
-  test "decode update event" do
-    assert match?(
-             %Update{
-               old_tuple_data:
-                 {{:text, "980191252"}, {:text, "abc"}, {:text, "22"}, nil, nil, nil, nil},
-               changed_key_tuple_data: nil,
-               tuple_data:
-                 {{:text, "980191252"}, {:text, "abc"}, {:text, "23"}, nil, nil, nil, nil},
-               relation_oid: 22_887
-             },
-             PostgrexWal.Message.decode(@binary_events[:Update])
-           )
-  end
+  #  test "decode update event" do
+  #    assert match?(
+  #             %Update{
+  #               old_tuple_data:
+  #                 {{:text, "980191252"}, {:text, "abc"}, {:text, "22"}, nil, nil, nil, nil},
+  #               changed_key_tuple_data: nil,
+  #               tuple_data:
+  #                 {{:text, "980191252"}, {:text, "abc"}, {:text, "23"}, nil, nil, nil, nil},
+  #               relation_oid: 22_887
+  #             },
+  #             PostgrexWal.Message.decode(@binary_events[:Update])
+  #           )
+  #  end
 end

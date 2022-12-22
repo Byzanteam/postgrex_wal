@@ -45,7 +45,11 @@ defmodule PostgrexWal.Messages.Relation do
     field :id, integer()
     field :namespace, String.t()
     field :relation_name, String.t()
-    field :replica_identity_setting, integer()
+
+    field :replica_identity_setting, [
+      {:replica_identity_setting, :default | :nothing | :all_columns | :index}
+    ]
+
     field :number_of_columns, integer()
     field :columns, [Column.t(), ...]
   end
@@ -69,7 +73,9 @@ defmodule PostgrexWal.Messages.Relation do
       id: id,
       namespace: namespace,
       relation_name: relation_name,
-      replica_identity_setting: Map.fetch!(@dict, replica_identity_setting),
+      replica_identity_setting: [
+        {:replica_identity_setting, Map.fetch!(@dict, replica_identity_setting)}
+      ],
       number_of_columns: number_of_columns,
       columns: Column.decode(columns)
     }

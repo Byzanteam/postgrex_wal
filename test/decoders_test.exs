@@ -132,7 +132,7 @@ defmodule DecodersTest do
              %Relation{
                columns: ^columns,
                number_of_columns: 7,
-               replica_identity_setting: :all_columns,
+               replica_identity_setting: [replica_identity_setting: :all_columns],
                relation_name: "users",
                namespace: "public",
                id: 22_887

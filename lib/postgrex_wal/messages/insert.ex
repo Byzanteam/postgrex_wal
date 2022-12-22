@@ -27,7 +27,7 @@ defmodule PostgrexWal.Messages.Insert do
   end
 
   @impl true
-  # seems unused
+  # NOTE: seems unused
   def decode(<<xid::32, relation_id::32, ?N, tuple_data::binary>>) do
     %__MODULE__{
       xid: xid,

@@ -47,7 +47,7 @@ defmodule DecodersTest do
 
     assert match?(
              %Begin{
-               xid: 3_575,
+               transaction_id: 3_575,
                commit_timestamp: ^ts,
                final_lsn: {0, 48_495_592}
              },
@@ -132,10 +132,10 @@ defmodule DecodersTest do
              %Relation{
                columns: ^columns,
                number_of_columns: 7,
-               replica_identity_setting: [replica_identity_setting: :all_columns],
+               replica_identity_setting: [setting: :all_columns],
                relation_name: "users",
                namespace: "public",
-               id: 22_887
+               oid: 22_887
              },
              PostgrexWal.Message.decode(@binary_events[:Relation])
            )
@@ -148,7 +148,7 @@ defmodule DecodersTest do
              %Insert{
                tuple_data: ^data,
                relation_id: 22_887,
-               xid: nil
+               transaction_id: nil
              },
              PostgrexWal.Message.decode(@binary_events[:Insert])
            )

@@ -21,16 +21,16 @@ defmodule PostgrexWal.Messages.Insert do
   use PostgrexWal.Message
 
   typedstruct enforce: true do
-    field :xid, integer(), enforce: false
+    field :transaction_id, integer(), enforce: false
     field :relation_id, integer()
     field :tuple_data, [Message.tuple_data()]
   end
 
   @impl true
   # NOTE: seems unused
-  def decode(<<xid::32, relation_id::32, ?N, tuple_data::binary>>) do
+  def decode(<<transaction_id::32, relation_id::32, ?N, tuple_data::binary>>) do
     %__MODULE__{
-      xid: xid,
+      transaction_id: transaction_id,
       relation_id: relation_id,
       tuple_data: Util.decode_tuple_data!(tuple_data)
     }

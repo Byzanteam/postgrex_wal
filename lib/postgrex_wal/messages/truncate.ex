@@ -22,7 +22,7 @@ defmodule PostgrexWal.Messages.Truncate do
   typedstruct enforce: true do
     field :number_of_relations, integer()
     field :options, [{:truncate, :cascade | :restart_identity}]
-    field :truncated_relations, integer()
+    field :relation_oids, [integer()]
   end
 
   @dict %{
@@ -33,12 +33,12 @@ defmodule PostgrexWal.Messages.Truncate do
 
   @impl true
   def decode(<<number_of_relations::32, options::8, column_ids::binary>>) do
-    truncated_relations = for <<column_id::32 <- column_ids>>, do: column_id
+    relation_oids = for <<column_id::32 <- column_ids>>, do: column_id
 
     %__MODULE__{
       number_of_relations: number_of_relations,
       options: [{:truncate, @dict[options]}],
-      truncated_relations: truncated_relations
+      relation_oids: relation_oids
     }
   end
 end

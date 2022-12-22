@@ -20,17 +20,17 @@ defmodule PostgrexWal.Messages.Type do
   use PostgrexWal.Message
 
   typedstruct enforce: true do
-    field :id, integer()
+    field :oid, integer()
     field :namespace, String.t()
     field :name, String.t()
   end
 
   @impl true
-  def decode(<<data_type_id::32, namespace_and_name::binary>>) do
+  def decode(<<oid::32, namespace_and_name::binary>>) do
     [namespace, name, _] = Util.binary_split(namespace_and_name, 3)
 
     %__MODULE__{
-      id: data_type_id,
+      oid: oid,
       namespace: namespace,
       name: name
     }

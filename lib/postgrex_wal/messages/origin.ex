@@ -17,14 +17,14 @@ defmodule PostgrexWal.Messages.Origin do
   use PostgrexWal.Message
 
   typedstruct enforce: true do
-    field :origin_commit_lsn, Message.lsn()
+    field :commit_lsn, Message.lsn()
     field :name, String.t()
   end
 
   @impl true
   def decode(<<lsn::binary-8, name::binary>>) do
     %__MODULE__{
-      origin_commit_lsn: Util.decode_lsn(lsn),
+      commit_lsn: Util.decode_lsn(lsn),
       name: name
     }
   end

@@ -13,14 +13,14 @@ defmodule PostgrexWal.Messages.Start do
 
   typedstruct enforce: true do
     field :transaction_id, integer()
-    field :flags, list()
+    field :flags, [{:first_segment, boolean}]
   end
 
   @impl true
   def decode(<<transaction_id::32, flags::8>>) do
     %__MODULE__{
       transaction_id: transaction_id,
-      flags: (flags == 1 && [:first_stream_segment]) || []
+      flags: [{:first_segment, flags == 1}]
     }
   end
 end

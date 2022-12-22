@@ -26,7 +26,7 @@ defmodule PostgrexWal.Messages.Message do
 
   typedstruct enforce: true do
     field :transaction_id, integer()
-    field :flags, list()
+    field :flags, [{:transactional, boolean}]
     field :lsn, Message.lsn()
     field :prefix, String.t()
     field :content, String.t()
@@ -41,7 +41,7 @@ defmodule PostgrexWal.Messages.Message do
 
     %__MODULE__{
       transaction_id: transaction_id,
-      flags: (flags == 1 && :transactional) || [],
+      flags: [{:transactional, flags == 1}],
       lsn: Util.decode_lsn(lsn),
       prefix: prefix,
       content: content

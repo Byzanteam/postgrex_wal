@@ -5,12 +5,12 @@ defmodule PostgrexWal.Messages.Stop do
   """
   use PostgrexWal.Message
 
-  typedstruct enforce: true do
-    field :flag, String.t()
+  typedstruct do
+    field :message_flag, String.t(), default: "stop"
   end
 
   @impl true
   def decode(<<>>) do
-    %__MODULE__{flag: "stop"}
+    %__MODULE__{}
   end
 end

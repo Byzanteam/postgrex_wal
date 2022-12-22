@@ -23,7 +23,7 @@ defmodule PostgrexWal.Messages.Truncate do
     field :transaction_id, integer()
     field :number_of_relations, integer()
     field :options, [{:truncate, :cascade | :restart_identity}]
-    field :relation_oids, [integer()]
+    field :relation_oids, list(integer)
   end
 
   @dict %{
@@ -33,8 +33,8 @@ defmodule PostgrexWal.Messages.Truncate do
   }
 
   @impl true
-  def decode(<<transaction_id::32, number_of_relations::32, options::8, column_ids::binary>>) do
-    relation_oids = for <<column_id::32 <- column_ids>>, do: column_id
+  def decode(<<transaction_id::32, number_of_relations::32, options::8, relations::binary>>) do
+    relation_oids = for <<column_id::32 <- relations>>, do: column_id
 
     %__MODULE__{
       transaction_id: transaction_id,

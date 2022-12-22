@@ -22,19 +22,18 @@ defmodule PostgrexWal.Messages.StreamCommit do
 
   typedstruct enforce: true do
     field :transaction_id, integer()
-    field :flags, []
+    field :flags, list(), default: []
     field :lsn, Message.lsn()
-    field :final_lsn, Message.lsn()
+    field :end_lsn, Message.lsn()
     field :commit_timestamp, DateTime.t()
   end
 
   @impl true
-  def decode(<<transaction_id::32, _flags::8, lsn::binary-8, final_lsn::binary-8, timestamp::64>>) do
+  def decode(<<transaction_id::32, _flags::8, lsn::binary-8, end_lsn::binary-8, timestamp::64>>) do
     %__MODULE__{
       transaction_id: transaction_id,
-      flags: [],
       lsn: Util.decode_lsn(lsn),
-      final_lsn: Util.decode_lsn(final_lsn),
+      end_lsn: Util.decode_lsn(end_lsn),
       commit_timestamp: Util.decode_timestamp(timestamp)
     }
   end

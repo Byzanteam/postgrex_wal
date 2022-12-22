@@ -43,7 +43,7 @@ defmodule PostgrexWal.Messages.Relation do
 
   typedstruct enforce: true do
     field :transaction_id, integer()
-    field :oid, integer()
+    field :relation_oid, integer()
     field :namespace, String.t()
     field :relation_name, String.t()
 
@@ -55,15 +55,8 @@ defmodule PostgrexWal.Messages.Relation do
     field :columns, [Column.t(), ...]
   end
 
-  @dict %{
-    ?d => :default,
-    ?n => :nothing,
-    ?f => :all_columns,
-    ?i => :index
-  }
-
   @impl true
-  def decode(<<transaction_id::32, oid::32, rest::binary>>) do
+  def decode(<<transaction_id::32, relation_oid::32, rest::binary>>) do
     [
       namespace,
       relation_name,
@@ -72,11 +65,11 @@ defmodule PostgrexWal.Messages.Relation do
 
     %__MODULE__{
       transaction_id: transaction_id,
-      oid: oid,
-      namespace: namespace,
+      relation_oid: relation_oid,
+      namespace: Util.decode_namespace(namespace),
       relation_name: relation_name,
       replica_identity_setting: [
-        {:setting, Map.fetch!(@dict, replica_identity_setting)}
+        {:setting, Util.decode_replica_identity_setting(replica_identity_setting)}
       ],
       number_of_columns: number_of_columns,
       columns: Column.decode(columns)

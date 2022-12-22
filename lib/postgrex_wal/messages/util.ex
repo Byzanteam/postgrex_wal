@@ -54,7 +54,7 @@ defmodule PostgrexWal.Messages.Util do
     do_decode(rest, columns_remaining - 1, [{:binary, binary} | acc])
   end
 
-  @dict %{
+  @type_oids %{
     16 => :bool,
     17 => :bytea,
     18 => :char,
@@ -89,9 +89,26 @@ defmodule PostgrexWal.Messages.Util do
     17_063 => :geometry
   }
   @spec decode_type_oid(type_oid :: integer) :: atom
-  for {type_oid, type_name} <- @dict do
+  for {type_oid, type_name} <- @type_oids do
     def decode_type_oid(unquote(type_oid)), do: unquote(type_name)
   end
 
   def decode_type_oid(_), do: :unknown
+
+  @doc "Namespace (empty string for pg_catalog)."
+  @spec decode_namespace(binary) :: binary
+  def decode_namespace(""), do: "pg_catalog"
+  def decode_namespace(namespace), do: namespace
+
+  @replica_identity_settings %{
+    ?d => :default,
+    ?n => :nothing,
+    ?f => :all_columns,
+    ?i => :index
+  }
+
+  @spec decode_replica_identity_setting(integer) :: atom
+  for {key, name} <- @replica_identity_settings do
+    def decode_replica_identity_setting(unquote(key)), do: unquote(name)
+  end
 end

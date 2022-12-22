@@ -3,11 +3,10 @@ defmodule PostgrexWal.Messages.Util do
 
   def decode_lsn(<<xlog_file::32, xlog_offset::32>>), do: {xlog_file, xlog_offset}
 
+  @pg_epoch ~U[2000-01-01 00:00:00Z]
   @spec decode_timestamp(microsecond_offset :: integer()) :: DateTime.t()
   def decode_timestamp(microsecond_offset) when is_integer(microsecond_offset) do
-    # pg_epoch
-    {:ok, epoch, 0} = DateTime.from_iso8601("2000-01-01T00:00:00Z")
-    DateTime.add(epoch, microsecond_offset, :microsecond)
+    DateTime.add(@pg_epoch, microsecond_offset, :microsecond)
   end
 
   def binary_split(binary, parts \\ 2, delimeter \\ <<0>>) do

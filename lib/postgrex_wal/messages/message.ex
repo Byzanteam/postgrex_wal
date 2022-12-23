@@ -20,11 +20,10 @@ defmodule PostgrexWal.Messages.Message do
 
   Byten
   The content of the logical decoding message.
-
   """
   use PostgrexWal.Message
 
-  typedstruct enforce: true do
+  typedstruct do
     field :transaction_id, integer()
     field :flags, [{:transactional, boolean}]
     field :lsn, Message.lsn()
@@ -33,14 +32,13 @@ defmodule PostgrexWal.Messages.Message do
   end
 
   @impl true
-  def decode(<<transaction_id::32, flags::8, lsn::binary-8, rest::binary>>) do
+  def decode(<<flags::8, lsn::binary-8, rest::binary>>) do
     [
       prefix,
       <<n::32, content::binary-size(n)>>
     ] = Util.binary_split(rest)
 
     %__MODULE__{
-      transaction_id: transaction_id,
       flags: [{:transactional, flags == 1}],
       lsn: Util.decode_lsn(lsn),
       prefix: prefix,

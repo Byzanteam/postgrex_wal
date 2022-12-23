@@ -33,23 +33,10 @@ defmodule PostgrexWal.Messages.Truncate do
   }
 
   @impl true
-  # protocol 1
   def decode(<<number_of_relations::32, options::8, relations::binary>>) do
     relation_oids = for <<column_id::32 <- relations>>, do: column_id
 
     %__MODULE__{
-      number_of_relations: number_of_relations,
-      options: [{:truncate, @dict[options]}],
-      relation_oids: relation_oids
-    }
-  end
-
-  # protocol 2
-  def decode(<<transaction_id::32, number_of_relations::32, options::8, relations::binary>>) do
-    relation_oids = for <<column_id::32 <- relations>>, do: column_id
-
-    %__MODULE__{
-      transaction_id: transaction_id,
       number_of_relations: number_of_relations,
       options: [{:truncate, @dict[options]}],
       relation_oids: relation_oids

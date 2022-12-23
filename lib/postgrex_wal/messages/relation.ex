@@ -41,7 +41,7 @@ defmodule PostgrexWal.Messages.Relation do
   use PostgrexWal.Message
   alias PostgrexWal.Messages.Relation.Column
 
-  typedstruct enforce: true do
+  typedstruct do
     field :transaction_id, integer()
     field :relation_oid, integer()
     field :namespace, String.t()
@@ -56,7 +56,7 @@ defmodule PostgrexWal.Messages.Relation do
   end
 
   @impl true
-  def decode(<<transaction_id::32, relation_oid::32, rest::binary>>) do
+  def decode(<<relation_oid::32, rest::binary>>) do
     [
       namespace,
       relation_name,
@@ -64,7 +64,6 @@ defmodule PostgrexWal.Messages.Relation do
     ] = Util.binary_split(rest, 3)
 
     %__MODULE__{
-      transaction_id: transaction_id,
       relation_oid: relation_oid,
       namespace: Util.decode_namespace(namespace),
       relation_name: relation_name,

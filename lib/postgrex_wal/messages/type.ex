@@ -19,7 +19,7 @@ defmodule PostgrexWal.Messages.Type do
   """
   use PostgrexWal.Message
 
-  typedstruct enforce: true do
+  typedstruct do
     field :transaction_id, integer()
     field :type_oid, integer()
     field :namespace, String.t()
@@ -27,11 +27,10 @@ defmodule PostgrexWal.Messages.Type do
   end
 
   @impl true
-  def decode(<<transaction_id::32, type_oid::32, namespace_and_name::binary>>) do
+  def decode(<<type_oid::32, namespace_and_name::binary>>) do
     [namespace, name, _] = Util.binary_split(namespace_and_name, 3)
 
     %__MODULE__{
-      transaction_id: transaction_id,
       type_oid: type_oid,
       namespace: Util.decode_namespace(namespace),
       type_name: name

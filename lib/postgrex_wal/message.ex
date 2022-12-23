@@ -20,6 +20,11 @@ defmodule PostgrexWal.Message do
       use TypedStruct
       alias PostgrexWal.Message
       alias PostgrexWal.Messages.Util
+
+      @impl true
+      def decode(<<"stream", transaction_id::32, payload::binary>>) do
+        decode(payload) |> struct(transaction_id: transaction_id)
+      end
     end
   end
 

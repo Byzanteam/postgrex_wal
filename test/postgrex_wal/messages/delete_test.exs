@@ -17,4 +17,17 @@ defmodule PostgrexWal.Messages.DeleteTest do
              Delete.decode(@event)
            )
   end
+
+  test "decode steamed delete event" do
+    assert match?(
+             %Delete{
+               changed_key_tuple_data: nil,
+               old_tuple_data:
+                 {{:text, "980191029"}, {:text, "title222"}, {:text, "2"}, nil, nil, nil, nil},
+               relation_oid: 22_887,
+               transaction_id: 123
+             },
+             Delete.decode(<<"stream", 123::32, @event>>)
+           )
+  end
 end

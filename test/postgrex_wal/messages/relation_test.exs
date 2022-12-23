@@ -14,56 +14,56 @@ defmodule PostgrexWal.Messages.RelationTest do
   test "decode relation event" do
     assert match?(
              %Relation{
-               transaction_id: 22_887,
                columns: [
                  %Column{
-                   type_modifier: 4_294_967_295,
-                   type_oid: :int8,
                    column_name: "id",
-                   flags: [:key]
+                   flags: [:key],
+                   type_modifier: 4_294_967_295,
+                   type_oid: :int8
                  },
                  %Column{
-                   type_modifier: 4_294_967_295,
-                   type_oid: :varchar,
                    column_name: "name",
-                   flags: [:key]
+                   flags: [:key],
+                   type_modifier: 4_294_967_295,
+                   type_oid: :varchar
                  },
                  %Column{
-                   type_modifier: 4_294_967_295,
-                   type_oid: :int4,
                    column_name: "age",
-                   flags: [:key]
+                   flags: [:key],
+                   type_modifier: 4_294_967_295,
+                   type_oid: :int4
                  },
                  %Column{
-                   type_modifier: 4_294_967_295,
-                   type_oid: :varchar,
                    column_name: "email",
-                   flags: [:key]
+                   flags: [:key],
+                   type_modifier: 4_294_967_295,
+                   type_oid: :varchar
                  },
                  %Column{
-                   type_modifier: 4_294_967_295,
-                   type_oid: :varchar,
                    column_name: "password_digest",
-                   flags: [:key]
-                 },
-                 %Column{
-                   type_modifier: 393_222,
-                   type_oid: :unknown,
-                   column_name: "salary",
-                   flags: [:key]
-                 },
-                 %Column{
+                   flags: [:key],
                    type_modifier: 4_294_967_295,
-                   type_oid: :bool,
+                   type_oid: :varchar
+                 },
+                 %Column{
+                   column_name: "salary",
+                   flags: [:key],
+                   type_modifier: 393_222,
+                   type_oid: :unknown
+                 },
+                 %Column{
                    column_name: "sex",
-                   flags: [:key]
+                   flags: [:key],
+                   type_modifier: 4_294_967_295,
+                   type_oid: :bool
                  }
                ],
-               namespace: "ic",
+               namespace: "public",
                number_of_columns: 7,
                relation_name: "users",
-               relation_oid: 1_886_741_100,
-               replica_identity_setting: [setting: :all_columns]
+               relation_oid: 22_887,
+               replica_identity_setting: [setting: :all_columns],
+               transaction_id: nil
              },
              Relation.decode(@event)
            )

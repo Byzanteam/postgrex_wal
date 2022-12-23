@@ -5,7 +5,7 @@ defmodule PostgrexWal.Messages.DeleteTest do
   @event <<0, 0, 89, 103, 79, 0, 7, 116, 0, 0, 0, 9, 57, 56, 48, 49, 57, 49, 48, 50, 57, 116, 0,
            0, 0, 8, 116, 105, 116, 108, 101, 50, 50, 50, 116, 0, 0, 0, 1, 50, 110, 110, 110, 110>>
 
-  test "decode begin event" do
+  test "decode delete event" do
     assert match?(
              %Delete{
                transaction_id: nil,

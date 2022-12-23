@@ -7,7 +7,7 @@ defmodule PostgrexWal.Messages.UpdateTest do
            0, 9, 57, 56, 48, 49, 57, 49, 50, 53, 51, 116, 0, 0, 0, 3, 100, 101, 102, 116, 0, 0, 0,
            2, 50, 50, 110, 110, 110, 110>>
 
-  test "decode commit event" do
+  test "decode update event" do
     assert match?(
              %Update{
                relation_oid: 22_887,

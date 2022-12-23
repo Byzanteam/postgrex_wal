@@ -11,7 +11,7 @@ defmodule PostgrexWal.Messages.RelationTest do
            108, 97, 114, 121, 0, 0, 0, 6, 164, 0, 6, 0, 6, 1, 115, 101, 120, 0, 0, 0, 0, 16, 255,
            255, 255, 255>>
 
-  test "decode begin event" do
+  test "decode relation event" do
     assert match?(
              %Relation{
                transaction_id: 22_887,

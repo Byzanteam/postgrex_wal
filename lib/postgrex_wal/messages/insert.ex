@@ -27,6 +27,15 @@ defmodule PostgrexWal.Messages.Insert do
   end
 
   @impl true
+  # protocol 1
+  def decode(<<relation_oid::32, ?N, tuple_data::binary>>) do
+    %__MODULE__{
+      relation_oid: relation_oid,
+      tuple_data: Util.decode_tuple_data!(tuple_data)
+    }
+  end
+
+  # protocol 2
   def decode(<<transaction_id::32, relation_oid::32, ?N, tuple_data::binary>>) do
     %__MODULE__{
       transaction_id: transaction_id,

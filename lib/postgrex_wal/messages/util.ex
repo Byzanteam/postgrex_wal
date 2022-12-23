@@ -21,6 +21,40 @@ defmodule PostgrexWal.Messages.Util do
     decoded_tuple_data
   end
 
+  @doc """
+  https://www.postgresql.org/docs/current/protocol-logicalrep-message-formats.html
+
+  TupleData
+  Int16
+  Number of columns.
+
+  Next, one of the following submessages appears for each column (except generated columns):
+
+  Byte1('n')
+  Identifies the data as NULL value.
+
+  Or
+
+  Byte1('u')
+  Identifies unchanged TOASTed value (the actual value is not sent).
+
+  Or
+
+  Byte1('t')
+  Identifies the data as text formatted value.
+
+  Or
+
+  Byte1('b')
+  Identifies the data as binary formatted value.
+
+  Int32
+  Length of the column value.
+
+  Byten
+  The value of the column, either in binary or in text format. (As specified in the preceding format byte). n is the above length.
+  """
+
   @spec decode_tuple_data(binary) :: tuple
   def decode_tuple_data(<<number_of_columns::16, data::binary>>) do
     do_decode(data, number_of_columns, [])

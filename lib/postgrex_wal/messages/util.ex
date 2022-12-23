@@ -4,7 +4,7 @@ defmodule PostgrexWal.Messages.Util do
   @spec decode_lsn(lsn :: binary) :: {integer, integer}
   def decode_lsn(<<xlog_file::32, xlog_offset::32>>), do: {xlog_file, xlog_offset}
 
-  @pg_epoch ~U[2000-01-01 00:00:00Z]
+  @pg_epoch ~U[2000-01-01 00:00:00.000000Z]
   @spec decode_timestamp(microsecond_offset :: integer) :: DateTime.t()
   def decode_timestamp(microsecond_offset) when is_integer(microsecond_offset) do
     DateTime.add(@pg_epoch, microsecond_offset, :microsecond)

@@ -1,4 +1,4 @@
-defmodule PostgrexWal.Messages.Start do
+defmodule PostgrexWal.Messages.StreamStart do
   @moduledoc """
   Byte1('S')
   Identifies the message as a stream start message.

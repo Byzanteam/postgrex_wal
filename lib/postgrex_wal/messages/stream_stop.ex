@@ -1,4 +1,4 @@
-defmodule PostgrexWal.Messages.Stop do
+defmodule PostgrexWal.Messages.StreamStop do
   @moduledoc """
   Byte1('E')
   Identifies the message as a stream stop message.

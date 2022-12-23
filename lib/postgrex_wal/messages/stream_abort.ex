@@ -1,4 +1,4 @@
-defmodule PostgrexWal.Messages.Abort do
+defmodule PostgrexWal.Messages.StreamAbort do
   @moduledoc """
   Byte1('A')
   Identifies the message as a stream abort message.

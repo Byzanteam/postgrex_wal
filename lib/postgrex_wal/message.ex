@@ -27,7 +27,6 @@ defmodule PostgrexWal.Message do
   @type tuple_data() :: nil | :unchanged_toast | {:text, binary()} | {:binary, bitstring()}
 
   alias PostgrexWal.Messages.{
-    Abort,
     Begin,
     Commit,
     Delete,
@@ -35,25 +34,26 @@ defmodule PostgrexWal.Message do
     Message,
     Origin,
     Relation,
-    Start,
-    Stop,
+    StreamAbort,
     StreamCommit,
+    StreamStart,
+    StreamStop,
     Truncate,
     Type,
     Update
   }
 
   @modules %{
-    ?A => Abort,
+    ?A => StreamAbort,
     ?B => Begin,
     ?C => Commit,
     ?D => Delete,
-    ?E => Stop,
+    ?E => StreamStop,
     ?I => Insert,
     ?M => Message,
     ?O => Origin,
     ?R => Relation,
-    ?S => Start,
+    ?S => StreamStart,
     ?T => Truncate,
     ?U => Update,
     ?Y => Type,

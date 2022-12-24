@@ -25,7 +25,7 @@ defmodule PostgrexWal.Messages.Origin do
   def decode(<<lsn::binary-8, name::binary>>) do
     %__MODULE__{
       commit_lsn: Util.decode_lsn(lsn),
-      name: name
+      name: String.trim_trailing(name, "\0")
     }
   end
 end

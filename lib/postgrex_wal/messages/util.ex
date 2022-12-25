@@ -1,8 +1,8 @@
 defmodule PostgrexWal.Messages.Util do
   @moduledoc false
 
-  @spec decode_lsn(lsn :: binary) :: {integer, integer}
-  def decode_lsn(<<xlog_file::32, xlog_offset::32>>), do: {xlog_file, xlog_offset}
+  @spec decode_lsn(lsn :: integer) :: String.t()
+  defdelegate decode_lsn(lsn), to: __MODULE__.LSN
 
   @pg_epoch ~U[2000-01-01 00:00:00.000000Z]
   @spec decode_timestamp(microsecond_offset :: integer) :: DateTime.t()

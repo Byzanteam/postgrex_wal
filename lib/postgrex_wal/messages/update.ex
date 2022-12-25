@@ -47,23 +47,21 @@ defmodule PostgrexWal.Messages.Update do
     }
   end
 
-  def decode(<<relation_oid::32, ?K, tuple_data::binary>>) do
-    {<<?N, new_tuple_data::binary>>, old_decoded_tuple_data} = Util.decode_tuple_data(tuple_data)
-
-    %__MODULE__{
-      relation_oid: relation_oid,
-      tuple_data: Util.decode_tuple_data!(new_tuple_data),
-      changed_key_tuple_data: old_decoded_tuple_data
-    }
+  def decode(<<_relation_oid::32, ?K, _tuple_data::binary>> = payload) do
+    do_decode(payload, :changed_key_tuple_data)
   end
 
-  def decode(<<relation_oid::32, ?O, tuple_data::binary>>) do
+  def decode(<<_relation_oid::32, ?O, _tuple_data::binary>> = payload) do
+    do_decode(payload, :old_tuple_data)
+  end
+
+  defp do_decode(<<relation_oid::32, _k_or_o, tuple_data::binary>>, key) do
     {<<?N, new_tuple_data::binary>>, old_decoded_tuple_data} = Util.decode_tuple_data(tuple_data)
 
-    %__MODULE__{
-      relation_oid: relation_oid,
-      tuple_data: Util.decode_tuple_data!(new_tuple_data),
-      old_tuple_data: old_decoded_tuple_data
-    }
+    struct(__MODULE__, [
+      {:relation_oid, relation_oid},
+      {:tuple_data, Util.decode_tuple_data!(new_tuple_data)},
+      {key, old_decoded_tuple_data}
+    ])
   end
 end

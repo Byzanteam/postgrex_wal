@@ -23,13 +23,13 @@ defmodule PostgrexWal.Messages.StreamCommit do
   typedstruct enforce: true do
     field :transaction_id, integer()
     field :flags, list(), default: []
-    field :lsn, Message.lsn()
-    field :end_lsn, Message.lsn()
+    field :lsn, String.t()
+    field :end_lsn, String.t()
     field :commit_timestamp, DateTime.t()
   end
 
   @impl true
-  def decode(<<transaction_id::32, _flags::8, lsn::binary-8, end_lsn::binary-8, timestamp::64>>) do
+  def decode(<<transaction_id::32, _flags::8, lsn::64, end_lsn::64, timestamp::64>>) do
     %__MODULE__{
       transaction_id: transaction_id,
       lsn: Util.decode_lsn(lsn),

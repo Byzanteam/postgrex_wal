@@ -22,13 +22,13 @@ defmodule PostgrexWal.Messages.Commit do
 
   typedstruct enforce: true do
     field :flags, []
-    field :lsn, Message.lsn()
-    field :end_lsn, Message.lsn()
+    field :lsn, String.t()
+    field :end_lsn, String.t()
     field :commit_timestamp, DateTime.t()
   end
 
   @impl true
-  def decode(<<_flag::8, lsn::binary-8, end_lsn::binary-8, timestamp::64>>) do
+  def decode(<<_flag::8, lsn::64, end_lsn::64, timestamp::64>>) do
     %__MODULE__{
       flags: [],
       lsn: Util.decode_lsn(lsn),

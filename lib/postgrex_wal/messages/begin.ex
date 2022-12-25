@@ -17,13 +17,13 @@ defmodule PostgrexWal.Messages.Begin do
   use PostgrexWal.Message
 
   typedstruct enforce: true do
-    field :final_lsn, Message.lsn()
+    field :final_lsn, String.t()
     field :commit_timestamp, DateTime.t()
     field :transaction_id, integer()
   end
 
   @impl true
-  def decode(<<lsn::binary-8, timestamp::64, transaction_id::32>>) do
+  def decode(<<lsn::64, timestamp::64, transaction_id::32>>) do
     %__MODULE__{
       final_lsn: Util.decode_lsn(lsn),
       commit_timestamp: Util.decode_timestamp(timestamp),

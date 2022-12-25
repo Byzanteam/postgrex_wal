@@ -26,13 +26,13 @@ defmodule PostgrexWal.Messages.Message do
   typedstruct do
     field :transaction_id, integer()
     field :flags, [{:transactional, boolean}]
-    field :lsn, Message.lsn()
+    field :lsn, String.t()
     field :prefix, String.t()
     field :content, String.t()
   end
 
   @impl true
-  def decode(<<flags::8, lsn::binary-8, rest::binary>>) do
+  def decode(<<flags::8, lsn::64, rest::binary>>) do
     [
       prefix,
       <<n::32, content::binary-size(n)>>

@@ -28,7 +28,6 @@ defmodule PostgrexWal.Message do
     end
   end
 
-  @type lsn() :: {integer(), integer()}
   @type tuple_data() :: nil | :unchanged_toast | {:text, binary()} | {:binary, bitstring()}
 
   alias PostgrexWal.Messages.{

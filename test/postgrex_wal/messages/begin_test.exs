@@ -8,7 +8,7 @@ defmodule PostgrexWal.Messages.BeginTest do
              %Begin{
                transaction_id: 3_575,
                commit_timestamp: ~U[2022-12-16 06:12:34.719554Z],
-               final_lsn: {0, 48_495_592}
+               final_lsn: "0/2E3FBE8"
              },
              Begin.decode(@event)
            )
@@ -20,7 +20,7 @@ defmodule PostgrexWal.Messages.BeginTest do
              %Begin{
                transaction_id: 3_643,
                commit_timestamp: ~U[2022-12-24 11:28:57.229966Z],
-               final_lsn: {0, 51_005_848}
+               final_lsn: "0/30A4998"
              },
              Begin.decode(@event)
            )

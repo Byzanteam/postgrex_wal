@@ -10,9 +10,9 @@ defmodule PostgrexWal.Messages.StreamCommitTest do
              %StreamCommit{
                transaction_id: 3_575,
                commit_timestamp: ~U[2022-12-16 06:12:34.719554Z],
-               end_lsn: {0, 48_495_605},
+               end_lsn: "0/2E3FBF5",
                flags: [],
-               lsn: {0, 48_495_592}
+               lsn: "0/2E3FBE8"
              },
              StreamCommit.decode(@event)
            )

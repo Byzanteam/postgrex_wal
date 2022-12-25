@@ -11,7 +11,7 @@ defmodule PostgrexWal.Messages.MessageTest do
                transaction_id: nil,
                content: "test",
                flags: [transactional: false],
-               lsn: {0, 48_495_592},
+               lsn: "0/2E3FBE8",
                prefix: "my_test"
              },
              Message.decode(@event)
@@ -23,7 +23,7 @@ defmodule PostgrexWal.Messages.MessageTest do
              %Message{
                content: "test",
                flags: [transactional: false],
-               lsn: {0, 48_495_592},
+               lsn: "0/2E3FBE8",
                prefix: "my_test",
                transaction_id: 123
              },

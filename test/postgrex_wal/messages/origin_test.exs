@@ -7,7 +7,7 @@ defmodule PostgrexWal.Messages.OriginTest do
     assert match?(
              %Origin{
                name: "my_origin",
-               commit_lsn: {0, 48_495_592}
+               commit_lsn: "0/2E3FBE8"
              },
              Origin.decode(@event)
            )

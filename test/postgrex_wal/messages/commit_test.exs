@@ -9,8 +9,8 @@ defmodule PostgrexWal.Messages.CommitTest do
     assert match?(
              %Commit{
                commit_timestamp: ~U[2022-12-16 06:12:34.719554Z],
-               end_lsn: {0, 48_495_640},
-               lsn: {0, 48_495_592},
+               end_lsn: "0/2E3FC18",
+               lsn: "0/2E3FBE8",
                flags: []
              },
              Commit.decode(@event)

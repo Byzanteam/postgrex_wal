@@ -6,9 +6,7 @@ defmodule PostgrexWal.Messages.StreamStopTest do
 
   test "decode steam_start message event" do
     assert match?(
-             %StreamStop{
-               message_flag: "stop"
-             },
+             %StreamStop{},
              StreamStop.decode(@event)
            )
   end

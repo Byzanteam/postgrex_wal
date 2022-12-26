@@ -6,7 +6,6 @@ defmodule PostgrexWal.Messages.StreamStop do
   use PostgrexWal.Message
 
   typedstruct do
-    field :message_flag, String.t(), default: "stop"
   end
 
   @impl true

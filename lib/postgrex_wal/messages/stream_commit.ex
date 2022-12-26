@@ -22,7 +22,7 @@ defmodule PostgrexWal.Messages.StreamCommit do
 
   typedstruct enforce: true do
     field :transaction_id, integer()
-    field :flags, list(), default: []
+    field :flags, Keyword.t(), default: []
     field :lsn, String.t()
     field :end_lsn, String.t()
     field :commit_timestamp, DateTime.t()

@@ -21,6 +21,10 @@ defmodule PostgrexWal.Messages.Util.LSN do
   @spec from_str(String.t()) :: integer
   def from_str(lsn) when is_binary(lsn) do
     [xlog_file_id, xlog_offset] = String.split(lsn, "/", trim: true)
-    String.to_integer(xlog_file_id, 16) <<< 32 ||| String.to_integer(xlog_offset, 16)
+
+    <<lsn::64>> =
+      <<String.to_integer(xlog_file_id, 16)::32, String.to_integer(xlog_offset, 16)::32>>
+
+    lsn
   end
 end

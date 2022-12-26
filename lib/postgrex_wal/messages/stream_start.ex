@@ -13,7 +13,7 @@ defmodule PostgrexWal.Messages.StreamStart do
 
   typedstruct enforce: true do
     field :transaction_id, integer()
-    field :flags, [{:first_segment, boolean}]
+    field :flags, [{:first_segment, boolean()}]
   end
 
   @impl true

@@ -25,7 +25,7 @@ defmodule PostgrexWal.Messages.Message do
 
   typedstruct do
     field :transaction_id, integer()
-    field :flags, [{:transactional, boolean}]
+    field :flags, [{:transactional, boolean()}]
     field :lsn, String.t()
     field :prefix, String.t()
     field :content, String.t()

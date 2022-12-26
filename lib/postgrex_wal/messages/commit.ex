@@ -21,7 +21,7 @@ defmodule PostgrexWal.Messages.Commit do
   use PostgrexWal.Message
 
   typedstruct enforce: true do
-    field :flags, []
+    field :flags, Keyword.t()
     field :lsn, String.t()
     field :end_lsn, String.t()
     field :commit_timestamp, DateTime.t()

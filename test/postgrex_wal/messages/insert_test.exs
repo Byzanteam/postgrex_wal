@@ -10,8 +10,15 @@ defmodule PostgrexWal.Messages.InsertTest do
              %Insert{
                transaction_id: nil,
                relation_oid: 22_887,
-               tuple_data:
-                 {{:text, "980191253"}, {:text, "abc"}, {:text, "11"}, nil, nil, nil, nil}
+               tuple_data: [
+                 {:text, "980191253"},
+                 {:text, "abc"},
+                 {:text, "11"},
+                 nil,
+                 nil,
+                 nil,
+                 nil
+               ]
              },
              Insert.decode(@event)
            )

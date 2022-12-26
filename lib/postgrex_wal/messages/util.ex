@@ -16,7 +16,7 @@ defmodule PostgrexWal.Messages.Util do
     String.split(binary, delimeter, parts: parts)
   end
 
-  @spec decode_tuple_data!(tuple_data :: binary) :: Message.tuple_data()
+  @spec decode_tuple_data!(tuple_data :: binary) :: [Message.tuple_data()]
   def decode_tuple_data!(tuple_data) do
     {<<>>, decoded_tuple_data} = decode_tuple_data(tuple_data)
     decoded_tuple_data
@@ -56,13 +56,13 @@ defmodule PostgrexWal.Messages.Util do
   The value of the column, either in binary or in text format. (As specified in the preceding format byte). n is the above length.
   """
 
-  @spec decode_tuple_data(binary) :: {binary, Message.tuple_data()}
+  @spec decode_tuple_data(binary) :: {binary, [Message.tuple_data()]}
   def decode_tuple_data(<<number_of_columns::16, data::binary>>) do
     do_decode(data, number_of_columns, [])
   end
 
   defp do_decode(remaining_data, 0, acc) do
-    {remaining_data, acc |> Enum.reverse() |> List.to_tuple()}
+    {remaining_data, acc |> Enum.reverse()}
   end
 
   defp do_decode(<<?n, rest::binary>>, columns_remaining, acc) do

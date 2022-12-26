@@ -12,20 +12,33 @@ defmodule PostgrexWal.Messages.UpdateTest do
              %Update{
                relation_oid: 22_887,
                changed_key_tuple_data: nil,
-               old_tuple_data:
-                 {{:text, "980191253"}, {:text, "abc"}, {:text, "11"}, nil, nil, nil, nil},
+               old_tuple_data: [
+                 {:text, "980191253"},
+                 {:text, "abc"},
+                 {:text, "11"},
+                 nil,
+                 nil,
+                 nil,
+                 nil
+               ],
                transaction_id: nil,
-               tuple_data:
-                 {{:text, "980191253"}, {:text, "def"}, {:text, "22"}, nil, nil, nil, nil}
+               tuple_data: [
+                 {:text, "980191253"},
+                 {:text, "def"},
+                 {:text, "22"},
+                 nil,
+                 nil,
+                 nil,
+                 nil
+               ]
              },
              Update.decode(@event)
            )
   end
 
-  @doc """
-  UPDATE "users" SET "salary" = $1, "sex" = $2, "emo" = $3 WHERE "users"."id" = $4
-  [["salary", "12.34"], ["sex", true], ["emo", "add emo text"], ["id", 1]]
-  """
+  # NOTE:
+  # UPDATE "users" SET "salary" = $1, "sex" = $2, "emo" = $3 WHERE "users"."id" = $4
+  # [["salary", "12.34"], ["sex", true], ["emo", "add emo text"], ["id", 1]]
   @event <<0, 0, 122, 7, 79, 0, 8, 116, 0, 0, 0, 1, 49, 116, 0, 0, 0, 3, 97, 98, 99, 116, 0, 0, 0,
            2, 50, 50, 110, 116, 0, 0, 0, 60, 36, 50, 97, 36, 49, 50, 36, 115, 107, 53, 77, 118,
            105, 116, 121, 51, 102, 67, 70, 56, 78, 47, 77, 67, 98, 67, 86, 103, 46, 115, 117, 70,
@@ -42,7 +55,7 @@ defmodule PostgrexWal.Messages.UpdateTest do
     assert match?(
              %Update{
                changed_key_tuple_data: nil,
-               old_tuple_data: {
+               old_tuple_data: [
                  {:text, "1"},
                  {:text, "abc"},
                  {:text, "22"},
@@ -51,10 +64,10 @@ defmodule PostgrexWal.Messages.UpdateTest do
                  nil,
                  nil,
                  nil
-               },
+               ],
                relation_oid: 31_239,
                transaction_id: nil,
-               tuple_data: {
+               tuple_data: [
                  {:text, "1"},
                  {:text, "abc"},
                  {:text, "22"},
@@ -63,7 +76,7 @@ defmodule PostgrexWal.Messages.UpdateTest do
                  {:text, "12.34"},
                  {:text, "t"},
                  {:text, "add emo text"}
-               }
+               ]
              },
              Update.decode(@event)
            )

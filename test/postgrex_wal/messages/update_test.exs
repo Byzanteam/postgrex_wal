@@ -7,7 +7,7 @@ defmodule PostgrexWal.Messages.UpdateTest do
            0, 9, 57, 56, 48, 49, 57, 49, 50, 53, 51, 116, 0, 0, 0, 3, 100, 101, 102, 116, 0, 0, 0,
            2, 50, 50, 110, 110, 110, 110>>
 
-  test "decode update event" do
+  test "decode update event(?O)" do
     assert match?(
              %Update{
                relation_oid: 22_887,
@@ -26,6 +26,64 @@ defmodule PostgrexWal.Messages.UpdateTest do
                  {:text, "980191253"},
                  {:text, "def"},
                  {:text, "22"},
+                 nil,
+                 nil,
+                 nil,
+                 nil
+               ]
+             },
+             Update.decode(@event)
+           )
+  end
+
+  @event <<0, 0, 89, 103, 75, 0, 7, 116, 0, 0, 0, 9, 57, 56, 48, 49, 57, 49, 50, 53, 51, 116, 0,
+           0, 0, 3, 97, 98, 99, 116, 0, 0, 0, 2, 49, 49, 110, 110, 110, 110, 78, 0, 7, 116, 0, 0,
+           0, 9, 57, 56, 48, 49, 57, 49, 50, 53, 51, 116, 0, 0, 0, 3, 100, 101, 102, 116, 0, 0, 0,
+           2, 50, 50, 110, 110, 110, 110>>
+
+  test "decode update event(?K)" do
+    assert match?(
+             %Update{
+               changed_key_tuple_data: [
+                 {:text, "980191253"},
+                 {:text, "abc"},
+                 {:text, "11"},
+                 nil,
+                 nil,
+                 nil,
+                 nil
+               ],
+               old_tuple_data: nil,
+               relation_oid: 22_887,
+               transaction_id: nil,
+               tuple_data: [
+                 {:text, "980191253"},
+                 {:text, "def"},
+                 {:text, "22"},
+                 nil,
+                 nil,
+                 nil,
+                 nil
+               ]
+             },
+             Update.decode(@event)
+           )
+  end
+
+  @event <<0, 0, 89, 103, 78, 0, 7, 116, 0, 0, 0, 9, 57, 56, 48, 49, 57, 49, 50, 53, 51, 116, 0,
+           0, 0, 3, 97, 98, 99, 116, 0, 0, 0, 2, 49, 49, 110, 110, 110, 110>>
+
+  test "decode update event(?N)" do
+    assert match?(
+             %Update{
+               relation_oid: 22_887,
+               changed_key_tuple_data: nil,
+               old_tuple_data: nil,
+               transaction_id: nil,
+               tuple_data: [
+                 {:text, "980191253"},
+                 {:text, "abc"},
+                 {:text, "11"},
                  nil,
                  nil,
                  nil,

@@ -7,8 +7,6 @@ defmodule PostgrexWal.Messages.Util.LSN do
 
   This module provides utility functions for encoding/decoding Lsn's
   """
-  import Bitwise
-
   @spec decode_lsn(lsn :: integer) :: String.t()
   def decode_lsn(lsn) when is_integer(lsn), do: to_str(lsn)
 

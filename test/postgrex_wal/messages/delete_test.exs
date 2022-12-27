@@ -64,7 +64,7 @@ defmodule PostgrexWal.Messages.DeleteTest do
                relation_oid: 22_887,
                transaction_id: 123
              },
-             PostgrexWal.Message.decode(?D, <<123::32, @event>>, true)
+             PostgrexWal.Message.decode(?D, {:in_transaction, <<123::32, @event>>})
            )
   end
 end

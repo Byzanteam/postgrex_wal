@@ -36,14 +36,14 @@ defmodule PostgrexWal.Messages.Delete do
   def decode(<<relation_oid::32, ?K, tuple_data::binary>>) do
     %__MODULE__{
       relation_oid: relation_oid,
-      changed_key_tuple_data: Util.split_tuple_data(tuple_data)
+      changed_key_tuple_data: Util.decode_tuple_data(tuple_data)
     }
   end
 
   def decode(<<relation_oid::32, ?O, tuple_data::binary>>) do
     %__MODULE__{
       relation_oid: relation_oid,
-      old_tuple_data: Util.split_tuple_data(tuple_data)
+      old_tuple_data: Util.decode_tuple_data(tuple_data)
     }
   end
 end

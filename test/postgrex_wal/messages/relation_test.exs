@@ -17,43 +17,43 @@ defmodule PostgrexWal.Messages.RelationTest do
                columns: [
                  %Column{
                    column_name: "id",
-                   flags: [:key],
+                   flags: [{:key, true}],
                    type_modifier: 4_294_967_295,
                    type_oid: 20
                  },
                  %Column{
                    column_name: "name",
-                   flags: [:key],
+                   flags: [{:key, true}],
                    type_modifier: 4_294_967_295,
                    type_oid: 1_043
                  },
                  %Column{
                    column_name: "age",
-                   flags: [:key],
+                   flags: [{:key, true}],
                    type_modifier: 4_294_967_295,
                    type_oid: 23
                  },
                  %Column{
                    column_name: "email",
-                   flags: [:key],
+                   flags: [{:key, true}],
                    type_modifier: 4_294_967_295,
                    type_oid: 1_043
                  },
                  %Column{
                    column_name: "password_digest",
-                   flags: [:key],
+                   flags: [{:key, true}],
                    type_modifier: 4_294_967_295,
-                   type_oid: 1_043
+                   type_oid: 1043
                  },
                  %Column{
                    column_name: "salary",
-                   flags: [:key],
+                   flags: [{:key, true}],
                    type_modifier: 393_222,
                    type_oid: 1_700
                  },
                  %Column{
                    column_name: "sex",
-                   flags: [:key],
+                   flags: [{:key, true}],
                    type_modifier: 4_294_967_295,
                    type_oid: 16
                  }

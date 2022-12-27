@@ -3,7 +3,7 @@ defmodule PostgrexWal.Messages.Util do
   alias PostgrexWal.Message
 
   @spec decode_lsn(lsn :: integer) :: String.t()
-  defdelegate decode_lsn(lsn), to: __MODULE__.LSN
+  defdelegate decode_lsn(lsn), to: __MODULE__.LSN, as: :decode
 
   @pg_epoch ~U[2000-01-01 00:00:00.000000Z]
   @spec decode_timestamp(microsecond_offset :: integer) :: DateTime.t()
@@ -16,9 +16,9 @@ defmodule PostgrexWal.Messages.Util do
     String.split(binary, delimeter, parts: parts)
   end
 
-  @spec split_tuple_data(tuple_data :: binary) :: [Message.tuple_data()]
-  def split_tuple_data(tuple_data) do
-    {<<>>, decoded_tuple_data} = decode_tuple_data(tuple_data)
+  @spec decode_tuple_data(tuple_data :: binary) :: [Message.tuple_data()]
+  def decode_tuple_data(tuple_data) do
+    {<<>>, decoded_tuple_data} = split_tuple_data(tuple_data)
     decoded_tuple_data
   end
 
@@ -56,8 +56,8 @@ defmodule PostgrexWal.Messages.Util do
   The value of the column, either in binary or in text format. (As specified in the preceding format byte). n is the above length.
   """
 
-  @spec decode_tuple_data(tuple_data :: binary) :: {binary, [Message.tuple_data()]}
-  def decode_tuple_data(<<number_of_columns::16, data::binary>>) do
+  @spec split_tuple_data(tuple_data :: binary) :: {binary, [Message.tuple_data()]}
+  def split_tuple_data(<<number_of_columns::16, data::binary>>) do
     do_decode(data, number_of_columns, [])
   end
 

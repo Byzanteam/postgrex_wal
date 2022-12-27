@@ -39,7 +39,7 @@ defmodule PostgrexWal.Messages.Relation.Column do
       rest,
       [
         %__MODULE__{
-          flags: (flags == 1 && [:key]) || [],
+          flags: [{:key, flags == 1}],
           column_name: column_name,
           type_oid: type_oid,
           type_modifier: type_modifier

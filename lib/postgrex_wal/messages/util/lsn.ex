@@ -7,17 +7,14 @@ defmodule PostgrexWal.Messages.Util.LSN do
 
   This module provides utility functions for encoding/decoding Lsn's
   """
-  @spec decode_lsn(lsn :: integer) :: String.t()
-  def decode_lsn(lsn) when is_integer(lsn), do: to_str(lsn)
-
-  @spec to_str(integer) :: String.t()
-  def to_str(lsn) do
+  @spec decode(lsn :: integer) :: String.t()
+  def decode(lsn) when is_integer(lsn) do
     <<xlog_file_id::32, xlog_offset::32>> = <<lsn::64>>
     Integer.to_string(xlog_file_id, 16) <> "/" <> Integer.to_string(xlog_offset, 16)
   end
 
-  @spec from_str(String.t()) :: integer
-  def from_str(lsn) when is_binary(lsn) do
+  @spec encode(lsn :: String.t()) :: integer
+  def encode(lsn) when is_binary(lsn) do
     [xlog_file_id, xlog_offset] = String.split(lsn, "/", trim: true)
 
     <<lsn::64>> =

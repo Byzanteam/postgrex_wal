@@ -16,8 +16,8 @@ defmodule PostgrexWal.Messages.Util do
     String.split(binary, delimeter, parts: parts)
   end
 
-  @spec decode_tuple_data!(tuple_data :: binary) :: [Message.tuple_data()]
-  def decode_tuple_data!(tuple_data) do
+  @spec split_tuple_data(tuple_data :: binary) :: [Message.tuple_data()]
+  def split_tuple_data(tuple_data) do
     {<<>>, decoded_tuple_data} = decode_tuple_data(tuple_data)
     decoded_tuple_data
   end

@@ -2,13 +2,24 @@ defmodule PostgrexWal.Messages.Util do
   @moduledoc false
   alias PostgrexWal.Message
 
-  @spec decode_lsn(lsn :: integer) :: String.t()
-  defdelegate decode_lsn(lsn), to: __MODULE__.LSN, as: :decode
-
   @pg_epoch ~U[2000-01-01 00:00:00.000000Z]
   @spec decode_timestamp(microsecond_offset :: integer) :: DateTime.t()
   def decode_timestamp(microsecond_offset) when is_integer(microsecond_offset) do
     DateTime.add(@pg_epoch, microsecond_offset, :microsecond)
+  end
+
+  @doc """
+  LSN (Log Sequence Number) is a pointer to a location in the WAL.
+
+  Internally, an LSN is a 64-bit integer, representing a byte position in the write-ahead log stream.
+  It is printed as two hexadecimal numbers of up to 8 digits each, separated by a slash; for example, 16/B374D848.
+
+  This module provides utility functions for encoding/decoding Lsn's
+  """
+  @spec decode_lsn(lsn :: integer) :: String.t()
+  def decode_lsn(lsn) when is_integer(lsn) do
+    <<xlog_file_id::32, xlog_offset::32>> = <<lsn::64>>
+    Integer.to_string(xlog_file_id, 16) <> "/" <> Integer.to_string(xlog_offset, 16)
   end
 
   @spec binary_split(binary, integer, binary) :: list(binary)

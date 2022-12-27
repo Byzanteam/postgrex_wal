@@ -21,7 +21,7 @@ defmodule PostgrexWal.Messages.Relation.Column do
   typedstruct enforce: true do
     field :flags, Keyword.t()
     field :column_name, String.t()
-    field :type_oid, atom()
+    field :type_oid, integer()
     field :type_modifier, integer()
   end
 

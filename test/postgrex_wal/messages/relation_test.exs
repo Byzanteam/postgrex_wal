@@ -62,7 +62,7 @@ defmodule PostgrexWal.Messages.RelationTest do
                number_of_columns: 7,
                relation_name: "users",
                relation_oid: 22_887,
-               replica_identity_setting: [setting: :all_columns],
+               flags: [setting: :all_columns],
                transaction_id: nil
              },
              Relation.decode(@event)

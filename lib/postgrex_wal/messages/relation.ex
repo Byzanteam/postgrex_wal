@@ -47,7 +47,7 @@ defmodule PostgrexWal.Messages.Relation do
     field :namespace, String.t()
     field :relation_name, String.t()
 
-    field :replica_identity_setting, [
+    field :flags, [
       {:setting, :default | :nothing | :all_columns | :index}
     ]
 
@@ -67,7 +67,7 @@ defmodule PostgrexWal.Messages.Relation do
       relation_oid: relation_oid,
       namespace: Util.decode_namespace(namespace),
       relation_name: relation_name,
-      replica_identity_setting: [
+      flags: [
         {:setting, Util.decode_replica_identity_setting(replica_identity_setting)}
       ],
       number_of_columns: number_of_columns,

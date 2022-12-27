@@ -19,43 +19,43 @@ defmodule PostgrexWal.Messages.RelationTest do
                    column_name: "id",
                    flags: [:key],
                    type_modifier: 4_294_967_295,
-                   type_oid: :int8
+                   type_oid: 20
                  },
                  %Column{
                    column_name: "name",
                    flags: [:key],
                    type_modifier: 4_294_967_295,
-                   type_oid: :varchar
+                   type_oid: 1_043
                  },
                  %Column{
                    column_name: "age",
                    flags: [:key],
                    type_modifier: 4_294_967_295,
-                   type_oid: :int4
+                   type_oid: 23
                  },
                  %Column{
                    column_name: "email",
                    flags: [:key],
                    type_modifier: 4_294_967_295,
-                   type_oid: :varchar
+                   type_oid: 1_043
                  },
                  %Column{
                    column_name: "password_digest",
                    flags: [:key],
                    type_modifier: 4_294_967_295,
-                   type_oid: :varchar
+                   type_oid: 1_043
                  },
                  %Column{
                    column_name: "salary",
                    flags: [:key],
                    type_modifier: 393_222,
-                   type_oid: :unknown
+                   type_oid: 1_700
                  },
                  %Column{
                    column_name: "sex",
                    flags: [:key],
                    type_modifier: 4_294_967_295,
-                   type_oid: :bool
+                   type_oid: 16
                  }
                ],
                namespace: "public",

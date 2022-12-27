@@ -11,10 +11,12 @@ defmodule PostgrexWal.Messages.Util do
   @doc """
   LSN (Log Sequence Number) is a pointer to a location in the WAL.
 
-  Internally, an LSN is a 64-bit integer, representing a byte position in the write-ahead log stream.
-  It is printed as two hexadecimal numbers of up to 8 digits each, separated by a slash; for example, 16/B374D848.
+  PostgreSQL uses two representations for the Log Sequence Number (LSN):
+  1. Internally, an LSN is a 64-bit integer, representing a byte position in the write-ahead log stream.
+     Used internally by PostgreSQL and sent in the XLogData replication messages.
 
-  This module provides utility functions for encoding/decoding Lsn's
+  2. A string of two hexadecimal numbers of up to eight digits each, separated by a slash. e.g. 1/F73E0220.
+     This is the form accepted by Postgrex.ReplicationConnection.start_replication/2.
   """
   @spec decode_lsn(lsn :: integer) :: String.t()
   def decode_lsn(lsn) when is_integer(lsn) do

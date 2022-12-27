@@ -27,7 +27,7 @@ defmodule PostgrexWal.Messages.MessageTest do
                prefix: "my_test",
                transaction_id: 123
              },
-             Message.decode(<<"stream", 123::32, @event>>)
+             PostgrexWal.Message.decode(?M, <<123::32, @event>>, true)
            )
   end
 end

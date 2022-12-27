@@ -20,11 +20,6 @@ defmodule PostgrexWal.Message do
       use TypedStruct
       alias PostgrexWal.Message
       alias PostgrexWal.Messages.Util
-
-      @impl true
-      def decode(<<"stream", transaction_id::32, payload::binary>>) do
-        decode(payload) |> struct(transaction_id: transaction_id)
-      end
     end
   end
 
@@ -64,7 +59,14 @@ defmodule PostgrexWal.Message do
     ?c => StreamCommit
   }
 
-  for {key, module} <- @modules do
-    def decode(<<unquote(key), payload::binary>>), do: unquote(module).decode(payload)
+  @spec decode(key :: integer, event :: binary, in_transaction :: boolean()) :: struct()
+  def decode(key, <<transaction_id::32, payload::binary>> = event, in_transaction \\ false) do
+    module = Map.fetch!(@modules, key)
+
+    if in_transaction do
+      module.decode(payload) |> struct(transaction_id: transaction_id)
+    else
+      module.decode(event)
+    end
   end
 end

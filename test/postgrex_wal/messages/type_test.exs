@@ -23,7 +23,7 @@ defmodule PostgrexWal.Messages.TypeTest do
                type_name: "my_type",
                type_oid: 31_204
              },
-             Type.decode(<<"stream", 123::32, @event>>)
+             PostgrexWal.Message.decode(?Y, <<123::32, @event>>, true)
            )
   end
 end

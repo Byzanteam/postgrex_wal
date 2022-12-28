@@ -41,8 +41,8 @@ defmodule PostgrexWal.Messages.Relation do
   use PostgrexWal.Message
   alias PostgrexWal.Messages.Relation.Column
 
-  typedstruct do
-    field :transaction_id, integer()
+  typedstruct enforce: true do
+    field :transaction_id, integer(), enforce: false
     field :relation_oid, integer()
     field :namespace, String.t()
     field :relation_name, String.t()

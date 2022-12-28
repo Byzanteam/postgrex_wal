@@ -61,8 +61,10 @@ defmodule PostgrexWal.Message do
 
   @spec decode(event :: {:in_transaction, binary()} | binary()) :: struct()
   def decode({:in_transaction, <<key::8, transaction_id::32, payload::binary>>}) do
-    @modules[key].decode(payload) |> struct(transaction_id: transaction_id)
+    decode(<<key::8>> <> payload) |> struct(transaction_id: transaction_id)
   end
 
-  def decode(<<key::8, payload::binary>>), do: @modules[key].decode(payload)
+  for {key, module} <- @modules do
+    def decode(<<unquote(key)::8, payload::binary>>), do: unquote(module).decode(payload)
+  end
 end

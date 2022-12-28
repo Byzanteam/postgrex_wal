@@ -59,10 +59,12 @@ defmodule PostgrexWal.Message do
     ?c => StreamCommit
   }
 
-  @spec decode(key :: integer, event :: {:in_transaction, binary()} | binary()) :: struct()
-  def decode(key, {:in_transaction, <<transaction_id::32, payload::binary>>}) do
-    @modules[key].decode(payload) |> struct(transaction_id: transaction_id)
+  @spec decode(event :: {:in_transaction, binary()} | binary()) :: struct()
+  def decode({:in_transaction, <<key::8, transaction_id::32, payload::binary>>}) do
+    decode(<<key::8>> <> payload) |> struct(transaction_id: transaction_id)
   end
 
-  def decode(key, event), do: @modules[key].decode(event)
+  for {key, module} <- @modules do
+    def decode(<<unquote(key)::8, payload::binary>>), do: unquote(module).decode(payload)
+  end
 end

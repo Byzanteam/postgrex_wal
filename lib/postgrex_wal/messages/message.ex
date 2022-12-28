@@ -23,8 +23,8 @@ defmodule PostgrexWal.Messages.Message do
   """
   use PostgrexWal.Message
 
-  typedstruct do
-    field :transaction_id, integer()
+  typedstruct enforce: true do
+    field :transaction_id, integer(), enforce: false
     field :flags, [{:transactional, boolean()}]
     field :lsn, String.t()
     field :prefix, String.t()

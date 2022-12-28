@@ -19,8 +19,8 @@ defmodule PostgrexWal.Messages.Truncate do
   """
   use PostgrexWal.Message
 
-  typedstruct do
-    field :transaction_id, integer()
+  typedstruct enforce: true do
+    field :transaction_id, integer(), enforce: false
     field :number_of_relations, integer()
     field :options, [{:truncate, :cascade | :restart_identity}]
     field :relation_oids, list(integer)

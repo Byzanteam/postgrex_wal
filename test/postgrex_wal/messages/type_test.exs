@@ -23,7 +23,7 @@ defmodule PostgrexWal.Messages.TypeTest do
                type_name: "my_type",
                type_oid: 31_204
              },
-             PostgrexWal.Message.decode(?Y, {:in_transaction, <<123::32, @event>>})
+             PostgrexWal.Message.decode({:in_transaction, <<?Y, 123::32, @event>>})
            )
   end
 end

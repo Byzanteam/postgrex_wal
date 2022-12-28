@@ -19,8 +19,8 @@ defmodule PostgrexWal.Messages.Type do
   """
   use PostgrexWal.Message
 
-  typedstruct do
-    field :transaction_id, integer()
+  typedstruct enforce: true do
+    field :transaction_id, integer(), enforce: false
     field :type_oid, integer()
     field :namespace, String.t()
     field :type_name, String.t()

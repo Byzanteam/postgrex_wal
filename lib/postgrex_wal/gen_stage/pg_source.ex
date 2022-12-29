@@ -10,6 +10,7 @@ defmodule PostgrexWal.GenStage.PgSource do
   """
   use Postgrex.ReplicationConnection, restart: :permanent, shutdown: 10_000
   use TypedStruct
+  require Logger
 
   typedstruct enforce: true do
     field :publication_name, String.t()
@@ -41,6 +42,11 @@ defmodule PostgrexWal.GenStage.PgSource do
   end
 
   # api functions()
+
+  @spec stop(pid) :: :ok
+  def stop(pid) do
+    GenServer.stop(pid)
+  end
 
   @type lsn() :: integer() | String.t()
   @type server() :: atom() | pid()
@@ -145,10 +151,25 @@ defmodule PostgrexWal.GenStage.PgSource do
     {:noreply, message, state}
   end
 
+  def handle_data(data, state) do
+    Logger.error("handle_data/2 Unknown data: #{inspect(data)}")
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_result(_results, state) do
+    {:noreply, state}
+  end
+
   @impl true
   def handle_info({:ack, lsn}, state) do
     state = if lsn > state.final_lsn, do: struct(state, final_lsn: lsn), else: state
     {:noreply, ack_message(state.fina_lsn), state}
+  end
+
+  def handle_info(data, state) do
+    Logger.error("handle_info/2 Unknown data: #{inspect(data)}")
+    {:noreply, state}
   end
 
   defp ack_message(lsn) when is_integer(lsn) do

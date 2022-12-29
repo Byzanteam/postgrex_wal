@@ -35,7 +35,6 @@ defmodule PostgrexWal.MixProject do
   defp aliases do
     [
       cc: [
-        "format",
         "format --check-formatted",
         "credo --strict",
         "dialyzer --format github",

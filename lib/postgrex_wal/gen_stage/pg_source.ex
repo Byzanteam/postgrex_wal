@@ -171,7 +171,7 @@ defmodule PostgrexWal.GenStage.PgSource do
   @impl true
   def handle_info({:ack, lsn}, state) do
     state = if lsn > state.final_lsn, do: %{state | final_lsn: lsn}, else: state
-    {:noreply, ack_message(state.fina_lsn), state}
+    {:noreply, ack_message(state.final_lsn), state}
   end
 
   def handle_info(data, state) do

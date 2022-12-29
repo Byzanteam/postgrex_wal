@@ -2,7 +2,7 @@ defmodule PostgrexWal.GenStage.PgSource do
   @moduledoc ~S"""
   ## Sample:
   opts = [
-    source_name: :my_pg_source,
+    name: :my_pg_source,
     publication_name: "mypub1",
     slot_name: "myslot1"
     conn_opts: [host: "localhost", database: "r704_development", username: "jswk"]
@@ -12,16 +12,17 @@ defmodule PostgrexWal.GenStage.PgSource do
   use TypedStruct
   require Logger
 
+  @typep step() :: :disconnected | :streaming
   typedstruct enforce: true do
     field :publication_name, String.t()
     field :slot_name, String.t()
     field :final_lsn, integer(), default: 0
-    field :step, atom(), default: :disconnected
+    field :step, step(), default: :disconnected
   end
 
   @typep conn_opts() :: [{:host, String.t()}, {:database, String.t()}, {:username, String.t()}]
   @typep opts() :: [
-           {:source_name, String.t()},
+           {:name, String.t()},
            {:publication_name, String.t()},
            {:slot_name, String.t()},
            {:conn_opts, conn_opts()}
@@ -31,7 +32,7 @@ defmodule PostgrexWal.GenStage.PgSource do
     # Automatically reconnect if we lose connection.
     extra_opts = [
       auto_reconnect: true,
-      name: opts[:source_name]
+      name: opts[:name]
     ]
 
     Postgrex.ReplicationConnection.start_link(
@@ -43,14 +44,13 @@ defmodule PostgrexWal.GenStage.PgSource do
 
   # api functions()
 
-  @spec stop(pid) :: :ok
-  def stop(pid) do
-    GenServer.stop(pid)
+  @spec stop(GenServer.server()) :: :ok
+  def stop(server) do
+    GenServer.stop(server)
   end
 
   @type lsn() :: integer() | String.t()
-  @type server() :: atom() | pid()
-  @spec async_ack(server(), lsn()) :: {:ack, lsn()}
+  @spec async_ack(GenServer.server(), lsn()) :: {:ack, lsn()}
   def async_ack(server, lsn) when is_integer(lsn) do
     send(server, {:ack, lsn})
   end
@@ -77,7 +77,7 @@ defmodule PostgrexWal.GenStage.PgSource do
     query =
       "START_REPLICATION SLOT #{state.slot_name} LOGICAL 0/0 (proto_version '2', publication_names '#{state.publication_name}')"
 
-    {:stream, query, [], struct(state, step: :streaming)}
+    {:stream, query, [], %{state | step: :streaming}}
   end
 
   @doc """
@@ -163,7 +163,7 @@ defmodule PostgrexWal.GenStage.PgSource do
 
   @impl true
   def handle_info({:ack, lsn}, state) do
-    state = if lsn > state.final_lsn, do: struct(state, final_lsn: lsn), else: state
+    state = if lsn > state.final_lsn, do: %{state | final_lsn: lsn}, else: state
     {:noreply, ack_message(state.fina_lsn), state}
   end
 

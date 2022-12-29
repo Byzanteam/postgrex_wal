@@ -18,6 +18,14 @@ defmodule PostgrexWal.GenStage.PgSource do
     field :step, atom(), default: :disconnected
   end
 
+  @typep conn_opts() :: [{:host, String.t()}, {:database, String.t()}, {:username, String.t()}]
+  @typep opts() :: [
+           {:source_name, String.t()},
+           {:publication_name, String.t()},
+           {:slot_name, String.t()},
+           {:conn_opts, conn_opts()}
+         ]
+  @spec start_link(opts()) :: {:ok, pid()} | {:error, Postgrex.Error.t() | term()}
   def start_link(opts) do
     # Automatically reconnect if we lose connection.
     extra_opts = [
@@ -27,7 +35,7 @@ defmodule PostgrexWal.GenStage.PgSource do
 
     Postgrex.ReplicationConnection.start_link(
       __MODULE__,
-      struct(__MODULE__, Map.take(opts, [:publication_name, :slot_name])),
+      struct(__MODULE__, Keyword.take(opts, [:publication_name, :slot_name])),
       extra_opts ++ opts[:conn_opts]
     )
   end

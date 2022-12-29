@@ -1,59 +1,51 @@
 defmodule PostgrexWal.GenStage.PgSource do
   @moduledoc false
   use Postgrex.ReplicationConnection, restart: :permanent, shutdown: 10_000
-
-  def start_link(_pg_source_opts \\ []) do
+  #  opts = [
+  #    source_name: :my_pg_source,
+  #    publication_name: "mypub1",
+  #    slot_name: "myslot1"
+  #    conn_opts: [
+  #      host: "localhost",
+  #      database: "r704_development",
+  #      username: "jswk"
+  #    ]
+  #  ]
+  def start_link(opts) do
     # Automatically reconnect if we lose connection.
-
     extra_opts = [
       auto_reconnect: true,
-      name: __MODULE__
-    ]
-
-    pg_source_opts = [
-      # producer_name: :my_prod,
-      publication_name: "mypub1",
-      conn_opts: [
-        host: "localhost",
-        database: "r704_development",
-        username: "jswk"
-      ]
+      name: opts[:source_name]
     ]
 
     Postgrex.ReplicationConnection.start_link(
       __MODULE__,
-      pg_source_opts[:publication_name],
-      extra_opts ++ pg_source_opts[:conn_opts]
+      Map.take(opts, [:publication_name, :slot_name]),
+      extra_opts ++ opts[:conn_opts]
     )
   end
 
-  # functions()
+  # api functions()
 
-  @type wal() :: integer() | String.t()
-  @spec async_ack(wal()) :: {:ack, wal()}
-  def async_ack(wal) when is_integer(wal) do
-    send(__MODULE__, {:ack, wal})
+  @type lsn() :: integer() | String.t()
+  @type server() :: atom() | pid()
+  @spec async_ack(server(), lsn()) :: {:ack, lsn()}
+
+  def async_ack(server, lsn) when is_integer(lsn) do
+    send(server, {:ack, lsn})
   end
 
-  def async_ack(wal) when is_binary(wal) do
-    async_ack(encode_lsn(wal))
-  end
-
-  @spec encode_lsn(lsn :: String.t()) :: integer
-  defp encode_lsn(lsn) when is_binary(lsn) do
-    [xlog_file_id, xlog_offset] = String.split(lsn, "/", trim: true)
-
-    <<lsn::64>> =
-      <<String.to_integer(xlog_file_id, 16)::32, String.to_integer(xlog_offset, 16)::32>>
-
-    lsn
+  def async_ack(server, lsn) when is_binary(lsn) do
+    {:ok, lsn} = Postgrex.ReplicationConnection.decode_lsn(lsn)
+    async_ack(server, lsn)
   end
 
   # callbacks()
 
   @impl true
-  def init(pub_name) do
-    {:ok, %{step: :disconnected, pub_name: pub_name, in_transaction: false, wal: 0}}
+  def init(init_opts) do
+    state = Map.merge(init_opts, %{step: :disconnected, final_lsn: 0})
+    {:ok, state}
   end
 
   @doc """
@@ -64,27 +56,10 @@ defmodule PostgrexWal.GenStage.PgSource do
   @impl true
   def handle_connect(state) do
     query =
-      "START_REPLICATION SLOT myslot1 LOGICAL 0/0 (proto_version '2', publication_names '#{state.pub_name}')"
+      "START_REPLICATION SLOT #{state.slot_name} LOGICAL 0/0 (proto_version '2', publication_names '#{state.publication_name}')"
 
     {:stream, query, [], %{state | step: :streaming}}
   end
-
-  #  @doc """
-  #  Logical Streaming Replication Protocol
-  #  https://www.postgresql.org/docs/15/protocol-logical-replication.html
-  #
-  #  Protocol version. Currently versions 1, 2, and 3 are supported.
-  #  Version 2 is supported only for server version 14 and above, and it allows streaming of large in-progress
-  # transactions.
-  #  Version 3 is supported only for server version 15 and above, and it allows streaming of two-phase commits.
-  #  """
-  #  @impl true
-  #  def handle_result(results, %{step: :create_slot} = state) when is_list(results) do
-  #    query =
-  #      "START_REPLICATION SLOT postgrex LOGICAL 0/0 (proto_version '2', publication_names '#{state.pub_name}')"
-  #
-  #    {:stream, query, [], %{state | step: :streaming}}
-  #  end
 
   @doc """
   XLogData (B)
@@ -141,55 +116,16 @@ defmodule PostgrexWal.GenStage.PgSource do
   If 1, the client requests the server to reply to this message immediately. This can be used to ping the server, to test if the connection is still healthy.
   """
 
-  @modules %{
-    ?A => StreamAbort,
-    ?B => Begin,
-    ?C => Commit,
-    ?D => Delete,
-    ?E => StreamStop,
-    ?I => Insert,
-    ?M => Message,
-    ?O => Origin,
-    ?R => Relation,
-    ?S => StreamStart,
-    ?T => Truncate,
-    ?U => Update,
-    ?Y => Type,
-    ?c => StreamCommit
-  }
-
   @impl true
   def handle_data(<<?w, _wal_start::64, _wal_end::64, _clock::64, payload::binary>>, state) do
-    <<key::8, _rest::binary>> = payload
-
-    state =
-      case key do
-        ?S -> %{state | in_transaction: true}
-        v when v in [?E, ?c, ?A] -> %{state | in_transaction: false}
-        _ -> state
-      end
-
-    event =
-      if key in [?I, ?D, ?M, ?R, ?T, ?Y, ?U] and state[:in_transaction] do
-        {:in_transaction, payload}
-      else
-        payload
-      end
-
-    IO.puts("message: #{@modules[key]}")
-    event |> PostgrexWal.Message.decode() |> IO.puts()
-
-    # IO.inspect(@modules[key], label: "message")
-    # event |> IO.inspect(limit: :infinity) |> PostgrexWal.Message.decode() |> IO.inspect()
-
-    # PostgrexWal.GenStage.PgSourceRelayer.async_notify(rest)
+    IO.puts(payload)
     {:noreply, state}
   end
 
   def handle_data(<<?k, _wal_end::64, _clock::64, reply>>, state) do
     messages =
       case reply do
-        1 -> ack_messages(state[:wal])
+        1 -> ack_messages(state[:final_lsn])
         0 -> []
       end
 
@@ -197,13 +133,13 @@ defmodule PostgrexWal.GenStage.PgSource do
   end
 
   @impl true
-  def handle_info({:ack, wal}, state) do
-    state = (wal > state[:wal] && %{state | wal: wal}) || state
-    {:noreply, ack_messages(state[:wal]), state}
+  def handle_info({:ack, lsn}, state) do
+    state = if lsn > state[:final_lsn], do: %{state | final_lsn: lsn}, else: state
+    {:noreply, ack_messages(state[:fina_lsn]), state}
   end
 
-  defp ack_messages(wal) when is_integer(wal) do
-    [<<?r, wal + 1::64, wal + 1::64, wal + 1::64, current_time()::64, 0>>]
+  defp ack_messages(lsn) when is_integer(lsn) do
+    [<<?r, lsn + 1::64, lsn + 1::64, lsn + 1::64, current_time()::64, 0>>]
   end
 
   @epoch DateTime.to_unix(~U[2000-01-01 00:00:00Z], :microsecond)

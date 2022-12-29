@@ -14,15 +14,16 @@ defmodule PostgrexWal.GenStage.PgSource do
   end
 
   @doc ~S"""
-  ## Sample（requied fields）
-  opts = [
-    name: :my_pg_source,
-    publication_name: "mypub1",
-    slot_name: "myslot1"
-    host: "localhost",
-    database: "r704_development",
-    username: "jswk"
-  ]
+  ## Sample (name field is optional)
+
+   opts = [
+     name: :my_pg_source,
+     publication_name: "mypub1",
+     slot_name: "myslot1",
+     host: "localhost",
+     database: "r704_development",
+     username: "jswk"
+   ]
   """
 
   @typep opts() :: [

@@ -1,13 +1,6 @@
 defmodule PostgrexWal.GenStage.PgSource do
-  @moduledoc ~S"""
-  ## Sample:
-  opts = [
-    name: :my_pg_source,
-    publication_name: "mypub1",
-    slot_name: "myslot1"
-    conn_opts: [host: "localhost", database: "r704_development", username: "jswk"]
-  ]
-  """
+  @moduledoc false
+
   use Postgrex.ReplicationConnection, restart: :permanent, shutdown: 10_000
   use TypedStruct
   require Logger
@@ -20,25 +13,43 @@ defmodule PostgrexWal.GenStage.PgSource do
     field :step, step(), default: :disconnected
   end
 
-  @typep conn_opts() :: [{:host, String.t()}, {:database, String.t()}, {:username, String.t()}]
+  @doc ~S"""
+  ## Sample:
+  opts = [
+    name: :my_pg_source,
+    publication_name: "mypub1",
+    slot_name: "myslot1"
+    host: "localhost",
+    database: "r704_development",
+    username: "jswk"
+  ]
+  """
+
   @typep opts() :: [
            {:name, String.t()},
            {:publication_name, String.t()},
            {:slot_name, String.t()},
-           {:conn_opts, conn_opts()}
+           {:host, String.t()},
+           {:database, String.t()},
+           {:username, String.t()}
          ]
   @spec start_link(opts()) :: {:ok, pid()} | {:error, Postgrex.Error.t() | term()}
   def start_link(opts) do
     # Automatically reconnect if we lose connection.
+    {name, opts} = Keyword.pop!(opts, :name)
+
     extra_opts = [
       auto_reconnect: true,
-      name: opts[:name]
+      name: name
     ]
+
+    {publication_name, opts} = Keyword.pop!(opts, :publication_name)
+    {slot_name, opts} = Keyword.pop!(opts, :slot_name)
 
     Postgrex.ReplicationConnection.start_link(
       __MODULE__,
-      struct(__MODULE__, Keyword.take(opts, [:publication_name, :slot_name])),
-      extra_opts ++ opts[:conn_opts]
+      struct(__MODULE__, publication_name: publication_name, slot_name: slot_name),
+      extra_opts ++ opts
     )
   end
 

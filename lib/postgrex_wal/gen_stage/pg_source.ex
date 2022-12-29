@@ -14,7 +14,7 @@ defmodule PostgrexWal.GenStage.PgSource do
   end
 
   @doc ~S"""
-  ## Sample:
+  ## Sample（requied fields）
   opts = [
     name: :my_pg_source,
     publication_name: "mypub1",
@@ -26,7 +26,7 @@ defmodule PostgrexWal.GenStage.PgSource do
   """
 
   @typep opts() :: [
-           {:name, String.t()},
+           {:name, GenServer.name()},
            {:publication_name, String.t()},
            {:slot_name, String.t()},
            {:host, String.t()},
@@ -36,12 +36,8 @@ defmodule PostgrexWal.GenStage.PgSource do
   @spec start_link(opts()) :: {:ok, pid()} | {:error, Postgrex.Error.t() | term()}
   def start_link(opts) do
     # Automatically reconnect if we lose connection.
-    {name, opts} = Keyword.pop!(opts, :name)
-
-    extra_opts = [
-      auto_reconnect: true,
-      name: name
-    ]
+    {name_opts, opts} = Keyword.split(opts, [:name])
+    extra_opts = [auto_reconnect: true]
 
     {publication_name, opts} = Keyword.pop!(opts, :publication_name)
     {slot_name, opts} = Keyword.pop!(opts, :slot_name)
@@ -49,7 +45,7 @@ defmodule PostgrexWal.GenStage.PgSource do
     Postgrex.ReplicationConnection.start_link(
       __MODULE__,
       struct(__MODULE__, publication_name: publication_name, slot_name: slot_name),
-      extra_opts ++ opts
+      extra_opts ++ name_opts ++ opts
     )
   end
 

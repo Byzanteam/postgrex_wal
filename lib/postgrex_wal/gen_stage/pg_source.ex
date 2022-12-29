@@ -56,12 +56,12 @@ defmodule PostgrexWal.GenStage.PgSource do
     GenServer.stop(server)
   end
 
-  @type lsn() :: integer() | String.t()
-  @spec async_ack(GenServer.server(), lsn()) :: {:ack, lsn()}
+  @spec async_ack(GenServer.server(), integer) :: {:ack, integer}
   def async_ack(server, lsn) when is_integer(lsn) do
     send(server, {:ack, lsn})
   end
 
+  @spec async_ack(GenServer.server(), String.t()) :: {:ack, integer}
   def async_ack(server, lsn) when is_binary(lsn) do
     {:ok, lsn} = Postgrex.ReplicationConnection.decode_lsn(lsn)
     async_ack(server, lsn)

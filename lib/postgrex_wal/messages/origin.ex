@@ -1,5 +1,20 @@
 defmodule PostgrexWal.Messages.Origin do
   @moduledoc """
+  Every sent transaction contains zero or more DML messages (Insert, Update, Delete).
+  In case of a cascaded setup it can also contain Origin messages.
+  The origin message indicates that the transaction originated on different replication node.
+  Since a replication node in the scope of logical replication protocol can be pretty much anything, the only identifier is the origin name.
+  It's downstream's responsibility to handle this as needed (if needed). The Origin message is always sent before any DML messages in the transaction.
+  """
+
+  use PostgrexWal.Message
+
+  typedstruct enforce: true do
+    field :commit_lsn, String.t()
+    field :name, String.t()
+  end
+
+  @doc """
   A Origin message
 
   Byte1('O')
@@ -13,14 +28,6 @@ defmodule PostgrexWal.Messages.Origin do
 
   Note that there can be multiple Origin messages inside a single transaction.
   """
-
-  use PostgrexWal.Message
-
-  typedstruct enforce: true do
-    field :commit_lsn, String.t()
-    field :name, String.t()
-  end
-
   @impl true
   def decode(<<lsn::64, name::binary>>) do
     %__MODULE__{

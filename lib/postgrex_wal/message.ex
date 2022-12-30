@@ -42,6 +42,13 @@ defmodule PostgrexWal.Message do
     Update
   }
 
+  @doc """
+  The logical replication protocol sends individual transactions one by one.
+  This means that all messages between a pair of Begin and Commit messages belong to the same transaction.
+  It also sends changes of large in-progress transactions between a pair of Stream Start and Stream Stop messages.
+  The last stream of such a transaction contains Stream Commit or Stream Abort message.
+  """
+
   @modules %{
     ?A => StreamAbort,
     ?B => Begin,

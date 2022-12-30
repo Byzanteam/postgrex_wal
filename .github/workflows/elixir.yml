@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - id: prepare 
+      - id: prepare
         uses: ./.github/workflows/prepare-ci
 
       - name: Install Dependencies
@@ -30,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - id: prepare 
+      - id: prepare
         uses: ./.github/workflows/prepare-ci
 
       - name: Check formatting
@@ -41,16 +41,40 @@ jobs:
   test:
     runs-on: ubuntu-latest
     needs: mix
+    services:
+      pg:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+        volumes:
+          - /var/run/postgresql:/var/run/postgresql
 
     steps:
       - uses: actions/checkout@v3
 
-      - id: prepare 
+      - id: prepare
         uses: ./.github/workflows/prepare-ci
 
+      - name: "Set PG settings"
+        run: |
+          docker exec ${{ job.services.postgres.id }} sh -c 'echo "wal_level=logical" >> /var/lib/postgresql/data/postgresql.conf'
+          docker restart ${{ job.services.pg.id }}
 
       - name: Test
         run: mix test
+        env:
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PG_SOCKET_DIR: /var/run/postgresql
 
   credo:
     runs-on: ubuntu-latest
@@ -58,7 +82,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - id: prepare 
+      - id: prepare
         uses: ./.github/workflows/prepare-ci
 
       - name: Credo
@@ -70,7 +94,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - id: prepare 
+      - id: prepare
         uses: ./.github/workflows/prepare-ci
 
       - uses: actions/cache@v3

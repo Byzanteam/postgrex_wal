@@ -1,21 +1,27 @@
-defmodule PostgrexWal.GenStage.PgSource do
+defmodule PostgrexWal.PgSource do
   @moduledoc false
 
-  use Postgrex.ReplicationConnection, restart: :permanent, shutdown: 10_000
+  alias Postgrex, as: P
+  alias Postgrex.ReplicationConnection, as: PR
+
+  use PR, restart: :permanent, shutdown: 10_000
   use TypedStruct
   require Logger
 
   @typep step() :: :disconnected | :streaming
+  @typep queue(type) :: :queue.queue(type)
   typedstruct enforce: true do
     field :publication_name, String.t()
     field :slot_name, String.t()
     field :final_lsn, integer(), default: 0
     field :step, step(), default: :disconnected
+    field :subscribers, MapSet.t(pid), default: MapSet.new()
+    field :queue, queue(struct()), default: :queue.new()
+    field :size, integer, default: 0
   end
 
   @doc ~S"""
-  ## Sample (name field is optional)
-
+  ## 调用参数示例
    opts = [
      name: :my_pg_source,
      publication_name: "mypub1",
@@ -34,41 +40,29 @@ defmodule PostgrexWal.GenStage.PgSource do
            {:database, String.t()},
            {:username, String.t()}
          ]
-  @spec start_link(opts()) :: {:ok, pid()} | {:error, Postgrex.Error.t() | term()}
+  @spec start_link(opts()) :: {:ok, pid()} | {:error, P.Error.t() | term()}
   def start_link(opts) do
-    # Automatically reconnect if we lose connection.
-    {name_opts, opts} = Keyword.split(opts, [:name])
-    extra_opts = [auto_reconnect: true]
+    {init_opts, opts} = Keyword.split(opts, [:publication_name, :slot_name])
 
-    {publication_name, opts} = Keyword.pop!(opts, :publication_name)
-    {slot_name, opts} = Keyword.pop!(opts, :slot_name)
-
-    Postgrex.ReplicationConnection.start_link(
+    PR.start_link(
       __MODULE__,
-      struct(__MODULE__, publication_name: publication_name, slot_name: slot_name),
-      extra_opts ++ name_opts ++ opts
+      struct(__MODULE__, init_opts),
+      opts ++ [auto_reconnect: true]
     )
   end
 
-  # api functions()
-
-  @spec stop(GenServer.server()) :: :ok
-  def stop(server) do
-    GenServer.stop(server)
-  end
-
-  @spec async_ack(GenServer.server(), integer) :: {:ack, integer}
-  def async_ack(server, lsn) when is_integer(lsn) do
+  @spec ack(PR.server(), String.t()) :: {:ack, integer}
+  def ack(server, lsn) when is_binary(lsn) do
+    {:ok, lsn} = PR.decode_lsn(lsn)
     send(server, {:ack, lsn})
   end
 
-  @spec async_ack(GenServer.server(), String.t()) :: {:ack, integer}
-  def async_ack(server, lsn) when is_binary(lsn) do
-    {:ok, lsn} = Postgrex.ReplicationConnection.decode_lsn(lsn)
-    async_ack(server, lsn)
+  @spec subscribe(PR.server()) :: {:subscribe, pid()}
+  def subscribe(server) do
+    send(server, {:subscribe, self()})
   end
 
-  # callbacks()
+  # Callbacks
 
   @impl true
   def init(state) do
@@ -82,10 +76,12 @@ defmodule PostgrexWal.GenStage.PgSource do
   """
   @impl true
   def handle_connect(state) do
-    query =
-      "START_REPLICATION SLOT #{state.slot_name} LOGICAL 0/0 (proto_version '2', publication_names '#{state.publication_name}')"
-
-    {:stream, query, [], %{state | step: :streaming}}
+    {
+      :stream,
+      "START_REPLICATION SLOT #{state.slot_name} LOGICAL 0/0 (proto_version '2', publication_names '#{state.publication_name}')",
+      [max_messages: 500],
+      %{state | step: :streaming}
+    }
   end
 
   @doc """
@@ -145,43 +141,62 @@ defmodule PostgrexWal.GenStage.PgSource do
 
   @impl true
   def handle_data(<<?w, _wal_start::64, _wal_end::64, _clock::64, payload::binary>>, state) do
-    IO.puts(payload)
-    {:noreply, state}
+    state = %{state | queue: :queue.in(payload, state.queue), size: state.size + 1}
+
+    # Behaviour maybe changed when introduce Broadway.
+    if MapSet.size(state.subscribers) > 0 do
+      events = :queue.to_list(state.queue)
+      for s <- state.subscribers, do: send(s, {:events, events})
+      {:noreply, %{state | queue: :queue.new(), size: 0}}
+    else
+      {:noreply, state}
+    end
   end
 
   def handle_data(<<?k, _wal_end::64, _clock::64, reply>>, state) do
-    message =
+    messages =
       case reply do
-        1 -> ack_message(state.final_lsn)
+        1 -> [ack_message(state.final_lsn)]
         0 -> []
       end
 
-    {:noreply, message, state}
+    {:noreply, messages, state}
   end
 
   def handle_data(data, state) do
-    Logger.error("handle_data/2 Unknown data: #{inspect(data)}")
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_result(_results, state) do
+    Logger.warning("handle_data/2 unknown data: #{inspect(data)}")
     {:noreply, state}
   end
 
   @impl true
   def handle_info({:ack, lsn}, state) do
     state = if lsn > state.final_lsn, do: %{state | final_lsn: lsn}, else: state
-    {:noreply, ack_message(state.final_lsn), state}
+    {:noreply, [ack_message(state.final_lsn)], state}
+  end
+
+  def handle_info({:subscribe, pid}, state) do
+    Process.monitor(pid)
+
+    {
+      :noreply,
+      %{state | subscribers: state.subscribers |> MapSet.put(pid)}
+    }
+  end
+
+  def handle_info({:DOWN, _ref, :process, pid, _reason}, state) do
+    {
+      :noreply,
+      %{state | subscribers: state.subscribers |> MapSet.delete(pid)}
+    }
   end
 
   def handle_info(data, state) do
-    Logger.error("handle_info/2 Unknown data: #{inspect(data)}")
+    Logger.warning("handle_info/2 unknown data: #{inspect(data)}")
     {:noreply, state}
   end
 
   defp ack_message(lsn) when is_integer(lsn) do
-    [<<?r, lsn + 1::64, lsn + 1::64, lsn + 1::64, current_time()::64, 0>>]
+    <<?r, lsn + 1::64, lsn + 1::64, lsn + 1::64, current_time()::64, 0>>
   end
 
   @epoch DateTime.to_unix(~U[2000-01-01 00:00:00Z], :microsecond)

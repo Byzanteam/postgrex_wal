@@ -71,6 +71,8 @@ defmodule PgSourceTest do
   end
 
   test "still receive un-acked message", context do
+    PSQL.cmd("INSERT INTO users (a, b) VALUES (5, 'five');")
+
     assert_receive [
       %Begin{},
       %Insert{tuple_data: [text: "3", text: "three"]},
@@ -82,6 +84,14 @@ defmodule PgSourceTest do
     assert_receive [
       %Begin{},
       %Insert{tuple_data: [text: "4", text: "four"]},
+      %Commit{end_lsn: lsn}
+    ]
+
+    PgSource.ack(context[:source], lsn)
+
+    assert_receive [
+      %Begin{},
+      %Insert{tuple_data: [text: "5", text: "five"]},
       %Commit{end_lsn: lsn}
     ]
 

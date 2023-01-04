@@ -2,7 +2,6 @@ defmodule PgSourceTest do
   use ExUnit.Case, async: true
   alias PostgrexWal.{PgSource, PgSourceRelayer, PSQL}
   alias PostgrexWal.Messages.{Begin, Commit, Insert}
-  alias PostgrexWal.Messages.Insert
 
   @opts [
     name: :my_pg_source,

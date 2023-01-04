@@ -9,12 +9,6 @@ defmodule PostgrexWal.PgSourceRelayer do
     field :buf, list(), default: []
   end
 
-  @doc """
-  opts = [
-   pg_source: PostgrexWal.PgSource,
-   receiver: Tester,
-  ]
-  """
   @spec start_link(opts :: {GenServer.server(), pid()}) :: GenServer.on_start()
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)

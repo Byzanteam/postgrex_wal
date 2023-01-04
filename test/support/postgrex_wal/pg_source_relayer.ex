@@ -30,29 +30,22 @@ defmodule PostgrexWal.PgSourceRelayer do
 
   @impl true
   def handle_info({:events, events}, state) do
-    buf = do_decode(events, state.receiver, state.buf)
+    buf =
+      for e <- events,
+          m = PostgrexWal.Message.decode(e),
+          !is_struct(m, PostgrexWal.Messages.Relation),
+          reduce: state.buf do
+        acc ->
+          acc = [m | acc]
+
+          if is_struct(m, PostgrexWal.Messages.Commit) do
+            send(state.receiver, Enum.reverse(acc))
+            []
+          else
+            acc
+          end
+      end
+
     {:noreply, %{state | buf: buf}}
-  end
-
-  def do_decode([], _receiver, buf), do: buf
-
-  def do_decode([event | rest], receiver, buf) do
-    msg = PostgrexWal.Message.decode(event)
-
-    if is_struct(msg, PostgrexWal.Messages.Relation) do
-      do_decode(rest, receiver, buf)
-    else
-      buf = [msg | buf]
-
-      buf =
-        if is_struct(msg, PostgrexWal.Messages.Commit) do
-          send(receiver, Enum.reverse(buf))
-          []
-        else
-          buf
-        end
-
-      do_decode(rest, receiver, buf)
-    end
   end
 end

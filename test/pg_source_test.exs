@@ -4,29 +4,18 @@ defmodule PgSourceTest do
   alias PostgrexWal.Messages.{Begin, Commit, Insert}
   alias PostgrexWal.Messages.Insert
 
-  @pg_srouce_opts [
+  @opts [
     name: :my_pg_source,
     publication_name: "mypub5",
-    slot_name: "myslot5"
-  ]
-
-  @pg_conn_opts [
+    slot_name: "myslot5",
     database: "postgres",
     username: "postgres"
   ]
 
   setup do
     [
-      source:
-        start_supervised!(
-          {PgSource, @pg_srouce_opts ++ @pg_conn_opts},
-          id: :source
-        ),
-      relayer:
-        start_supervised!(
-          {PgSourceRelayer, {:my_pg_source, self()}},
-          id: :relayer
-        )
+      source: start_supervised!({PgSource, @opts}),
+      relayer: start_supervised!({PgSourceRelayer, {@opts[:name], self()}})
     ]
   end
 

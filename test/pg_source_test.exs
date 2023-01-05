@@ -75,7 +75,7 @@ defmodule PgSourceTest do
 
     PgSource.ack(context.opts[:name], lsn)
 
-    # "should not receive any already acked messages"
+    # should not receive any already acked messages
     restart_repl!(context)
 
     refute_receive [
@@ -84,7 +84,7 @@ defmodule PgSourceTest do
       %Commit{}
     ]
 
-    # "without ack"
+    # without ack
     restart_repl!(context)
     PSQL.cmd("INSERT INTO #{context.table_name} (a, b) VALUES (3, 'three');")
 
@@ -102,7 +102,7 @@ defmodule PgSourceTest do
       %Commit{}
     ]
 
-    # "still can receive un-acked message"
+    # still can receive un-acked message
     restart_repl!(context)
     PSQL.cmd("INSERT INTO #{context.table_name} (a, b) VALUES (5, 'five');")
 
@@ -147,7 +147,7 @@ defmodule PgSourceTest do
     PgSource.ack(context.opts[:name], lsn)
 
     restart_repl!(context)
-    # "due to all acked, should not receive anymore" d
+    # due to all acked, should not receive anymore
     refute_receive [
       %Begin{},
       %Insert{},

@@ -4,11 +4,6 @@ defmodule PostgrexWal.PgSourceRelayer do
   use TypedStruct
   require Logger
 
-  typedstruct do
-    field :receiver, pid()
-    field :buf, list(), default: []
-  end
-
   @spec start_link(opts :: {GenServer.server(), pid()}) :: GenServer.on_start()
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
@@ -19,27 +14,27 @@ defmodule PostgrexWal.PgSourceRelayer do
   @impl true
   def init({pg_source, receiver}) do
     PostgrexWal.PgSource.subscribe(pg_source)
-    {:ok, %__MODULE__{receiver: receiver}}
+    {:ok, {receiver, []}}
   end
 
   @impl true
-  def handle_info({:events, events}, state) do
+  def handle_info({:events, events}, {receiver, buf}) do
     buf =
       for e <- events,
           m = PostgrexWal.Message.decode(e),
           !is_struct(m, PostgrexWal.Messages.Relation),
-          reduce: state.buf do
+          reduce: buf do
         acc ->
           acc = [m | acc]
 
           if is_struct(m, PostgrexWal.Messages.Commit) do
-            send(state.receiver, Enum.reverse(acc))
+            send(receiver, Enum.reverse(acc))
             []
           else
             acc
           end
       end
 
-    {:noreply, %{state | buf: buf}}
+    {:noreply, {receiver, buf}}
   end
 end

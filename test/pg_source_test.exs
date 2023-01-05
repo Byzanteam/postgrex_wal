@@ -37,24 +37,24 @@ defmodule PgSourceTest do
     ]
   end
 
-  defp start_repl(context) do
+  defp start_repl!(context) do
     start_supervised!({PgSource, context.opts})
     start_supervised!({PgSourceRelayer, {context.opts[:name], self()}})
   end
 
-  defp stop_repl do
+  defp stop_repl! do
     stop_supervised!(PgSource)
     stop_supervised!(PgSourceRelayer)
   end
 
-  defp restart_repl(context) do
-    stop_repl()
-    start_repl(context)
+  defp restart_repl!(context) do
+    stop_repl!()
+    start_repl!(context)
   end
 
   test "pg logical replication ack test", context do
     # shold receive replication events (with consume ack)
-    start_repl(context)
+    start_repl!(context)
     PSQL.cmd("INSERT INTO #{context.table_name} (a, b) VALUES (1, 'one');")
 
     assert_receive [
@@ -76,7 +76,7 @@ defmodule PgSourceTest do
     PgSource.ack(context.opts[:name], lsn)
 
     # "should not receive any already acked messages"
-    restart_repl(context)
+    restart_repl!(context)
 
     refute_receive [
       %Begin{},
@@ -85,7 +85,7 @@ defmodule PgSourceTest do
     ]
 
     # "without ack"
-    restart_repl(context)
+    restart_repl!(context)
     PSQL.cmd("INSERT INTO #{context.table_name} (a, b) VALUES (3, 'three');")
 
     assert_receive [
@@ -103,7 +103,7 @@ defmodule PgSourceTest do
     ]
 
     # "still can receive un-acked message"
-    restart_repl(context)
+    restart_repl!(context)
     PSQL.cmd("INSERT INTO #{context.table_name} (a, b) VALUES (5, 'five');")
 
     # acked message should not received again
@@ -146,7 +146,7 @@ defmodule PgSourceTest do
 
     PgSource.ack(context.opts[:name], lsn)
 
-    restart_repl(context)
+    restart_repl!(context)
     # "due to all acked, should not receive anymore" d
     refute_receive [
       %Begin{},
@@ -154,6 +154,6 @@ defmodule PgSourceTest do
       %Commit{}
     ]
 
-    stop_repl()
+    stop_repl!()
   end
 end

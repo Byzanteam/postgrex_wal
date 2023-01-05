@@ -51,10 +51,14 @@ defmodule PostgrexWal.PgSource do
     )
   end
 
-  @spec ack(PR.server(), String.t()) :: {:ack, integer}
+  @spec async_ack(PR.server(), String.t()) :: {:async_ack, integer}
+  def async_ack(server, lsn) when is_binary(lsn) do
+    send(server, {:async_ack, lsn})
+  end
+
+  @spec ack(PR.server(), String.t()) :: :ok
   def ack(server, lsn) when is_binary(lsn) do
-    {:ok, lsn} = PR.decode_lsn(lsn)
-    send(server, {:ack, lsn})
+    PR.call(server, {:ack, lsn})
   end
 
   @spec subscribe(PR.server()) :: {:subscribe, pid()}
@@ -142,7 +146,6 @@ defmodule PostgrexWal.PgSource do
   @impl true
   def handle_data(<<?w, _wal_start::64, _wal_end::64, _clock::64, payload::binary>>, state) do
     state = %{state | queue: :queue.in(payload, state.queue), size: state.size + 1}
-
     # Behaviour maybe changed when introduce Broadway.
     if MapSet.size(state.subscribers) > 0 do
       events = :queue.to_list(state.queue)
@@ -169,7 +172,14 @@ defmodule PostgrexWal.PgSource do
   end
 
   @impl true
-  def handle_info({:ack, lsn}, state) do
+  def handle_call({:ack, lsn}, from, state) when is_binary(lsn) do
+    PR.reply(from, :ok)
+    handle_info({:async_ack, lsn}, state)
+  end
+
+  @impl true
+  def handle_info({:async_ack, lsn}, state) when is_binary(lsn) do
+    {:ok, lsn} = PR.decode_lsn(lsn)
     state = if lsn > state.final_lsn, do: %{state | final_lsn: lsn}, else: state
     {:noreply, [ack_message(state.final_lsn)], state}
   end

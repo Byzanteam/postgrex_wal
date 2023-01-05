@@ -9,15 +9,13 @@ defmodule PostgrexWal.PgSource do
   require Logger
 
   @typep step() :: :disconnected | :streaming
-  @typep queue(type) :: :queue.queue(type)
   typedstruct enforce: true do
     field :publication_name, String.t()
     field :slot_name, String.t()
     field :final_lsn, integer(), default: 0
     field :step, step(), default: :disconnected
-    field :subscribers, MapSet.t(pid), default: MapSet.new()
-    field :queue, queue(struct()), default: :queue.new()
-    field :size, integer, default: 0
+    field :subscriber, pid(), default: nil
+    field :events, list(), default: []
   end
 
   @doc ~S"""
@@ -61,9 +59,9 @@ defmodule PostgrexWal.PgSource do
     PR.call(server, {:ack, lsn})
   end
 
-  @spec subscribe(PR.server()) :: {:subscribe, pid()}
+  @spec subscribe(PR.server()) :: :ok
   def subscribe(server) do
-    send(server, {:subscribe, self()})
+    PR.call(server, :subscribe)
   end
 
   # Callbacks
@@ -145,12 +143,11 @@ defmodule PostgrexWal.PgSource do
 
   @impl true
   def handle_data(<<?w, _wal_start::64, _wal_end::64, _clock::64, payload::binary>>, state) do
-    state = %{state | queue: :queue.in(payload, state.queue), size: state.size + 1}
+    state = %{state | events: [payload | state.events]}
     # Behaviour maybe changed when introduce Broadway.
-    if MapSet.size(state.subscribers) > 0 do
-      events = :queue.to_list(state.queue)
-      for s <- state.subscribers, do: send(s, {:events, events})
-      {:noreply, %{state | queue: :queue.new(), size: 0}}
+    if state.subscriber do
+      send(state.subscriber, {:events, Enum.reverse(state.events)})
+      {:noreply, %{state | events: []}}
     else
       {:noreply, state}
     end
@@ -172,6 +169,14 @@ defmodule PostgrexWal.PgSource do
   end
 
   @impl true
+  def handle_call(:subscribe, from, state) do
+    {pid, _} = from
+    Process.monitor(pid)
+    PR.reply(from, :ok)
+    # allow pid override
+    {:noreply, %{state | subscriber: pid}}
+  end
+
   def handle_call({:ack, lsn}, from, state) when is_binary(lsn) do
     PR.reply(from, :ok)
     handle_info({:async_ack, lsn}, state)
@@ -184,20 +189,9 @@ defmodule PostgrexWal.PgSource do
     {:noreply, [ack_message(state.final_lsn)], state}
   end
 
-  def handle_info({:subscribe, pid}, state) do
-    Process.monitor(pid)
-
-    {
-      :noreply,
-      %{state | subscribers: state.subscribers |> MapSet.put(pid)}
-    }
-  end
-
   def handle_info({:DOWN, _ref, :process, pid, _reason}, state) do
-    {
-      :noreply,
-      %{state | subscribers: state.subscribers |> MapSet.delete(pid)}
-    }
+    s = if pid == state.subscriber, do: nil, else: state.subscriber
+    {:noreply, %{state | subscriber: s}}
   end
 
   def handle_info(data, state) do

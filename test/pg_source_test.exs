@@ -28,7 +28,7 @@ defmodule PgSourceTest do
     [
       table_name: table_name,
       opts: [
-        name: :my_pg_source,
+        name: :"pg_source_#{n}",
         publication_name: publication_name,
         slot_name: slot_name,
         database: "postgres",

@@ -177,13 +177,13 @@ defmodule PostgrexWal.PgSource do
     {:noreply, %{state | subscriber: pid}}
   end
 
-  def handle_call({:ack, lsn}, from, state) when is_binary(lsn) do
+  def handle_call({:ack, lsn}, from, state) do
     PR.reply(from, :ok)
     handle_info({:async_ack, lsn}, state)
   end
 
   @impl true
-  def handle_info({:async_ack, lsn}, state) when is_binary(lsn) do
+  def handle_info({:async_ack, lsn}, state) do
     {:ok, lsn} = PR.decode_lsn(lsn)
     state = if lsn > state.final_lsn, do: %{state | final_lsn: lsn}, else: state
     {:noreply, [ack_message(state.final_lsn)], state}

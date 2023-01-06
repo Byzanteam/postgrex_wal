@@ -3,8 +3,8 @@ defmodule PgSourceTest do
   alias PostgrexWal.{PgSource, PgSourceRelayer, PSQL}
   alias PostgrexWal.Messages.{Begin, Commit, Insert}
 
-  setup_all do
-    n = :rand.uniform(100_000)
+  setup_all context do
+    n = :erlang.phash2(context.module)
     slot_name = "slot_#{n}"
     publication_name = "publication_#{n}"
     table_name = "table_#{n}"

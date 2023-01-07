@@ -10,7 +10,7 @@ defmodule PgSourceTest do
     table_name = "table_#{n}"
 
     PSQL.cmd("SELECT pg_create_logical_replication_slot('#{slot_name}', 'pgoutput');")
-    PSQL.cmd("CREATE PUBLICATION #{publication_name} FOR all tables;")
+    PSQL.cmd("CREATE PUBLICATION #{publication_name} FOR ALL TABLES;")
 
     sql_test = """
     CREATE TABLE IF NOT EXISTS #{table_name} (a int, b text);

@@ -179,14 +179,12 @@ defmodule PostgrexWal.PgSource do
 
   def handle_call({:ack, lsn}, from, state) do
     PR.reply(from, :ok)
-    handle_info({:async_ack, lsn}, state)
+    pg_ack(lsn, state)
   end
 
   @impl true
   def handle_info({:async_ack, lsn}, state) do
-    {:ok, lsn} = PR.decode_lsn(lsn)
-    state = if lsn > state.final_lsn, do: %{state | final_lsn: lsn}, else: state
-    {:noreply, [ack_message(state.final_lsn)], state}
+    pg_ack(lsn, state)
   end
 
   def handle_info({:DOWN, _ref, :process, pid, _reason}, state) do
@@ -197,6 +195,12 @@ defmodule PostgrexWal.PgSource do
   def handle_info(data, state) do
     Logger.warning("handle_info/2 unknown data: #{inspect(data)}")
     {:noreply, state}
+  end
+
+  defp pg_ack(lsn, state) when is_binary(lsn) do
+    {:ok, lsn} = PR.decode_lsn(lsn)
+    state = if lsn > state.final_lsn, do: %{state | final_lsn: lsn}, else: state
+    {:noreply, [ack_message(state.final_lsn)], state}
   end
 
   defp ack_message(lsn) when is_integer(lsn) do

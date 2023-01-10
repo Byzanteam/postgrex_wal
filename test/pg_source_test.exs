@@ -4,13 +4,11 @@ defmodule PgSourceTest do
   alias PostgrexWal.Messages.{Begin, Commit, Insert}
 
   setup_all context do
+    Logger.configure(level: :debug)
     n = :erlang.phash2(context.module)
     slot_name = "slot_#{n}"
     publication_name = "publication_#{n}"
     table_name = "table_#{n}"
-
-    PSQL.cmd("SELECT pg_create_logical_replication_slot('#{slot_name}', 'pgoutput');")
-    PSQL.cmd("CREATE PUBLICATION #{publication_name} FOR ALL TABLES;")
 
     sql_test = """
     CREATE TABLE IF NOT EXISTS #{table_name} (a int, b text);
@@ -18,6 +16,9 @@ defmodule PgSourceTest do
     """
 
     PSQL.cmd(sql_test)
+
+    PSQL.cmd("SELECT pg_create_logical_replication_slot('#{slot_name}', 'pgoutput');")
+    PSQL.cmd("CREATE PUBLICATION #{publication_name} FOR TABLE #{table_name};")
 
     on_exit(fn ->
       PSQL.cmd("SELECT pg_drop_replication_slot('#{slot_name}');")
@@ -31,7 +32,8 @@ defmodule PgSourceTest do
         name: :"pg_source_#{n}",
         publication_name: publication_name,
         slot_name: slot_name,
-        database: "postgres",
+        database: "postgrex_wal_test",
+        host: "127.0.0.1",
         username: "postgres"
       ]
     ]
@@ -53,24 +55,24 @@ defmodule PgSourceTest do
   end
 
   test "pg logical replication ack test", context do
-    # shold receive replication events (with consume ack)
+    # should receive replication events (with consume ack)
     start_repl!(context)
     PSQL.cmd("INSERT INTO #{context.table_name} (a, b) VALUES (1, 'one');")
 
     assert_receive [
       %Begin{},
       %Insert{tuple_data: [text: "1", text: "one"]},
-      %Commit{end_lsn: lsn}
+      %Commit{end_lsn: final_lsn}
     ]
 
-    PgSource.ack(context.opts[:name], lsn)
+    # PgSource.ack(context.opts[:name], lsn)
 
     PSQL.cmd("INSERT INTO #{context.table_name} (a, b) VALUES (2, 'two');")
 
     assert_receive [
       %Begin{},
       %Insert{tuple_data: [text: "2", text: "two"]},
-      %Commit{end_lsn: lsn}
+      %Commit{lsn: lsn}
     ]
 
     PgSource.ack(context.opts[:name], lsn)

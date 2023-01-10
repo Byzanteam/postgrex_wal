@@ -40,7 +40,7 @@ defmodule PostgrexWal.PgSource do
          ]
   @spec start_link(opts()) :: {:ok, pid()} | {:error, P.Error.t() | term()}
   def start_link(opts) do
-    {init_opts, opts} = Keyword.split(opts, [:publication_name, :slot_name])
+    {init_opts, opts} = Keyword.split(opts, [:publication_name, :slot_name, :subscriber])
 
     PR.start_link(
       __MODULE__,

@@ -32,9 +32,14 @@ defmodule PostgrexWal.Producer do
         acc ->
           m = PostgrexWal.Message.decode(e)
 
+          acknowledger =
+            if is_struct(m, PostgrexWal.Messages.Commit),
+              do: {__MODULE__, {state.pg_source_name, get_lsn(m)}, :ack_data},
+              else: Broadway.NoopAcknowledger.init()
+
           %Broadway.Message{
             data: m,
-            acknowledger: {__MODULE__, {state.pg_source_name, get_lsn(m)}, :ack_data}
+            acknowledger: acknowledger
           }
           |> :queue.in(acc)
       end
@@ -42,9 +47,7 @@ defmodule PostgrexWal.Producer do
     dispatch_events(%{state | queue: queue}, [])
   end
 
-  def ack({_pg_source_name, ""}, _, _), do: :ok
-
-  def ack({pg_source_name, lsn}, _successful, _failed) do
+  def ack({pg_source_name, lsn}, _succ, _fail) do
     PostgrexWal.PgSource.ack(pg_source_name, lsn)
     :ok
   end
@@ -71,6 +74,5 @@ defmodule PostgrexWal.Producer do
     end
   end
 
-  defp get_lsn(%PostgrexWal.Messages.Commit{end_lsn: lsn}), do: lsn
-  defp get_lsn(_), do: ""
+  defp get_lsn(%{end_lsn: lsn}), do: lsn
 end

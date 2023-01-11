@@ -55,8 +55,6 @@ jobs:
           --health-retries 10
         ports:
           - 5432:5432
-        volumes:
-          - /var/run/postgresql:/var/run/postgresql
 
     steps:
       - uses: actions/checkout@v3

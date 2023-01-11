@@ -1,4 +1,4 @@
-defmodule PgSourceAltTest do
+defmodule PgSourceTest do
   use ExUnit.Case, async: true
 
   alias PostgrexWal.{PgSource, PgSourceRelayer, PSQL}
@@ -118,13 +118,13 @@ defmodule PgSourceAltTest do
       refute_receive [
         %Begin{},
         %Insert{tuple_data: [text: "1"]},
-        %Commit{end_lsn: _final_lsn}
+        %Commit{}
       ]
 
       refute_receive [
         %Begin{},
         %Insert{tuple_data: [text: "2"]},
-        %Commit{end_lsn: _final_lsn}
+        %Commit{}
       ]
 
       assert_receive [

@@ -8,17 +8,10 @@ defmodule PostgrexWal.PSQL do
   	PG_SOCKET_DIR: /var/run/postgresq
   """
 
-  @pg_env %{
-    "PGUSER" => System.get_env("WAL_USERNAME", "postgres"),
-    "PGDATABASE" => System.get_env("WAL_DB", "postgres"),
-    "PGHOST" => System.get_env("WAL_HOST", "localhost"),
-    "PGPASSWORD" => System.get_env("WAL_PASSWORD", "postgres")
-  }
-
   def cmd(query) do
     for q <- List.wrap(query) do
       args = ["-c", q]
-      {output, status} = System.cmd("psql", args, stderr_to_stdout: true, env: @pg_env)
+      {output, status} = System.cmd("psql", args, stderr_to_stdout: true, env: pg_env())
 
       if status != 0 do
         IO.puts("""
@@ -41,5 +34,14 @@ defmodule PostgrexWal.PSQL do
 
       output
     end
+  end
+
+  def pg_env do
+    %{
+      "PGUSER" => System.get_env("WAL_USERNAME", "postgres"),
+      "PGDATABASE" => System.get_env("WAL_DB", "postgres"),
+      "PGHOST" => System.get_env("WAL_HOST", "localhost"),
+      "PGPASSWORD" => System.get_env("WAL_PASSWORD", "postgres")
+    }
   end
 end

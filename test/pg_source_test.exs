@@ -26,15 +26,17 @@ defmodule PgSourceTest do
       ])
     end)
 
+    pg_env = PostgrexWal.PSQL.pg_env()
+
     [
       table_name: table_name,
       opts: [
         publication_name: publication_name,
         slot_name: slot_name,
-        database: System.get_env("WAL_DB", "postgres"),
-        host: System.get_env("WAL_HOST", "localhost"),
-        username: System.get_env("WAL_USERNAME", "postgres"),
-        password: System.get_env("WAL_PASSWORD", "postgres")
+        database: pg_env["PGDATABASE"],
+        host: pg_env["PGHOST"],
+        username: pg_env["PGUSER"],
+        password: pg_env["PGPASSWORD"]
       ]
     ]
   end

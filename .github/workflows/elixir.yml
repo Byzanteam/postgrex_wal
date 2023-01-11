@@ -66,7 +66,7 @@ jobs:
 
       - name: "Set PG settings"
         run: |
-          docker exec ${{ job.services.pg.id }} sh -c 'echo "wal_level=logical" >> /var/lib/postgresql/data/postgresql.conf'
+          docker exec ${{ job.services.pg.id }} sh -c 'echo "wal_level=logical\nmax_wal_senders=10\nmax_replication_slots=10\n" >> /var/lib/postgresql/data/postgresql.conf'
           docker restart ${{ job.services.pg.id }}
 
       - name: Test

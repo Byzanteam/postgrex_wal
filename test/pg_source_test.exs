@@ -160,13 +160,13 @@ defmodule PgSourceTest do
       refute_receive [
         %Begin{},
         %Insert{tuple_data: [text: "1"]},
-        %Commit{end_lsn: _final_lsn}
+        %Commit{}
       ]
 
       assert_receive [
         %Begin{},
         %Insert{tuple_data: [text: "2"]},
-        %Commit{end_lsn: _final_lsn}
+        %Commit{}
       ]
     end
 
@@ -176,7 +176,7 @@ defmodule PgSourceTest do
       assert_receive [
         %Begin{},
         %Insert{tuple_data: [text: "2"]},
-        %Commit{end_lsn: _final_lsn}
+        %Commit{}
       ]
 
       restart_repl!(context)
@@ -184,13 +184,13 @@ defmodule PgSourceTest do
       refute_receive [
         %Begin{},
         %Insert{tuple_data: [text: "1"]},
-        %Commit{end_lsn: _final_lsn}
+        %Commit{}
       ]
 
       assert_receive [
         %Begin{},
         %Insert{tuple_data: [text: "2"]},
-        %Commit{end_lsn: _final_lsn}
+        %Commit{}
       ]
     end
   end
@@ -215,13 +215,13 @@ defmodule PgSourceTest do
     refute_receive [
       %Begin{},
       %Insert{tuple_data: [text: "1"]},
-      %Commit{end_lsn: _final_lsn}
+      %Commit{}
     ]
 
     assert_receive [
       %Begin{},
       %Insert{tuple_data: [text: "2"]},
-      %Commit{end_lsn: _final_lsn}
+      %Commit{}
     ]
   end
 

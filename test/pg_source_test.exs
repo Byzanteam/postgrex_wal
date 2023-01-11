@@ -31,9 +31,9 @@ defmodule PgSourceTest do
       opts: [
         publication_name: publication_name,
         slot_name: slot_name,
-        database: Application.fetch_env!(:postgrex_wal, :database),
-        host: Application.fetch_env!(:postgrex_wal, :host),
-        username: Application.fetch_env!(:postgrex_wal, :username)
+        database: System.get_env("WAL_DB", "postgres"),
+        host: System.get_env("WAL_HOST", "localhost"),
+        username: System.get_env("WAL_USERNAME", "postgres")
       ]
     ]
   end

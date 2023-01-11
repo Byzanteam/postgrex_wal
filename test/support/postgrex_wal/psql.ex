@@ -9,9 +9,9 @@ defmodule PostgrexWal.PSQL do
   """
 
   @pg_env %{
-    "PGUSER" => "postgres",
-    "PGDATABASE" => "postgres",
-    "PGHOST" => "localhost"
+    "PGUSER" => System.get_env("WAL_USERNAME", "postgres"),
+    "PGDATABASE" => System.get_env("WAL_DB", "postgres"),
+    "PGHOST" => System.get_env("WAL_HOST", "localhost")
   }
 
   def cmd(query) do

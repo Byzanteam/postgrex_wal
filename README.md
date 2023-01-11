@@ -7,6 +7,19 @@
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
 by adding `postgrex_wal` to your list of dependencies in `mix.exs`:
 
+# PostgrexWal
+
+This project provides:
+
+* `PostgrexWal.Producer` - A GenStage producer that continuously ingest events from a pg_replication and acknowledges
+  them after being successfully processed.
+* `PostgrexWal.PgSource` - A generic behaviour to implement `Postgrex.ReplicationConnection`.
+* `PostgrexWal.Message` - The pg replication protocol 2 message decode entry module.
+
+## Installation
+
+Add `:postgrex_wal` to the list of dependencies in `mix.exs`:
+
 ```elixir
 def deps do
   [
@@ -15,83 +28,64 @@ def deps do
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/postgrex_wal>.
+## Usage
+
+Configure Broadway with one or more producers using `PostgrexWal.Producer`:
 
 ```elixir
-defmodule Repl do
-  use Postgrex.ReplicationConnection
+defmodule MyBroadway do
+  @moduledoc false
+  use Broadway
+  require Logger
+
+  @doc """
+  ## Example
+  
+  opts = [
+    name: PostgrexWal.PgSource,
+    publication_name: "my_pub",
+    slot_name: "my_slot",
+    database: "postgres",
+    username: "postgres"
+  ]
+
+    MyBroadway.start_link(opts)
+  """
 
   def start_link(opts) do
-    # Automatically reconnect if we lose connection.
-    extra_opts = [
-      auto_reconnect: true
-    ]
-
-    Postgrex.ReplicationConnection.start_link(__MODULE__, :ok, extra_opts ++ opts)
+    Broadway.start_link(__MODULE__,
+      name: __MODULE__,
+      producer: [
+        module: {PostgrexWal.Producer, opts},
+        concurrency: 1
+      ],
+      processors: [
+        default: [
+          concurrency: 1
+        ]
+      ]
+    )
   end
 
-  @impl true
-  def init(:ok) do
-    {:ok, %{step: :disconnected}}
+  def handle_message(_, message, _) do
+    message
   end
-
-  @impl true
-  def handle_connect(%{step: :streaming} = state) do
-    {:noreply, state}
-  end
-
-  def handle_connect(%{step: :disconnected} = state) do
-    query = "CREATE_REPLICATION_SLOT postgrex LOGICAL pgoutput NOEXPORT_SNAPSHOT"
-    {:query, query, %{state | step: :create_slot}}
-  end
-
-  @impl true
-  def handle_result(results, %{step: :create_slot} = state) when is_list(results) do
-    query =
-      "START_REPLICATION SLOT postgrex LOGICAL 0/0 (proto_version '1', publication_names 'example')"
-
-    {:stream, query, [], %{state | step: :streaming}}
-  end
-
-  def handle_result(results, state) do
-    IO.inspect(results, label: :results)
-    {:noreply, state}
-  end
-
-  @impl true
-  # https://www.postgresql.org/docs/14/protocol-replication.html
-  def handle_data(<<?w, _wal_start::64, _wal_end::64, _clock::64, rest::binary>>, state) do
-    PostgrexWal.Message.decode(rest) |> IO.inspect()
-
-    {:noreply, state}
-  end
-
-  def handle_data(<<?k, wal_end::64, _clock::64, reply>>, state) do
-    messages =
-      case reply do
-        1 -> [<<?r, wal_end + 1::64, wal_end + 1::64, wal_end + 1::64, current_time()::64, 0>>]
-        0 -> []
-      end
-
-    {:noreply, messages, state}
-  end
-
-  def handle_data(data, state) do
-    IO.inspect(data, label: :data)
-    {:noreply, state}
-  end
-
-  @epoch DateTime.to_unix(~U[2000-01-01 00:00:00Z], :microsecond)
-  defp current_time(), do: System.os_time(:microsecond) - @epoch
 end
-
-{:ok, pid} =
-  Repl.start_link(
-    host: "localhost",
-    database: "postgres",
-    username: "postgres",
-    password: "postgres"
-  )
 ```
+
+----
+
+## Other Info
+
+This library was created using
+the [Broadway Custom Producers documentation](https://hexdocs.pm/broadway/custom-producers.html) for reference. I would
+encourage you to view that as well as
+the [Broadway Architecture documentation](https://hexdocs.pm/broadway/architecture.html) for more information.
+
+----
+
+## License
+
+MIT License
+
+See the [license file](LICENSE.txt) for details.

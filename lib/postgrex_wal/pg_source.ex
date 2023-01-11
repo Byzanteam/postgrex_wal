@@ -1,5 +1,29 @@
 defmodule PostgrexWal.PgSource do
-  @moduledoc false
+  @moduledoc """
+  A GenStage producer that continuously ingest events from a Postgrex.ReplicationConnection.
+
+    ## Example
+  opts = [
+     name: :my_pg_source,
+     publication_name: "mypub1",
+     slot_name: "myslot1",
+     host: "localhost",
+     database: "r704_development",
+     username: "jswk"
+   ]
+
+  PostgrexWal.PgSource.start_link(opts)
+
+  ## Options
+
+    * `:name` - Optional. An atom registered name of process.
+    * `:publication_name` - Required. The name of the pg replication containing events you want to process.
+    * `:slot_name` - Required. The name of the pg replication slot name.
+    * `:host` - required. The postgreSQL DB host.
+    * `:database` - required. The postgreSQL DB database.
+    * `:username` - required. The postgreSQL DB username.
+
+  """
 
   alias Postgrex, as: P
   alias Postgrex.ReplicationConnection, as: PR
@@ -20,14 +44,7 @@ defmodule PostgrexWal.PgSource do
 
   @doc ~S"""
   ## 调用参数示例
-   opts = [
-     name: :my_pg_source,
-     publication_name: "mypub1",
-     slot_name: "myslot1",
-     host: "localhost",
-     database: "r704_development",
-     username: "jswk"
-   ]
+
   """
 
   @typep opts() :: [
@@ -75,6 +92,12 @@ defmodule PostgrexWal.PgSource do
   Replication slots provide an automated way to ensure that the primary does not remove WAL segments until
   they have been received by all standbys, and that the primary does not remove rows which could cause a recovery
   conflict even when the standby is disconnected.
+
+  @type stream_opts() :: [{:max_messages, pos_integer()}]
+  The following options configure streaming:
+
+  :max_messages - The maximum number of replications messages that can be accumulated from the wire until they are relayed to handle_data/2.
+  Defaults to 500.
   """
   @impl true
   def handle_connect(state) do

@@ -108,11 +108,6 @@ defmodule PostgrexWal.PgSource do
   Replication slots provide an automated way to ensure that the primary does not remove WAL segments until
   they have been received by all standbys, and that the primary does not remove rows which could cause a recovery
   conflict even when the standby is disconnected.
-
-  In the return tuple, the third argument is a Keyword.t() to configure streaming:
-
-  :max_messages - The maximum number of replications messages that can be accumulated from the wire until they are relayed to handle_data/2.
-  Defaults to 500.
   """
 
   @impl true
@@ -120,7 +115,7 @@ defmodule PostgrexWal.PgSource do
     {
       :stream,
       "START_REPLICATION SLOT #{state.slot_name} LOGICAL 0/0 (proto_version '2', publication_names '#{state.publication_name}')",
-      [max_messages: 500],
+      [],
       %{state | step: :streaming}
     }
   end

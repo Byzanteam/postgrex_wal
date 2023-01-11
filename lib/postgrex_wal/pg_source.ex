@@ -3,16 +3,16 @@ defmodule PostgrexWal.PgSource do
   A GenStage producer that continuously ingest events from a Postgrex.ReplicationConnection.
 
     ## Example
-  opts = [
-     name: :my_pg_source,
-     publication_name: "mypub1",
-     slot_name: "myslot1",
-     host: "localhost",
-     database: "r704_development",
-     username: "jswk"
-   ]
+  	opts = [
+  	   name: :my_pg_source,
+  	   publication_name: "mypub1",
+  	   slot_name: "myslot1",
+  	   host: "localhost",
+  	   database: "r704_development",
+  	   username: "jswk"
+  	 ]
 
-  PostgrexWal.PgSource.start_link(opts)
+  	PostgrexWal.PgSource.start_link(opts)
 
   ## Options
 
@@ -42,11 +42,6 @@ defmodule PostgrexWal.PgSource do
     field :events, list(), default: []
   end
 
-  @doc ~S"""
-  ## 调用参数示例
-
-  """
-
   @typep opts() :: [
            {:name, GenServer.name()},
            {:publication_name, String.t()},
@@ -66,7 +61,7 @@ defmodule PostgrexWal.PgSource do
     )
   end
 
-  @spec async_ack(PR.server(), String.t()) :: {:async_ack, integer}
+  @spec async_ack(PR.server(), String.t()) :: {:async_ack, integer()}
   def async_ack(server, lsn) when is_binary(lsn) do
     send(server, {:async_ack, lsn})
   end

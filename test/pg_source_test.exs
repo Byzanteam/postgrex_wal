@@ -1,161 +1,261 @@
-defmodule PgSourceTest do
+defmodule PgSourceAltTest do
   use ExUnit.Case, async: true
+
   alias PostgrexWal.{PgSource, PgSourceRelayer, PSQL}
   alias PostgrexWal.Messages.{Begin, Commit, Insert}
 
-  setup_all context do
-    Logger.configure(level: :debug)
-    n = :erlang.phash2(context.module)
-    slot_name = "slot_#{n}"
-    publication_name = "publication_#{n}"
-    table_name = "table_#{n}"
+  setup context do
+    case_id = case_identity(context)
 
-    sql_test = """
-    CREATE TABLE IF NOT EXISTS #{table_name} (a int, b text);
-    ALTER TABLE #{table_name} REPLICA IDENTITY FULL;
-    """
+    slot_name = "slot_#{case_id}"
+    publication_name = "publication_#{case_id}"
+    table_name = "users_#{case_id}"
 
-    PSQL.cmd(sql_test)
-
-    PSQL.cmd("SELECT pg_create_logical_replication_slot('#{slot_name}', 'pgoutput');")
-    PSQL.cmd("CREATE PUBLICATION #{publication_name} FOR TABLE #{table_name};")
+    PSQL.cmd([
+      """
+      CREATE TABLE #{table_name} (id bigint);
+      ALTER TABLE #{table_name} REPLICA IDENTITY FULL;
+      """,
+      "SELECT pg_create_logical_replication_slot('#{slot_name}', 'pgoutput');",
+      "CREATE PUBLICATION #{publication_name} FOR TABLE #{table_name};"
+    ])
 
     on_exit(fn ->
-      PSQL.cmd("SELECT pg_drop_replication_slot('#{slot_name}');")
-      PSQL.cmd("DROP PUBLICATION #{publication_name};")
-      PSQL.cmd("DROP TABLE #{table_name};")
+      PSQL.cmd([
+        "SELECT pg_drop_replication_slot('#{slot_name}');",
+        "DROP PUBLICATION #{publication_name};",
+        "DROP TABLE #{table_name};"
+      ])
     end)
 
     [
       table_name: table_name,
       opts: [
-        name: :"pg_source_#{n}",
         publication_name: publication_name,
         slot_name: slot_name,
-        database: "postgrex_wal_test",
-        host: "127.0.0.1",
-        username: "postgres"
+        database: Application.fetch_env!(:postgrex_wal, :database),
+        host: Application.fetch_env!(:postgrex_wal, :host),
+        username: Application.fetch_env!(:postgrex_wal, :username)
       ]
     ]
   end
 
-  defp start_repl!(context) do
-    start_supervised!({PgSource, context.opts})
-    start_supervised!({PgSourceRelayer, {context.opts[:name], self()}})
-  end
-
-  defp stop_repl! do
-    stop_supervised!(PgSource)
-    stop_supervised!(PgSourceRelayer)
-  end
-
-  defp restart_repl!(context) do
-    stop_repl!()
+  test "should receive events", context do
     start_repl!(context)
-  end
 
-  test "pg logical replication ack test", context do
-    # should receive replication events (with consume ack)
-    start_repl!(context)
-    PSQL.cmd("INSERT INTO #{context.table_name} (a, b) VALUES (1, 'one');")
+    insert_users(context, 1)
 
     assert_receive [
       %Begin{},
-      %Insert{tuple_data: [text: "1", text: "one"]},
+      %Insert{tuple_data: [text: "1"]},
+      %Commit{end_lsn: _final_lsn}
+    ]
+  end
+
+  describe "ack" do
+    test "works", context do
+      start_repl!(context)
+
+      insert_users(context, [1, 2])
+
+      assert_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "1"]},
+        %Commit{end_lsn: first_lsn}
+      ]
+
+      assert_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "2"]},
+        %Commit{end_lsn: second_lsn}
+      ]
+
+      PgSource.ack(source_id(context), first_lsn)
+
+      restart_repl!(context)
+
+      refute_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "1"]},
+        %Commit{end_lsn: _final_lsn}
+      ]
+
+      assert_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "2"]},
+        %Commit{end_lsn: ^second_lsn}
+      ]
+    end
+
+    test "ignores the final_lsn that is less than the one in the state", context do
+      start_repl!(context)
+
+      insert_users(context, [1, 2, 3])
+
+      assert_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "1"]},
+        %Commit{end_lsn: first_lsn}
+      ]
+
+      assert_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "2"]},
+        %Commit{end_lsn: second_lsn}
+      ]
+
+      assert_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "3"]},
+        %Commit{end_lsn: third_lsn}
+      ]
+
+      PgSource.ack(source_id(context), second_lsn)
+      PgSource.ack(source_id(context), first_lsn)
+
+      restart_repl!(context)
+
+      refute_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "1"]},
+        %Commit{end_lsn: _final_lsn}
+      ]
+
+      refute_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "2"]},
+        %Commit{end_lsn: _final_lsn}
+      ]
+
+      assert_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "3"]},
+        %Commit{end_lsn: ^third_lsn}
+      ]
+    end
+  end
+
+  describe "should receive un-acked events" do
+    setup context do
+      start_repl!(context)
+
+      insert_users(context, 1)
+
+      assert_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "1"]},
+        %Commit{end_lsn: final_lsn}
+      ]
+
+      PgSource.ack(source_id(context), final_lsn)
+    end
+
+    test "events that are not received previously", context do
+      stop_repl!(context)
+
+      insert_users(context, 2)
+
+      start_repl!(context)
+
+      refute_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "1"]},
+        %Commit{end_lsn: _final_lsn}
+      ]
+
+      assert_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "2"]},
+        %Commit{end_lsn: _final_lsn}
+      ]
+    end
+
+    test "events that are received previously", context do
+      insert_users(context, 2)
+
+      assert_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "2"]},
+        %Commit{end_lsn: _final_lsn}
+      ]
+
+      restart_repl!(context)
+
+      refute_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "1"]},
+        %Commit{end_lsn: _final_lsn}
+      ]
+
+      assert_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "2"]},
+        %Commit{end_lsn: _final_lsn}
+      ]
+    end
+  end
+
+  test "should not receive acked events", context do
+    start_repl!(context)
+
+    insert_users(context, 1)
+
+    assert_receive [
+      %Begin{},
+      %Insert{tuple_data: [text: "1"]},
       %Commit{end_lsn: final_lsn}
     ]
 
-    # PgSource.ack(context.opts[:name], lsn)
+    PgSource.ack(source_id(context), final_lsn)
 
-    PSQL.cmd("INSERT INTO #{context.table_name} (a, b) VALUES (2, 'two');")
-
-    assert_receive [
-      %Begin{},
-      %Insert{tuple_data: [text: "2", text: "two"]},
-      %Commit{lsn: lsn}
-    ]
-
-    PgSource.ack(context.opts[:name], lsn)
-
-    # should not receive any already acked messages
     restart_repl!(context)
+
+    insert_users(context, 2)
 
     refute_receive [
       %Begin{},
-      %Insert{},
-      %Commit{}
+      %Insert{tuple_data: [text: "1"]},
+      %Commit{end_lsn: _final_lsn}
     ]
-
-    # without ack
-    restart_repl!(context)
-    PSQL.cmd("INSERT INTO #{context.table_name} (a, b) VALUES (3, 'three');")
 
     assert_receive [
       %Begin{},
-      %Insert{tuple_data: [text: "3", text: "three"]},
-      %Commit{}
+      %Insert{tuple_data: [text: "2"]},
+      %Commit{end_lsn: _final_lsn}
     ]
+  end
 
-    PSQL.cmd("INSERT INTO #{context.table_name} (a, b) VALUES (4, 'four');")
+  defp start_repl!(context) do
+    source_pid =
+      start_supervised!({PgSource, context.opts ++ [name: source_id(context)]},
+        id: source_id(context)
+      )
 
-    assert_receive [
-      %Begin{},
-      %Insert{tuple_data: [text: "4", text: "four"]},
-      %Commit{}
-    ]
+    start_supervised!({PgSourceRelayer, {source_pid, self()}}, id: relayer_id(context))
+  end
 
-    # still can receive un-acked message
-    restart_repl!(context)
-    PSQL.cmd("INSERT INTO #{context.table_name} (a, b) VALUES (5, 'five');")
+  defp stop_repl!(context) do
+    stop_supervised!(source_id(context))
+    stop_supervised!(relayer_id(context))
+  end
 
-    # acked message should not received again
-    refute_receive [
-      %Begin{},
-      %Insert{tuple_data: [text: "1", text: "one"]},
-      %Commit{}
-    ]
+  defp restart_repl!(context) do
+    stop_repl!(context)
+    start_repl!(context)
+  end
 
-    # acked message should not received again
-    refute_receive [
-      %Begin{},
-      %Insert{tuple_data: [text: "2", text: "two"]},
-      %Commit{}
-    ]
+  defp insert_users(context, nos) do
+    nos
+    |> List.wrap()
+    |> Enum.each(fn no ->
+      PSQL.cmd("INSERT INTO #{context.table_name} (id) VALUES (#{no});")
+    end)
+  end
 
-    # un-acked message should received again
-    assert_receive [
-      %Begin{},
-      %Insert{tuple_data: [text: "3", text: "three"]},
-      %Commit{end_lsn: lsn}
-    ]
+  defp source_id(context), do: :"source-#{context.module}-#{context.test}"
+  defp relayer_id(context), do: :"relayer-#{context.module}-#{context.test}"
 
-    PgSource.ack(context.opts[:name], lsn)
-
-    # un-acked message should received again
-    assert_receive [
-      %Begin{},
-      %Insert{tuple_data: [text: "4", text: "four"]},
-      %Commit{end_lsn: lsn}
-    ]
-
-    PgSource.ack(context.opts[:name], lsn)
-
-    assert_receive [
-      %Begin{},
-      %Insert{tuple_data: [text: "5", text: "five"]},
-      %Commit{end_lsn: lsn}
-    ]
-
-    PgSource.ack(context.opts[:name], lsn)
-
-    restart_repl!(context)
-    # due to all acked, should not receive anymore
-    refute_receive [
-      %Begin{},
-      %Insert{},
-      %Commit{}
-    ]
-
-    stop_repl!()
+  defp case_identity(context) do
+    "#{context.module |> Module.split() |> Enum.map_join(&Macro.underscore/1)}_#{context.line}"
   end
 end

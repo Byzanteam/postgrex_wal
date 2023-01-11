@@ -4,13 +4,15 @@ defmodule PostgrexWal.PgSource do
 
     ## Example
   	opts = [
-  	   name: :my_pg_source,
-  	   publication_name: "mypub1",
-  	   slot_name: "myslot1",
-  	   host: "localhost",
-  	   database: "r704_development",
-  	   username: "jswk"
+			name: :example_pg_source,
+			publication_name: "example_publication",
+			slot_name: "example_slot",
+			host: "localhost",
+			database: "postgres",
+			username: "postgres"
   	 ]
+
+
 
   	PostgrexWal.PgSource.start_link(opts)
 

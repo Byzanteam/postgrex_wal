@@ -12,10 +12,8 @@ defmodule PgSourceTest do
     table_name = "users_#{case_id}"
 
     PSQL.cmd([
-      """
-      CREATE TABLE #{table_name} (id bigint);
-      ALTER TABLE #{table_name} REPLICA IDENTITY FULL;
-      """,
+      "CREATE TABLE #{table_name} (id bigint);",
+      "ALTER TABLE #{table_name} REPLICA IDENTITY FULL;",
       "SELECT pg_create_logical_replication_slot('#{slot_name}', 'pgoutput');",
       "CREATE PUBLICATION #{publication_name} FOR TABLE #{table_name};"
     ])
@@ -48,7 +46,7 @@ defmodule PgSourceTest do
     assert_receive [
       %Begin{},
       %Insert{tuple_data: [text: "1"]},
-      %Commit{end_lsn: _final_lsn}
+      %Commit{}
     ]
   end
 
@@ -74,16 +72,26 @@ defmodule PgSourceTest do
 
       restart_repl!(context)
 
-      refute_receive [
+      insert_users(context, 100)
+
+      assert_receive [
         %Begin{},
-        %Insert{tuple_data: [text: "1"]},
-        %Commit{end_lsn: _final_lsn}
+        %Insert{tuple_data: [text: "100"]},
+        %Commit{end_lsn: end_lsn}
       ]
+
+      PgSource.ack(source_id(context), end_lsn)
 
       assert_receive [
         %Begin{},
         %Insert{tuple_data: [text: "2"]},
         %Commit{end_lsn: ^second_lsn}
+      ]
+
+      refute_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "1"]},
+        %Commit{end_lsn: _final_lsn}
       ]
     end
 
@@ -115,6 +123,22 @@ defmodule PgSourceTest do
 
       restart_repl!(context)
 
+      insert_users(context, 103)
+
+      assert_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "103"]},
+        %Commit{end_lsn: end_lsn}
+      ]
+
+      PgSource.ack(source_id(context), end_lsn)
+
+      assert_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "3"]},
+        %Commit{end_lsn: ^third_lsn}
+      ]
+
       refute_receive [
         %Begin{},
         %Insert{tuple_data: [text: "1"]},
@@ -125,12 +149,6 @@ defmodule PgSourceTest do
         %Begin{},
         %Insert{tuple_data: [text: "2"]},
         %Commit{}
-      ]
-
-      assert_receive [
-        %Begin{},
-        %Insert{tuple_data: [text: "3"]},
-        %Commit{end_lsn: ^third_lsn}
       ]
     end
   end
@@ -157,6 +175,16 @@ defmodule PgSourceTest do
 
       start_repl!(context)
 
+      insert_users(context, 102)
+
+      assert_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "102"]},
+        %Commit{end_lsn: end_lsn}
+      ]
+
+      PgSource.ack(source_id(context), end_lsn)
+
       refute_receive [
         %Begin{},
         %Insert{tuple_data: [text: "1"]},
@@ -180,6 +208,16 @@ defmodule PgSourceTest do
       ]
 
       restart_repl!(context)
+
+      insert_users(context, 101)
+
+      assert_receive [
+        %Begin{},
+        %Insert{tuple_data: [text: "101"]},
+        %Commit{end_lsn: end_lsn}
+      ]
+
+      PgSource.ack(source_id(context), end_lsn)
 
       refute_receive [
         %Begin{},
@@ -245,11 +283,9 @@ defmodule PgSourceTest do
   end
 
   defp insert_users(context, nos) do
-    nos
-    |> List.wrap()
-    |> Enum.each(fn no ->
+    for no <- List.wrap(nos) do
       PSQL.cmd("INSERT INTO #{context.table_name} (id) VALUES (#{no});")
-    end)
+    end
   end
 
   defp source_id(context), do: :"source-#{context.module}-#{context.test}"

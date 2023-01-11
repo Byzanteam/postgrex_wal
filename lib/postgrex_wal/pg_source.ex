@@ -4,17 +4,39 @@ defmodule PostgrexWal.PgSource do
 
     ## Example
   	opts = [
-			name: :example_pg_source,
-			publication_name: "example_publication",
-			slot_name: "example_slot",
-			host: "localhost",
-			database: "postgres",
-			username: "postgres"
+  	name: :example_pg_source,
+  	publication_name: "example_publication",
+  	slot_name: "example_slot",
+  	host: "localhost",
+  	database: "postgres",
+  	username: "postgres"
   	 ]
 
+  defmodule MyBroadway do
+  	use Broadway
+  	# some other codes...
 
+  	def start_link(opts) do
+  		Broadway.start_link(__MODULE__,
+  		  name: __MODULE__,
+  		  producer: [
+  		    module: {PostgrexWal.Producer, opts},
+  		    concurrency: 1
+  		  ],
+  		  processors: [
+  		    default: [
+  		      concurrency: 10
+  		    ]
+  		  ]
+  		)
+  	end
 
-  	PostgrexWal.PgSource.start_link(opts)
+  	def handle_message(_, message, _) do
+  		message
+  	end
+
+  		# some other codes...
+  end
 
   ## Options
 

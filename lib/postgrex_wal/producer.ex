@@ -1,9 +1,12 @@
 defmodule PostgrexWal.Producer do
   @moduledoc false
+  @behaviour Broadway.Producer
 
   use GenStage
   use TypedStruct
   require Logger
+
+  # other callbacks...
 
   typedstruct enforce: true do
     field :pg_source_name, GenServer.name()
@@ -12,6 +15,15 @@ defmodule PostgrexWal.Producer do
   end
 
   ## Client API
+
+  @impl true
+  def prepare_for_start(_module, broadway_options) do
+    children = [
+      {PostgrexWal.PgSource, broadway_options}
+    ]
+
+    {children, broadway_options}
+  end
 
   def start_link(producer_name \\ __MODULE__) do
     GenStage.start_link(__MODULE__, nil, name: producer_name)

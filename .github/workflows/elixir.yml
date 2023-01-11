@@ -71,10 +71,6 @@ jobs:
 
       - name: Test
         run: mix test
-        env:
-          PGUSER: postgres
-          PGPASSWORD: postgres
-          PG_SOCKET_DIR: /var/run/postgresql
 
   credo:
     runs-on: ubuntu-latest

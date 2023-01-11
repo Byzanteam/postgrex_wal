@@ -13,35 +13,35 @@ defmodule PostgrexWal.PgSource do
   	username: "postgres"
   	 ]
 
-  defmodule MyBroadway do
-  	use Broadway
-  	# some other codes...
+   defmodule MyBroadway do
+     use Broadway
+     # some other codes...
 
-  	def start_link(opts) do
-  		Broadway.start_link(__MODULE__,
-  		  name: __MODULE__,
-  		  producer: [
-  		    module: {PostgrexWal.Producer, opts},
-  		    concurrency: 1
-  		  ],
-  		  processors: [
-  		    default: [
-  		      concurrency: 10
-  		    ]
-  		  ]
-  		)
-  	end
+     def start_link(opts) do
+       Broadway.start_link(__MODULE__,
+         name: __MODULE__,
+         producer: [
+           module: {PostgrexWal.Producer, opts},
+           concurrency: 1
+         ],
+         processors: [
+           default: [
+             concurrency: 10
+           ]
+         ]
+       )
+     end
 
-  	def handle_message(_, message, _) do
-  		message
-  	end
+     def handle_message(_, message, _) do
+       message
+     end
 
   		# some other codes...
   end
 
   ## Options
 
-    * `:name` - Optional. An atom registered name of process.
+    * `:name` - Optional. An GenServer.name() registered name of process.
     * `:publication_name` - Required. The name of the pg replication containing events you want to process.
     * `:slot_name` - Required. The name of the pg replication slot name.
     * `:host` - required. The postgreSQL DB host.
@@ -87,11 +87,6 @@ defmodule PostgrexWal.PgSource do
     )
   end
 
-  @spec async_ack(PR.server(), String.t()) :: {:async_ack, integer()}
-  def async_ack(server, lsn) when is_binary(lsn) do
-    send(server, {:async_ack, lsn})
-  end
-
   @spec ack(PR.server(), String.t()) :: :ok
   def ack(server, lsn) when is_binary(lsn) do
     PR.call(server, {:ack, lsn})
@@ -114,12 +109,12 @@ defmodule PostgrexWal.PgSource do
   they have been received by all standbys, and that the primary does not remove rows which could cause a recovery
   conflict even when the standby is disconnected.
 
-  @type stream_opts() :: [{:max_messages, pos_integer()}]
-  The following options configure streaming:
+  In the return tuple, the third argument is a Keyword.t() to configure streaming:
 
   :max_messages - The maximum number of replications messages that can be accumulated from the wire until they are relayed to handle_data/2.
   Defaults to 500.
   """
+
   @impl true
   def handle_connect(state) do
     {
@@ -227,10 +222,6 @@ defmodule PostgrexWal.PgSource do
   end
 
   @impl true
-  def handle_info({:async_ack, lsn}, state) do
-    pg_ack(lsn, state)
-  end
-
   def handle_info({:DOWN, _ref, :process, pid, _reason}, state) do
     s = if pid == state.subscriber, do: nil, else: state.subscriber
     {:noreply, %{state | subscriber: s}}

@@ -5,13 +5,13 @@ defmodule MyBroadway do
 
   @doc """
   ## Example
-     opts = [
-      name: PostgrexWal.PgSource,
-      publication_name: "my_pub",
-      slot_name: "my_slot",
-      database: "postgres",
-      username: "postgres"
-   	]
+  	opts = [
+  		name: PostgrexWal.PgSource,
+  		publication_name: "my_pub",
+  		slot_name: "my_slot",
+  		database: "postgres",
+  		username: "postgres"
+  	]
 
   		MyBroadway.start_link(opts)
   """

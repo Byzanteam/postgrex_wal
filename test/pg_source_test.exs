@@ -26,7 +26,7 @@ defmodule PgSourceTest do
       ])
     end)
 
-    pg_env = PostgrexWal.PSQL.pg_env()
+    pg_env = PSQL.pg_env()
 
     [
       table_name: table_name,

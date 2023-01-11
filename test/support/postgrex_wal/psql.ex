@@ -14,7 +14,7 @@ defmodule PostgrexWal.PSQL do
       {output, status} = System.cmd("psql", args, stderr_to_stdout: true, env: pg_env())
 
       if status != 0 do
-        IO.puts("""
+        raise """
         Command:
 
         psql #{Enum.join(args, " ")}
@@ -22,12 +22,8 @@ defmodule PostgrexWal.PSQL do
         error'd with:
 
         #{output}
-        """)
-
-        raise "PSQL.cmd error"
+        """
       end
-
-      output
     end
   end
 

@@ -1,4 +1,3 @@
-# credo:disable-for-this-file Credo.Check.Design.TagTODO
 defmodule PostgrexWal.PgSource do
   @moduledoc """
   A GenStage producer that continuously ingest events from a Postgrex.ReplicationConnection.
@@ -178,6 +177,7 @@ defmodule PostgrexWal.PgSource do
   @impl true
   def handle_data(<<?w, _wal_start::64, _wal_end::64, _clock::64, payload::binary>>, state) do
     state = %{state | events: [payload | state.events]}
+    # credo:disable-for-this-file Credo.Check.Design.TagTODO
     # TODO: Behaviour maybe changed when introduce Broadway.
     if state.subscriber do
       send(state.subscriber, {:events, Enum.reverse(state.events)})

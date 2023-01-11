@@ -11,7 +11,8 @@ defmodule PostgrexWal.PSQL do
   @pg_env %{
     "PGUSER" => System.get_env("WAL_USERNAME", "postgres"),
     "PGDATABASE" => System.get_env("WAL_DB", "postgres"),
-    "PGHOST" => System.get_env("WAL_HOST", "localhost")
+    "PGHOST" => System.get_env("WAL_HOST", "localhost"),
+    "PGPASSWORD" => System.get_env("WAL_PASSWORD", "postgres")
   }
 
   def cmd(query) do

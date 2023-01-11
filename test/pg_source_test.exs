@@ -33,7 +33,8 @@ defmodule PgSourceTest do
         slot_name: slot_name,
         database: System.get_env("WAL_DB", "postgres"),
         host: System.get_env("WAL_HOST", "localhost"),
-        username: System.get_env("WAL_USERNAME", "postgres")
+        username: System.get_env("WAL_USERNAME", "postgres"),
+        password: System.get_env("WAL_PASSWORD", "postgres")
       ]
     ]
   end

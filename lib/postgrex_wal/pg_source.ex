@@ -72,7 +72,8 @@ defmodule PostgrexWal.PgSource do
            {:slot_name, String.t()},
            {:host, String.t()},
            {:database, String.t()},
-           {:username, String.t()}
+           {:username, String.t()},
+           {:password, String.t()}
          ]
   @spec start_link(opts()) :: {:ok, pid()} | {:error, P.Error.t() | term()}
   def start_link(opts) do

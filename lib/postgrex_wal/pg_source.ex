@@ -4,40 +4,40 @@ defmodule PostgrexWal.PgSource do
   A GenStage producer that continuously ingest events from a Postgrex.ReplicationConnection.
 
     ## Example
-  	opts = [
-  	name: :example_pg_source,
-  	publication_name: "example_publication",
-  	slot_name: "example_slot",
-  	host: "localhost",
-  	database: "postgres",
-  	username: "postgres"
-  	 ]
+        opts = [
+          name: :example_pg_source,
+          publication_name: "example_publication",
+          slot_name: "example_slot",
+          host: "localhost",
+          database: "postgres",
+          username: "postgres"
+        ]
 
-   defmodule MyBroadway do
-     use Broadway
-     # some other codes...
+        defmodule MyBroadway do
+          use Broadway
+          # some other codes...
 
-     def start_link(opts) do
-       Broadway.start_link(__MODULE__,
-         name: __MODULE__,
-         producer: [
-           module: {PostgrexWal.Producer, opts},
-           concurrency: 1
-         ],
-         processors: [
-           default: [
-             concurrency: 10
-           ]
-         ]
-       )
-     end
+          def start_link(opts) do
+            Broadway.start_link(__MODULE__,
+              name: __MODULE__,
+              producer: [
+                module: {PostgrexWal.Producer, opts},
+                concurrency: 1
+              ],
+              processors: [
+                default: [
+                  concurrency: 10
+                ]
+              ]
+            )
+          end
 
-     def handle_message(_, message, _) do
-       message
-     end
+          def handle_message(_, message, _) do
+            message
+          end
 
-  		# some other codes...
-  end
+          # some other codes...
+        end
 
   ## Options
 

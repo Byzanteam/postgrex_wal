@@ -22,11 +22,6 @@ defmodule PostgrexWal.PSQL do
         error'd with:
 
         #{output}
-
-        Please verify the user "postgres" exists and it has permissions to
-        create databases and users. If not, you can create a new user with:
-
-        $ createuser postgres -s --no-password
         """)
 
         raise "PSQL.cmd error"

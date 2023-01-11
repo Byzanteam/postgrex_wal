@@ -1,9 +1,14 @@
 defmodule PostgrexWal.PSQL do
-  @moduledoc false
+  @moduledoc """
+  Defafult env in Github traivs CI environment:
+  	PGUSER: postgres
+  	PGPASSWORD: postgres
+  	PG_SOCKET_DIR: /var/run/postgresq
+  """
 
   @pg_env %{
     "PGUSER" => "postgres",
-    "PGDATABASE" => "postgrex_wal_test"
+    "PGDATABASE" => "postgres"
   }
 
   def cmd(query) do
@@ -14,7 +19,7 @@ defmodule PostgrexWal.PSQL do
       {output, status} = System.cmd("psql", args, stderr_to_stdout: true, env: @pg_env)
 
       if status != 0 do
-        raise RuntimeError, """
+        IO.puts("""
         Command:
 
         psql #{Enum.join(args, " ")}
@@ -27,7 +32,9 @@ defmodule PostgrexWal.PSQL do
         create databases and users. If not, you can create a new user with:
 
         $ createuser postgres -s --no-password
-        """
+        """)
+
+        raise RuntimeError, "PSQL.cmd error"
       end
 
       output

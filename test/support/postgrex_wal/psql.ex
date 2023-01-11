@@ -1,5 +1,6 @@
 defmodule PostgrexWal.PSQL do
   @moduledoc """
+  environment variables PGDATABASE, PGHOST, PGPASSWORD, PGPORT and/or PGUSER
   Defafult env in Github traivs CI environment:
   	PGUSER: postgres
   	PGPASSWORD: postgres
@@ -8,14 +9,13 @@ defmodule PostgrexWal.PSQL do
 
   @pg_env %{
     "PGUSER" => "postgres",
-    "PGDATABASE" => "postgres"
+    "PGDATABASE" => "postgres",
+    "PGHOST" => "localhost"
   }
 
   def cmd(query) do
-    query
-    |> List.wrap()
-    |> Enum.map(fn q ->
-      args = ["-c", q, "-h", "localhost"]
+    for q <- List.wrap(query) do
+      args = ["-c", q]
       {output, status} = System.cmd("psql", args, stderr_to_stdout: true, env: @pg_env)
 
       if status != 0 do
@@ -38,6 +38,6 @@ defmodule PostgrexWal.PSQL do
       end
 
       output
-    end)
+    end
   end
 end

@@ -34,7 +34,7 @@ defmodule PostgrexWal.PSQL do
         $ createuser postgres -s --no-password
         """)
 
-        raise RuntimeError, "PSQL.cmd error"
+        raise "PSQL.cmd error"
       end
 
       output

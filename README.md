@@ -3,7 +3,7 @@
 This project provides:
 
 * `PostgrexWal.PgSource` - A generic behaviour to implement `Postgrex.ReplicationConnection`.
-* `PostgrexWal.Message` - The pg replication protocol 2 message decode entry module.
+* `PostgrexWal.Message` - The pg replication protocol 2 message decoder module.
 
 ## Installation
 
@@ -21,10 +21,8 @@ end
 ## Other Info
 
 This library was created using
-the [Broadway Custom Producers documentation](https://hexdocs.pm/broadway/custom-producers.html) for reference. We would
-encourage you to view that as well as
-the [Broadway Architecture documentation](https://hexdocs.pm/broadway/architecture.html) for more information.
-
+the [Postgrex.ReplicationConnection behaviour](https://hexdocs.pm/postgrex/Postgrex.ReplicationConnection.html) for
+reference.
 ----
 
 ## License

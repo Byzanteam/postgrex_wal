@@ -26,8 +26,12 @@ defmodule PostgrexWal.PSQL do
         #{output}
         """
       end
+
+      output
     end
   end
+
+
 
   def pg_env do
     [

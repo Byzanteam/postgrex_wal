@@ -1,11 +1,6 @@
 defmodule PostgrexWal.PSQL do
   @moduledoc """
-  psql will use environment variables, suck as: PGDATABASE, PGHOST, PGPASSWORD, PGPORT and/or PGUSER
-
-  Some env variables (as below) has already set in Github traivs CI environment:
-  	PGUSER: postgres
-  	PGPASSWORD: postgres
-  	PG_SOCKET_DIR: /var/run/postgresq
+  Directly execute SQL statement via `psql` client.
   """
 
   def cmd(query) do

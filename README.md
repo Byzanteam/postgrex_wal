@@ -42,8 +42,10 @@ when running it from Docker:
 
 ### Step 2: Setup your environment variables for postgreSQL connection.
 
-Currently we build postgreSQL connection based on following environment variables (with default values).  
+Currently we build postgreSQL connection based on following environment variables (with default values).
 Setup these environment variables in your test environment as you need.
+
+Please note that the user **must be a replication role**.
 
 ```elixir
   def pg_env do

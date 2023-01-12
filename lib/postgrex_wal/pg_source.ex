@@ -2,7 +2,7 @@ defmodule PostgrexWal.PgSource do
   @moduledoc """
   A GenStage producer that continuously ingest events from a Postgrex.ReplicationConnection.
 
-  ## Example
+  ## Examples
       opts = [
         name: :example_pg_source,
         publication_name: "example_publication",

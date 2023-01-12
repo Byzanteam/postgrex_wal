@@ -1,6 +1,6 @@
 defmodule PostgrexWal.PgSource do
   @moduledoc """
-  A data-souce(pg replication events) which a GenStage producer continuously ingest events from.
+  A data-souce (pg replication events) which a GenStage producer could continuously ingest events from.
   """
 
   alias Postgrex, as: P

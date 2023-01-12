@@ -29,7 +29,7 @@ end
 ## Other Info
 
 This library was created using
-the [Broadway Custom Producers documentation](https://hexdocs.pm/broadway/custom-producers.html) for reference. I would
+the [Broadway Custom Producers documentation](https://hexdocs.pm/broadway/custom-producers.html) for reference. We would
 encourage you to view that as well as
 the [Broadway Architecture documentation](https://hexdocs.pm/broadway/architecture.html) for more information.
 

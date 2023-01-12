@@ -1,9 +1,10 @@
 # PostgrexWal
+A `GenStage` producer for `Broadway` that continuously ingest events from a Postgrex.ReplicationConnection.
 
 This project provides:
 
 * `PostgrexWal.PgSource` - A generic behaviour to implement `Postgrex.ReplicationConnection`.
-* `PostgrexWal.Message` - The pg replication protocol 2 message decoder module.
+* `PostgrexWal.Message` - The postgreSQL replication protocol 2 message decoder module.
 
 ## Installation
 
@@ -20,13 +21,7 @@ end
 
 ## Running tests
 
-### Step 1: Clone the repo and fetch its dependencies:
-
-    $ git clone https://github.com/Byzanteam/postgrex_wal.git
-    $ cd postgrex_wal
-    $ mix deps.get
-
-### Step 2: You need to configure the wal level in PostgreSQL to logical.
+### Step 1: You need to configure the wal level in PostgreSQL to logical.
 
 Run this inside your PostgreSQL shell/configuration :
 
@@ -34,28 +29,21 @@ Run this inside your PostgreSQL shell/configuration :
       ALTER SYSTEM SET max_wal_senders='10';
       ALTER SYSTEM SET max_replication_slots='10';
 
-Then **you must restart your server**.
+Then **you must restart your server**. Alternatively, you can set
+those values when starting "postgres". This is useful, for example,
+when running it from Docker:
 
-### Step 3: You must create a publication to be replicated.
+      services:
+        postgres:
+          image: postgres:14
+          env:
+            ...
+          command: ["postgres", "-c", "wal_level=logical"]
 
-This can be done in any session:
+### Step 2: Setup your environment variables for postgreSQL connection.
 
-      CREATE PUBLICATION postgrex_example FOR ALL TABLES;
-
-You can also filter if you want to publish insert, update,
-delete or a subset of them:
-
-      # Skips updates (keeps inserts, deletes, begins, commits, etc)
-      create PUBLICATION postgrex_example FOR ALL TABLES WITH (publish = 'insert,delete');
-
-      # Skips inserts, updates, and deletes (keeps begins, commits, etc)
-      create PUBLICATION postgrex_example FOR ALL TABLES WITH (publish = '');
-
-### Step 4: Setup your environment variables for postgreSQL db connection.
-
-Currently we build pg connection based on following environment variables (with default values).
-
-Setup these environment variables in your test environment as your need.
+Currently we build postgreSQL connection based on following environment variables (with default values).  
+Setup these environment variables in your test environment as you need.
 
 ```elixir
   def pg_env do
@@ -74,11 +62,14 @@ Setup these environment variables in your test environment as your need.
   end
 ```
 
-### Step 5: Run the test.
+### Step 3: Clone the repo and fetch its dependencies:
 
+    $ git clone https://github.com/Byzanteam/postgrex_wal.git
+    $ cd postgrex_wal
+    $ mix deps.get
     $ mix test
 
-## Important links
+## Reference links
 
 * [Postgrex.ReplicationConnection](https://hexdocs.pm/postgrex/Postgrex.ReplicationConnection.html)
 * [GenStage](https://hexdocs.pm/gen_stage/GenStage.html)

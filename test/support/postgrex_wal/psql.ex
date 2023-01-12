@@ -31,8 +31,6 @@ defmodule PostgrexWal.PSQL do
     end
   end
 
-
-
   def pg_env do
     [
       username: System.get_env("PG_USERNAME", "postgres"),

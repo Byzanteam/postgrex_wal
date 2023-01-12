@@ -9,9 +9,14 @@ defmodule PostgrexWal.PSQL do
   """
 
   def cmd(query) do
+    env = pg_env()
+
+    database_url =
+      "postgres://#{env[:username]}:#{env[:password]}@#{env[:host]}:#{env[:port]}/#{env[:database]}"
+
     for q <- List.wrap(query) do
-      args = ["-c", q]
-      {output, status} = System.cmd("psql", args, stderr_to_stdout: true, env: pg_env())
+      args = [database_url, "-c", q]
+      {output, status} = System.cmd("psql", args, stderr_to_stdout: true)
 
       if status != 0 do
         raise """
@@ -28,11 +33,12 @@ defmodule PostgrexWal.PSQL do
   end
 
   def pg_env do
-    %{
-      "PGUSER" => System.get_env("WAL_USERNAME", "postgres"),
-      "PGDATABASE" => System.get_env("WAL_DB", "postgres"),
-      "PGHOST" => System.get_env("WAL_HOST", "localhost"),
-      "PGPASSWORD" => System.get_env("WAL_PASSWORD", "postgres")
-    }
+    [
+      username: System.get_env("PG_USERNAME", "postgres"),
+      database: System.get_env("PG_DATABASE", "postgres"),
+      host: System.get_env("PG_HOST", "localhost"),
+      password: System.get_env("PG_PASSWORD", "postgres"),
+      port: System.get_env("PG_PORT", "5432")
+    ]
   end
 end

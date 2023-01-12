@@ -26,18 +26,13 @@ defmodule PgSourceTest do
       ])
     end)
 
-    pg_env = PSQL.pg_env()
-
     [
       table_name: table_name,
-      opts: [
-        publication_name: publication_name,
-        slot_name: slot_name,
-        database: pg_env["PGDATABASE"],
-        host: pg_env["PGHOST"],
-        username: pg_env["PGUSER"],
-        password: pg_env["PGPASSWORD"]
-      ]
+      opts:
+        [
+          publication_name: publication_name,
+          slot_name: slot_name
+        ] ++ PSQL.pg_env()
     ]
   end
 

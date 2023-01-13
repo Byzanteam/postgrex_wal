@@ -1,6 +1,10 @@
 # PostgrexWal
+A `GenStage` producer for `Broadway` that continuously ingest events from a Postgrex.ReplicationConnection.
 
-**TODO: Add description**
+This project provides:
+
+* `PostgrexWal.PgSource` - A generic behaviour to implement `Postgrex.ReplicationConnection`.
+* `PostgrexWal.Message` - The postgreSQL replication protocol 2 message decoder module.
 
 ## Installation
 
@@ -15,83 +19,64 @@ def deps do
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/postgrex_wal>.
+## Running tests
+
+### Step 1: You need to configure the wal level in PostgreSQL to logical.
+
+Run this inside your PostgreSQL shell/configuration :
+
+      ALTER SYSTEM SET wal_level='logical';
+      ALTER SYSTEM SET max_wal_senders='10';
+      ALTER SYSTEM SET max_replication_slots='10';
+
+Then **you must restart your server**. Alternatively, you can set
+those values when starting "postgres". This is useful, for example,
+when running it from Docker:
+
+      services:
+        postgres:
+          image: postgres:14
+          env:
+            ...
+          command: ["postgres", "-c", "wal_level=logical"]
+
+### Step 2: Setup your environment variables for postgreSQL connection.
+
+Currently we build postgreSQL connection based on following environment variables (with default values).
+Setup these environment variables in your test environment as you need.
+
+Please note that the user **must be a replication role**.
 
 ```elixir
-defmodule Repl do
-  use Postgrex.ReplicationConnection
-
-  def start_link(opts) do
-    # Automatically reconnect if we lose connection.
-    extra_opts = [
-      auto_reconnect: true
+  def pg_env do
+    [
+      username: System.get_env("PG_USERNAME", "postgres"),
+      database: System.get_env("PG_DATABASE", "postgres"),
+      host: System.get_env("PG_HOST", "localhost"),
+      password: System.get_env("PG_PASSWORD", "postgres"),
+      port: System.get_env("PG_PORT", "5432")
     ]
-
-    Postgrex.ReplicationConnection.start_link(__MODULE__, :ok, extra_opts ++ opts)
   end
 
-  @impl true
-  def init(:ok) do
-    {:ok, %{step: :disconnected}}
+  def database_url do
+    e = pg_env()
+    "postgres://#{e[:username]}:#{e[:password]}@#{e[:host]}:#{e[:port]}/#{e[:database]}"
   end
-
-  @impl true
-  def handle_connect(%{step: :streaming} = state) do
-    {:noreply, state}
-  end
-
-  def handle_connect(%{step: :disconnected} = state) do
-    query = "CREATE_REPLICATION_SLOT postgrex LOGICAL pgoutput NOEXPORT_SNAPSHOT"
-    {:query, query, %{state | step: :create_slot}}
-  end
-
-  @impl true
-  def handle_result(results, %{step: :create_slot} = state) when is_list(results) do
-    query =
-      "START_REPLICATION SLOT postgrex LOGICAL 0/0 (proto_version '1', publication_names 'example')"
-
-    {:stream, query, [], %{state | step: :streaming}}
-  end
-
-  def handle_result(results, state) do
-    IO.inspect(results, label: :results)
-    {:noreply, state}
-  end
-
-  @impl true
-  # https://www.postgresql.org/docs/14/protocol-replication.html
-  def handle_data(<<?w, _wal_start::64, _wal_end::64, _clock::64, rest::binary>>, state) do
-    PostgrexWal.Message.decode(rest) |> IO.inspect()
-
-    {:noreply, state}
-  end
-
-  def handle_data(<<?k, wal_end::64, _clock::64, reply>>, state) do
-    messages =
-      case reply do
-        1 -> [<<?r, wal_end + 1::64, wal_end + 1::64, wal_end + 1::64, current_time()::64, 0>>]
-        0 -> []
-      end
-
-    {:noreply, messages, state}
-  end
-
-  def handle_data(data, state) do
-    IO.inspect(data, label: :data)
-    {:noreply, state}
-  end
-
-  @epoch DateTime.to_unix(~U[2000-01-01 00:00:00Z], :microsecond)
-  defp current_time(), do: System.os_time(:microsecond) - @epoch
-end
-
-{:ok, pid} =
-  Repl.start_link(
-    host: "localhost",
-    database: "postgres",
-    username: "postgres",
-    password: "postgres"
-  )
 ```
+
+### Step 3: Clone the repo and fetch its dependencies:
+
+    $ git clone https://github.com/Byzanteam/postgrex_wal.git
+    $ cd postgrex_wal
+    $ mix deps.get
+    $ mix test
+
+## Reference links
+
+* [Postgrex.ReplicationConnection](https://hexdocs.pm/postgrex/Postgrex.ReplicationConnection.html)
+* [GenStage](https://hexdocs.pm/gen_stage/GenStage.html)
+* [Elixir Broadway](https://elixir-broadway.org/)
+
+## License
+
+MIT License

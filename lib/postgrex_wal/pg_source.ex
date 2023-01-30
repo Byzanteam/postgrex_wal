@@ -161,7 +161,6 @@ defmodule PostgrexWal.PgSource do
     {pid, _} = from
     Process.monitor(pid)
     PR.reply(from, :ok)
-    # allow pid override
     {:noreply, %{state | subscriber: pid}}
   end
 
@@ -171,9 +170,8 @@ defmodule PostgrexWal.PgSource do
   end
 
   @impl true
-  def handle_info({:DOWN, _ref, :process, pid, _reason}, state) do
-    s = if pid == state.subscriber, do: nil, else: state.subscriber
-    {:noreply, %{state | subscriber: s}}
+  def handle_info({:DOWN, _ref, :process, pid, _reason}, %{subscriber: pid} = state) do
+    {:noreply, %{state | subscriber: nil}}
   end
 
   def handle_info(data, state) do
@@ -182,6 +180,7 @@ defmodule PostgrexWal.PgSource do
   end
 
   defp pg_ack(lsn, state) when is_binary(lsn) do
+    Logger.debug "pg_source ack: #{lsn}"
     {:ok, lsn} = PR.decode_lsn(lsn)
     state = if lsn > state.final_lsn, do: %{state | final_lsn: lsn}, else: state
     {:noreply, [ack_message(state.final_lsn)], state}

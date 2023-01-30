@@ -180,7 +180,7 @@ defmodule PostgrexWal.PgSource do
   end
 
   defp pg_ack(lsn, state) when is_binary(lsn) do
-    Logger.debug "pg_source ack: #{lsn}"
+    Logger.debug("pg_source ack: #{lsn}")
     {:ok, lsn} = PR.decode_lsn(lsn)
     state = if lsn > state.final_lsn, do: %{state | final_lsn: lsn}, else: state
     {:noreply, [ack_message(state.final_lsn)], state}

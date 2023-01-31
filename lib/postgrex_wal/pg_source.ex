@@ -14,7 +14,7 @@ defmodule PostgrexWal.PgSource do
   typedstruct enforce: true do
     field :publication_name, String.t()
     field :slot_name, String.t()
-    field :final_lsn, integer(), default: 0
+    field :max_lsn, integer(), default: 0
     field :step, step(), default: :disconnected
     field :subscriber, pid(), default: nil
     field :events, list(), default: []
@@ -25,9 +25,11 @@ defmodule PostgrexWal.PgSource do
            {:publication_name, String.t()},
            {:slot_name, String.t()},
            {:host, String.t()},
+           {:port, String.t()},
            {:database, String.t()},
            {:username, String.t()},
-           {:password, String.t()}
+           {:password, String.t()},
+           {:subscriber, pid()}
          ]
   @spec start_link(opts()) :: {:ok, pid()} | {:error, P.Error.t() | term()}
   def start_link(opts) do
@@ -42,6 +44,7 @@ defmodule PostgrexWal.PgSource do
 
   @spec ack(PR.server(), String.t()) :: :ok
   def ack(server, lsn) when is_binary(lsn) do
+    {:ok, lsn} = PR.decode_lsn(lsn)
     PR.call(server, {:ack, lsn})
   end
 
@@ -144,7 +147,7 @@ defmodule PostgrexWal.PgSource do
   def handle_data(<<?k, _wal_end::64, _clock::64, reply>>, state) do
     messages =
       case reply do
-        1 -> [ack_message(state.final_lsn)]
+        1 -> [ack_message(state.max_lsn)]
         0 -> []
       end
 
@@ -164,9 +167,16 @@ defmodule PostgrexWal.PgSource do
     {:noreply, %{state | subscriber: pid}}
   end
 
-  def handle_call({:ack, lsn}, from, state) do
+  def handle_call({:ack, lsn}, from, %{max_lsn: max_lsn} = state) when lsn > max_lsn do
     PR.reply(from, :ok)
-    pg_ack(lsn, state)
+    state = %{state | max_lsn: lsn}
+    Logger.debug("pg_source ack: #{lsn}")
+    {:noreply, [ack_message(lsn)], state}
+  end
+
+  def handle_call({:ack, _lsn}, from, state) do
+    PR.reply(from, :ok)
+    {:noreply, [], state}
   end
 
   @impl true
@@ -177,13 +187,6 @@ defmodule PostgrexWal.PgSource do
   def handle_info(data, state) do
     Logger.warning("handle_info/2 unknown data: #{inspect(data)}")
     {:noreply, state}
-  end
-
-  defp pg_ack(lsn, state) when is_binary(lsn) do
-    Logger.debug("pg_source ack: #{lsn}")
-    {:ok, lsn} = PR.decode_lsn(lsn)
-    state = if lsn > state.final_lsn, do: %{state | final_lsn: lsn}, else: state
-    {:noreply, [ack_message(state.final_lsn)], state}
   end
 
   defp ack_message(lsn) when is_integer(lsn) do

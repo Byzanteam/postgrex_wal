@@ -70,14 +70,14 @@ defmodule PostgrexWal.PgProducer do
 
   @behaviour Broadway.Producer
   @impl true
-  def prepare_for_start(_module, broadway_options) do
-    {_producer_module, opts} = broadway_options[:producer][:module]
+  def prepare_for_start(_module, broadway_opts) do
+    {_producer_module, opts} = broadway_opts[:producer][:module]
 
     children = [
       {PostgrexWal.PgSource, opts}
     ]
 
-    {children, broadway_options}
+    {children, broadway_opts}
   end
 
   def ack(pg_source, successful, _failed) do
@@ -85,9 +85,9 @@ defmodule PostgrexWal.PgProducer do
       successful
       |> Enum.reverse()
       |> Enum.find_value(fn m ->
-        if is_struct(m.data, PostgrexWal.Messages.Commit), do: m.data.end_lsn
+        is_struct(m.data, PostgrexWal.Messages.Commit) && m.data.end_lsn
       end)
 
-    if lsn, do: PostgrexWal.PgSource.ack(pg_source, lsn)
+    lsn && PostgrexWal.PgSource.ack(pg_source, lsn)
   end
 end

@@ -68,8 +68,7 @@ defmodule PostgrexWal.PgProducer do
     {:noreply, events, state}
   end
 
-  @behaviour Broadway.Producer
-  @impl true
+  @impl Broadway.Producer
   def prepare_for_start(_module, broadway_opts) do
     {_producer_module, opts} = broadway_opts[:producer][:module]
 

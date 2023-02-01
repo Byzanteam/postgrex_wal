@@ -1,4 +1,7 @@
 # PostgrexWal
+
+[![Elixir CI](https://github.com/Byzanteam/postgrex_wal/actions/workflows/elixir.yml/badge.svg)](https://github.com/Byzanteam/postgrex_wal/actions/workflows/elixir.yml)
+
 A `GenStage` producer for `Broadway` that continuously ingest events from a Postgrex.ReplicationConnection.
 
 This project provides:

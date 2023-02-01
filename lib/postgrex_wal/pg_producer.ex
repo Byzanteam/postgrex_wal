@@ -1,5 +1,6 @@
 defmodule PostgrexWal.PgProducer do
   use GenStage
+  use TypedStruct
   require Logger
 
   @moduledoc """
@@ -20,15 +21,15 @@ defmodule PostgrexWal.PgProducer do
             name: __MODULE__,
             producer: [
               module: {
-                 PostgrexWal.PgProducer,
-                 name: :my_pg_source,
-                 publication_name: "my_pub",
-                 slot_name: "my_slot",
-                 username: "postgres",
-                 database: "postgres",
-                 password: "postgres",
-                 host: "localhost",
-                 port: "5432"
+                PostgrexWal.PgProducer,
+                name: :my_pg_source,
+                publication_name: "my_pub",
+                slot_name: "my_slot",
+                username: "postgres",
+                database: "postgres",
+                password: "postgres",
+                host: "localhost",
+                port: "5432"
               }
             ],
             processors: [
@@ -45,11 +46,15 @@ defmodule PostgrexWal.PgProducer do
 
   """
 
+  typedstruct do
+    field :pg_source, pid(), default: nil
+  end
+
   @impl true
   def init(opts) do
     Logger.info("pg_producer init...")
     send(self(), {:start_pg_source, opts})
-    {:producer, %{pg_source: opts[:name]}}
+    {:producer, %__MODULE__{}}
   end
 
   @impl true
@@ -59,8 +64,8 @@ defmodule PostgrexWal.PgProducer do
 
   @impl true
   def handle_info({:start_pg_source, opts}, state) do
-    PostgrexWal.PgSource.start_link(opts ++ [subscriber: self()])
-    {:noreply, [], state}
+    {:ok, pid} = PostgrexWal.PgSource.start_link(opts ++ [subscriber: self()])
+    {:noreply, [], %{state | pg_source: pid}}
   end
 
   def handle_info({:events, events}, state) do

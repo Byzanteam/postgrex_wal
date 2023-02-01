@@ -57,6 +57,7 @@ defmodule PostgrexWal.PgSource do
 
   @impl true
   def init(state) do
+    Logger.info("pg_source init...")
     {:ok, state}
   end
 

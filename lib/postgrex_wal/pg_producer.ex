@@ -1,5 +1,6 @@
 defmodule PostgrexWal.PgProducer do
   use GenStage
+  require Logger
 
   @moduledoc """
   A PostgreSQL wal events producer for Broadway.
@@ -46,8 +47,9 @@ defmodule PostgrexWal.PgProducer do
 
   @impl true
   def init(opts) do
-    PostgrexWal.PgSource.subscribe(opts[:name])
-    {:producer, pg_source: opts[:name]}
+    Logger.info("pg_producer init...")
+    send(self(), {:start_pg_source, opts})
+    {:producer, %{pg_source: opts[:name]}}
   end
 
   @impl true
@@ -56,27 +58,21 @@ defmodule PostgrexWal.PgProducer do
   end
 
   @impl true
+  def handle_info({:start_pg_source, opts}, state) do
+    PostgrexWal.PgSource.start_link(opts ++ [subscriber: self()])
+    {:noreply, [], state}
+  end
+
   def handle_info({:events, events}, state) do
     events =
       for event <- events do
         %Broadway.Message{
           data: PostgrexWal.Message.decode(event),
-          acknowledger: {__MODULE__, state[:pg_source], :ack_data}
+          acknowledger: {__MODULE__, state.pg_source, :ack_data}
         }
       end
 
     {:noreply, events, state}
-  end
-
-  @impl Broadway.Producer
-  def prepare_for_start(_module, broadway_opts) do
-    {_producer_module, opts} = broadway_opts[:producer][:module]
-
-    children = [
-      {PostgrexWal.PgSource, opts}
-    ]
-
-    {children, broadway_opts}
   end
 
   def ack(pg_source, successful, _failed) do

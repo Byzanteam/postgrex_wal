@@ -95,6 +95,12 @@ defmodule PostgrexWal.PgProducer do
     {:noreply, events, state}
   end
 
+  @doc """
+  If there are no batchers, the acknowledgement will be done by processors.
+  The number of messages acknowledged, assuming the pipeline is running at full scale,
+  will be max_demand - min_demand.
+  Since the default values are 10 and 5 respectively, we will be acknowledging in groups of 5.
+  """
   @behaviour Broadway.Acknowledger
   @impl true
   def ack(pg_source, successful, _failed) do

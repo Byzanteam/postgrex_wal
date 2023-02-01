@@ -19,6 +19,43 @@ def deps do
 end
 ```
 
+## Usage
+
+Configure Broadway with one or more producers using `PostgrexWal.PgProducer`:
+
+```elixir
+  defmodule MyBroadway do
+    use Broadway
+  
+    def start_link(_opts) do
+      Broadway.start_link(__MODULE__,
+        name: __MODULE__,
+        producer: [
+          module: {
+            PostgrexWal.PgProducer,
+            name: :my_pg_source,
+            publication_name: "my_pub",
+            slot_name: "my_slot",
+            username: "postgres",
+            database: "postgres",
+            password: "postgres",
+            host: "localhost",
+            port: "5432"
+          }
+        ],
+        processors: [
+          default: [max_demand: 1]
+        ]
+      )
+    end
+  
+    @impl true
+    def handle_message(_processor_name, message, _context) do
+      message |> IO.inspect(label: "Got message")
+    end
+  end
+```
+
 ## Running tests
 
 ### Step 1: You need to configure the wal level in PostgreSQL to logical.

@@ -13,10 +13,11 @@ defmodule PgProducerTest do
       Broadway.start_link(__MODULE__,
         name: __MODULE__,
         producer: [
-          module: {PostgrexWal.PgProducer, opts}
+          module: {PostgrexWal.PgProducer, opts},
+          concurrency: 1
         ],
         processors: [
-          default: []
+          default: [concurrency: 1]
         ],
         context: %{tester: tester}
       )

@@ -51,6 +51,7 @@ defmodule PostgrexWal.PgProducer do
   end
 
   @impl true
+  # opts has been injected with {broadway: Keyword.t()} by Broadway behaviour.
   def init(opts) do
     Logger.info("pg_producer init...")
     send(self(), {:start_pg_source, opts})
@@ -68,18 +69,34 @@ defmodule PostgrexWal.PgProducer do
     {:noreply, [], %{state | pg_source: pid}}
   end
 
+  @doc """
+  Broadway.NoopAcknowledger.init() produce: {Broadway.NoopAcknowledger, nil, nil}
+  Broadway.CallerAcknowledger.init({pid, ref}, term) produce: {Broadway.CallerAcknowledger, {#PID<0.275.0>, ref}, term}
+  """
   def handle_info({:events, events}, state) do
+    noop_acker = Broadway.NoopAcknowledger.init()
+    op_acker = {__MODULE__, state.pg_source, :ack_data}
+
     events =
       for event <- events do
+        message = PostgrexWal.Message.decode(event)
+
+        acker =
+          if is_struct(message, PostgrexWal.Messages.Commit),
+            do: op_acker,
+            else: noop_acker
+
         %Broadway.Message{
-          data: PostgrexWal.Message.decode(event),
-          acknowledger: {__MODULE__, state.pg_source, :ack_data}
+          data: message,
+          acknowledger: acker
         }
       end
 
     {:noreply, events, state}
   end
 
+  @behaviour Broadway.Acknowledger
+  @impl true
   def ack(pg_source, successful, _failed) do
     lsn =
       successful

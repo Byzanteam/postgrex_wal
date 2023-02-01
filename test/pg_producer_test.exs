@@ -16,7 +16,7 @@ defmodule PgProducerTest do
           module: {PostgrexWal.PgProducer, opts}
         ],
         processors: [
-          default: []
+          default: [max_demand: 1, min_demand: 0]
         ],
         context: %{tester: tester}
       )
@@ -24,7 +24,8 @@ defmodule PgProducerTest do
 
     @impl true
     def handle_message(_processor_name, message, context) do
-      message |> tap(&send(context.tester, &1))
+      send(context.tester, message)
+      message
     end
   end
 

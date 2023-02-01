@@ -16,7 +16,7 @@ defmodule PgProducerTest do
           module: {PostgrexWal.PgProducer, opts}
         ],
         processors: [
-          default: [max_demand: 1, min_demand: 0]
+          default: []
         ],
         context: %{tester: tester}
       )

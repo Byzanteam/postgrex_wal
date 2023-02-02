@@ -103,9 +103,9 @@ defmodule PostgrexWal.PgProducer do
   """
   @behaviour Broadway.Acknowledger
   @impl true
-  def ack(pg_source, successful, _failed) do
+  def ack(pg_source, successful_messages, _failed_messages) do
     lsn =
-      successful
+      successful_messages
       |> Enum.reverse()
       |> Enum.find_value(fn m ->
         is_struct(m.data, PostgrexWal.Messages.Commit) && m.data.end_lsn

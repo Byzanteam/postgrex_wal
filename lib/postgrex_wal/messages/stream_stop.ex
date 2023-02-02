@@ -3,7 +3,7 @@ defmodule PostgrexWal.Messages.StreamStop do
   Byte1('E')
   Identifies the message as a stream stop message.
   """
-  use PostgrexWal.Message
+  use PostgrexWal.GenMessage
 
   typedstruct do
   end

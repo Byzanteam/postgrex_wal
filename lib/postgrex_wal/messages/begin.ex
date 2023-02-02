@@ -14,7 +14,7 @@ defmodule PostgrexWal.Messages.Begin do
   Int32 (TransactionId)
   Xid of the transaction.
   """
-  use PostgrexWal.Message
+  use PostgrexWal.GenMessage
 
   typedstruct enforce: true do
     field :final_lsn, String.t()

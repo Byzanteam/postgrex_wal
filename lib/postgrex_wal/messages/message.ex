@@ -21,7 +21,7 @@ defmodule PostgrexWal.Messages.Message do
   Byten
   The content of the logical decoding message.
   """
-  use PostgrexWal.Message
+  use PostgrexWal.GenMessage
 
   typedstruct enforce: true do
     field :transaction_id, integer(), enforce: false

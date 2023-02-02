@@ -9,7 +9,7 @@ defmodule PostgrexWal.Messages.StreamStart do
   Int8
   A value of 1 indicates this is the first stream segment for this XID, 0 for any other stream segment.
   """
-  use PostgrexWal.Message
+  use PostgrexWal.GenMessage
 
   typedstruct enforce: true do
     field :transaction_id, integer()

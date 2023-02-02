@@ -7,7 +7,7 @@ defmodule PostgrexWal.Messages.Origin do
   It's downstream's responsibility to handle this as needed (if needed). The Origin message is always sent before any DML messages in the transaction.
   """
 
-  use PostgrexWal.Message
+  use PostgrexWal.GenMessage
 
   typedstruct enforce: true do
     field :commit_lsn, String.t()

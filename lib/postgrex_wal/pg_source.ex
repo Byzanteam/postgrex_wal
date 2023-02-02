@@ -49,11 +49,6 @@ defmodule PostgrexWal.PgSource do
     PR.call(server, {:ack, lsn})
   end
 
-  @spec subscribe(PR.server()) :: :ok
-  def subscribe(server) do
-    PR.call(server, :subscribe)
-  end
-
   # Callbacks
 
   @impl true
@@ -162,13 +157,6 @@ defmodule PostgrexWal.PgSource do
   end
 
   @impl true
-  def handle_call(:subscribe, from, state) do
-    {pid, _} = from
-    Process.monitor(pid)
-    PR.reply(from, :ok)
-    {:noreply, %{state | subscriber: pid}}
-  end
-
   def handle_call({:ack, lsn}, from, %{max_lsn: max_lsn} = state) when lsn > max_lsn do
     PR.reply(from, :ok)
     Logger.debug("pg_source ack: #{lsn}")
@@ -178,16 +166,6 @@ defmodule PostgrexWal.PgSource do
   def handle_call({:ack, _lsn}, from, state) do
     PR.reply(from, :ok)
     {:noreply, [], state}
-  end
-
-  @impl true
-  def handle_info({:DOWN, _ref, :process, pid, _reason}, %{subscriber: pid} = state) do
-    {:noreply, %{state | subscriber: nil}}
-  end
-
-  def handle_info(data, state) do
-    Logger.warning("handle_info/2 unknown data: #{inspect(data)}")
-    {:noreply, state}
   end
 
   defp ack_message(lsn) when is_integer(lsn) do

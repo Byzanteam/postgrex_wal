@@ -1,6 +1,6 @@
 defmodule PostgrexWal.Messages.MessageTest do
   use ExUnit.Case, async: true
-  alias PostgrexWal.Messages.{Message, Util}
+  alias PostgrexWal.Messages.Message
 
   @event <<0, 0, 0, 0, 0, 2, 227, 251, 232, 109, 121, 95, 116, 101, 115, 116, 0, 0, 0, 0, 4, 116,
            101, 115, 116>>
@@ -27,7 +27,7 @@ defmodule PostgrexWal.Messages.MessageTest do
                prefix: "my_test",
                transaction_id: 123
              },
-             Util.decode({:in_stream, <<?M, 123::32, @event>>})
+             PostgrexWal.Message.decode({:in_stream, <<?M, 123::32, @event>>})
            )
   end
 end

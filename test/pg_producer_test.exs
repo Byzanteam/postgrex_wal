@@ -1,5 +1,5 @@
 defmodule PgProducerTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias PostgrexWal.Messages.Insert
   alias PostgrexWal.PSQL

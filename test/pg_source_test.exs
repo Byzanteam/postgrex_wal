@@ -1,5 +1,5 @@
 defmodule PgSourceTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias PostgrexWal.{PgSource, PgSourceRelayer, PSQL}
   alias PostgrexWal.Messages.{Begin, Commit, Insert}

@@ -1,4 +1,7 @@
 # PostgrexWal
+
+[![Elixir CI](https://github.com/Byzanteam/postgrex_wal/actions/workflows/elixir.yml/badge.svg)](https://github.com/Byzanteam/postgrex_wal/actions/workflows/elixir.yml)
+
 A `GenStage` producer for `Broadway` that continuously ingest events from a Postgrex.ReplicationConnection.
 
 This project provides:
@@ -17,6 +20,43 @@ def deps do
     {:postgrex_wal, "~> 0.1.0"}
   ]
 end
+```
+
+## Usage
+
+Configure Broadway with one or more producers using `PostgrexWal.PgProducer`:
+
+```elixir
+  defmodule MyBroadway do
+    use Broadway
+  
+    def start_link(_opts) do
+      Broadway.start_link(__MODULE__,
+        name: __MODULE__,
+        producer: [
+          module: {
+            PostgrexWal.PgProducer,
+            name: :my_pg_source,
+            publication_name: "my_pub",
+            slot_name: "my_slot",
+            username: "postgres",
+            database: "postgres",
+            password: "postgres",
+            host: "localhost",
+            port: "5432"
+          }
+        ],
+        processors: [
+          default: [max_demand: 1]
+        ]
+      )
+    end
+  
+    @impl true
+    def handle_message(_processor_name, message, _context) do
+      message |> IO.inspect(label: "Got message")
+    end
+  end
 ```
 
 ## Running tests

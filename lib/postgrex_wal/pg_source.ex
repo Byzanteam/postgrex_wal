@@ -211,9 +211,7 @@ defmodule PostgrexWal.PgSource do
   # ?U => Update,
   # ?Y => Type,
   # ?c => StreamCommit
-  defp in_stream_preprocess(payload, state) do
-    key = :binary.first(payload)
-
+  defp in_stream_preprocess(<<key::8, _rest::binary>> = payload, state) do
     in_stream? =
       case key do
         ?S ->

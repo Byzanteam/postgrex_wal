@@ -20,9 +20,14 @@ defmodule PostgrexWal.PgSourceRelayer do
   # Callbacks
 
   @impl true
-  def init({pg_source, receiver}) do
-    PgSource.subscribe(pg_source)
-    {:ok, {receiver, []}}
+  def init({receiver, opts}) do
+    {:ok, {receiver, []}, {:continue, {:start_pg_source, opts}}}
+  end
+
+  @impl true
+  def handle_continue({:start_pg_source, opts}, state) do
+    PgSource.start_link(opts ++ [subscriber: self()])
+    {:noreply, state}
   end
 
   @impl true

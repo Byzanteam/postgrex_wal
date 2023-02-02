@@ -83,7 +83,9 @@ defmodule PostgrexWal.Message do
   ]
 
   @spec streamable?(byte()) :: boolean()
-  def streamable?(key) do
-    key in for m <- @streamable_modules, do: m.identifier()
+  for m <- @streamable_modules do
+    def streamable?(unquote(m.identifier())), do: true
   end
+
+  def streamable?(_key), do: false
 end

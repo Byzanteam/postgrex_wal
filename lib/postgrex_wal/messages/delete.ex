@@ -23,13 +23,13 @@ defmodule PostgrexWal.Messages.Delete do
   The Delete message may contain either a 'K' message part or an 'O' message part, but never both of them.
   """
 
-  use PostgrexWal.Message
+  use PostgrexWal.GenMessage
 
   typedstruct do
     field :transaction_id, integer()
     field :relation_oid, integer(), enforce: true
-    field :changed_key_tuple_data, [Message.tuple_data()]
-    field :old_tuple_data, [Message.tuple_data()]
+    field :changed_key_tuple_data, [GenMessage.tuple_data()]
+    field :old_tuple_data, [GenMessage.tuple_data()]
   end
 
   @impl true

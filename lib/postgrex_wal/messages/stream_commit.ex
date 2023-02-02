@@ -18,7 +18,7 @@ defmodule PostgrexWal.Messages.StreamCommit do
   Int64 (TimestampTz)
   Commit timestamp of the transaction. The value is in number of microseconds since PostgreSQL epoch (2000-01-01).
   """
-  use PostgrexWal.Message
+  use PostgrexWal.GenMessage
 
   typedstruct enforce: true do
     field :transaction_id, integer()

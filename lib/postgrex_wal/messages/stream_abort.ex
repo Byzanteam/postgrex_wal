@@ -9,7 +9,7 @@ defmodule PostgrexWal.Messages.StreamAbort do
   Int32 (TransactionId)
   Xid of the subtransaction (will be same as xid of the transaction for top-level transactions).
   """
-  use PostgrexWal.Message
+  use PostgrexWal.GenMessage
 
   typedstruct enforce: true do
     field :transaction_id, integer()

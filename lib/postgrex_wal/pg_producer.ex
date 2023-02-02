@@ -3,6 +3,8 @@ defmodule PostgrexWal.PgProducer do
   use TypedStruct
   require Logger
 
+  alias PostgrexWal.Messages.{Commit, Util}
+
   @moduledoc """
   A PostgreSQL wal events producer for Broadway.
 
@@ -79,10 +81,10 @@ defmodule PostgrexWal.PgProducer do
 
     events =
       for event <- events do
-        message = PostgrexWal.Message.decode(event)
+        message = Util.decode(event)
 
         acker =
-          if is_struct(message, PostgrexWal.Messages.Commit),
+          if is_struct(message, Commit),
             do: op_acker,
             else: noop_acker
 
@@ -108,7 +110,7 @@ defmodule PostgrexWal.PgProducer do
       successful_messages
       |> Enum.reverse()
       |> Enum.find_value(fn m ->
-        is_struct(m.data, PostgrexWal.Messages.Commit) && m.data.end_lsn
+        is_struct(m.data, Commit) && m.data.end_lsn
       end)
 
     lsn && PostgrexWal.PgSource.ack(pg_source, lsn)

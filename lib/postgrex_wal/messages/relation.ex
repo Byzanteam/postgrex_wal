@@ -7,7 +7,7 @@ defmodule PostgrexWal.Messages.Relation do
   and first consult that cache to see if the type OID is defined there. If not, look up the type OID locally.
   """
 
-  use PostgrexWal.GenMessage
+  use PostgrexWal.Message
   alias PostgrexWal.Messages.Relation.Column
 
   typedstruct enforce: true do

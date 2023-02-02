@@ -18,7 +18,7 @@ defmodule PostgrexWal.Messages.Commit do
   Commit timestamp of the transaction. The value is in number of microseconds since PostgreSQL epoch (2000-01-01).
   """
 
-  use PostgrexWal.GenMessage
+  use PostgrexWal.Message
 
   typedstruct enforce: true do
     field :flags, Keyword.t()

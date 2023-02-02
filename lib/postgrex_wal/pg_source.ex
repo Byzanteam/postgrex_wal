@@ -176,15 +176,15 @@ defmodule PostgrexWal.PgSource do
   defp current_time, do: System.os_time(:microsecond) - @epoch
 
   defp wrap_in_stream(<<key::8, _rest::binary>> = payload, state) do
-    alias PostgrexWal.Message, as: M
+    alias PostgrexWal.Messages.Util
 
     in_stream? =
       cond do
-        M.stream_start?(key) ->
+        Util.stream_start?(key) ->
           state.in_stream? && Logger.error("stream flag consecutively true")
           true
 
-        M.stream_stop?(key) ->
+        Util.stream_stop?(key) ->
           state.in_stream? || Logger.error("stream flag consecutively false")
           false
 
@@ -193,7 +193,7 @@ defmodule PostgrexWal.PgSource do
       end
 
     payload =
-      if in_stream? and M.streamable?(key),
+      if in_stream? and Util.streamable?(key),
         do: {:in_stream, payload},
         else: payload
 

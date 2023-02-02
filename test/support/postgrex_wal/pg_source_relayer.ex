@@ -5,9 +5,9 @@ defmodule PostgrexWal.PgSourceRelayer do
   require Logger
 
   alias PostgrexWal.{
-    Message,
     Messages.Commit,
     Messages.Relation,
+    Messages.Util,
     PgSource
   }
 
@@ -34,7 +34,7 @@ defmodule PostgrexWal.PgSourceRelayer do
   def handle_info({:events, events}, {receiver, buf}) do
     buf =
       for e <- events,
-          m = Message.decode(e),
+          m = Util.decode(e),
           !is_struct(m, Relation),
           reduce: buf do
         acc ->

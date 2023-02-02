@@ -12,20 +12,6 @@ defmodule PostgrexWal.Message do
   https://www.postgresql.org/docs/current/protocol-logicalrep-message-formats.html
   """
 
-  @callback decode(message :: binary()) :: struct()
-  @callback identifier() :: byte()
-
-  defmacro __using__(_opts) do
-    quote do
-      @behaviour PostgrexWal.Message
-      use TypedStruct
-      alias PostgrexWal.Message
-      alias PostgrexWal.Messages.Util
-    end
-  end
-
-  @type tuple_data() :: nil | :unchanged_toast | {:text, binary()} | {:binary, bitstring()}
-
   alias PostgrexWal.Messages.{
     Begin,
     Commit,
@@ -43,22 +29,22 @@ defmodule PostgrexWal.Message do
     Update
   }
 
-  @modules %{
-    ?A => StreamAbort,
-    ?B => Begin,
-    ?C => Commit,
-    ?D => Delete,
-    ?E => StreamStop,
-    ?I => Insert,
-    ?M => Message,
-    ?O => Origin,
-    ?R => Relation,
-    ?S => StreamStart,
-    ?T => Truncate,
-    ?U => Update,
-    ?Y => Type,
-    ?c => StreamCommit
-  }
+  @modules [
+    StreamAbort,
+    Begin,
+    Commit,
+    Delete,
+    StreamStop,
+    Insert,
+    Message,
+    Origin,
+    Relation,
+    StreamStart,
+    Truncate,
+    Update,
+    Type,
+    StreamCommit
+  ]
 
   @doc """
   The logical replication protocol sends individual transactions one by one.
@@ -72,8 +58,8 @@ defmodule PostgrexWal.Message do
     decode(<<key::8>> <> payload) |> struct(transaction_id: transaction_id)
   end
 
-  for {key, module} <- @modules do
-    def decode(<<unquote(key)::8, payload::binary>>), do: unquote(module).decode(payload)
+  for m <- @modules do
+    def decode(<<unquote(m.identifier())::8, payload::binary>>), do: unquote(m).decode(payload)
   end
 
   @spec stream_start?(byte()) :: boolean()
@@ -86,16 +72,18 @@ defmodule PostgrexWal.Message do
     key === StreamStop.identifier()
   end
 
+  @streamable_modules [
+    Delete,
+    Insert,
+    Message,
+    Relation,
+    Truncate,
+    Update,
+    Type
+  ]
+
   @spec streamable?(byte()) :: boolean()
   def streamable?(key) do
-    key in [
-      Delete.identifier(),
-      Insert.identifier(),
-      Message.identifier(),
-      Relation.identifier(),
-      Truncate.identifier(),
-      Update.identifier(),
-      Type.identifier()
-    ]
+    key in for m <- @streamable_modules, do: m.identifier()
   end
 end

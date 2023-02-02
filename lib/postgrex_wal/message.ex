@@ -18,7 +18,8 @@ defmodule PostgrexWal.Message do
     quote do
       @behaviour PostgrexWal.Message
       use TypedStruct
-      alias PostgrexWal.{Message, MessageHelper}
+      alias PostgrexWal.Message
+      alias PostgrexWal.Messages.Util
     end
   end
 
@@ -32,6 +33,7 @@ defmodule PostgrexWal.Message do
     Message,
     Origin,
     Relation,
+    Streamable,
     StreamAbort,
     StreamCommit,
     StreamStart,
@@ -72,5 +74,20 @@ defmodule PostgrexWal.Message do
 
   for {key, module} <- @modules do
     def decode(<<unquote(key)::8, payload::binary>>), do: unquote(module).decode(payload)
+  end
+
+  @spec stream_start?(byte()) :: boolean()
+  def stream_start?(key) do
+    key === StreamStart.identifier()
+  end
+
+  @spec stream_stop?(byte()) :: boolean()
+  def stream_stop?(key) do
+    key === StreamStop.identifier()
+  end
+
+  @spec streamable?(byte()) :: boolean()
+  def streamable?(key) do
+    key in Streamable.identifiers()
   end
 end

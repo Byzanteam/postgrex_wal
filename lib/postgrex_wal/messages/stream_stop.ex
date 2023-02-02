@@ -13,6 +13,5 @@ defmodule PostgrexWal.Messages.StreamStop do
     %__MODULE__{}
   end
 
-  @impl true
   def identifier, do: ?E
 end

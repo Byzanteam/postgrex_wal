@@ -42,20 +42,20 @@ defmodule PostgrexWal.Message do
   end
 
   @modules [
-    StreamAbort,
     Begin,
     Commit,
     Delete,
-    StreamStop,
     Insert,
     Message,
     Origin,
     Relation,
+    StreamAbort,
+    StreamCommit,
     StreamStart,
+    StreamStop,
     Truncate,
-    Update,
     Type,
-    StreamCommit
+    Update
   ]
 
   for m <- @modules do
@@ -78,8 +78,8 @@ defmodule PostgrexWal.Message do
     Message,
     Relation,
     Truncate,
-    Update,
-    Type
+    Type,
+    Update
   ]
 
   @spec streamable?(byte()) :: boolean()

@@ -23,4 +23,6 @@ defmodule PostgrexWal.Messages.StreamStart do
       flags: [{:first_segment, flags == 1}]
     }
   end
+
+  def identifier, do: ?S
 end

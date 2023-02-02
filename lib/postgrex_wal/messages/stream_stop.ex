@@ -12,4 +12,6 @@ defmodule PostgrexWal.Messages.StreamStop do
   def decode(<<>>) do
     %__MODULE__{}
   end
+
+  def identifier, do: ?E
 end

@@ -67,7 +67,7 @@ defmodule PostgrexWal.Message do
   }
 
   @spec decode(event :: {:in_transaction, binary()} | binary()) :: struct()
-  def decode({:in_transaction, <<key::8, transaction_id::32, payload::binary>>}) do
+  def decode({:in_stream, <<key::8, transaction_id::32, payload::binary>>}) do
     decode(<<key::8>> <> payload) |> struct(transaction_id: transaction_id)
   end
 

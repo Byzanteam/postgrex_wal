@@ -37,4 +37,6 @@ defmodule PostgrexWal.Messages.StreamCommit do
       commit_timestamp: Util.decode_timestamp(timestamp)
     }
   end
+
+  def identifier, do: ?c
 end

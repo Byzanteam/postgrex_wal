@@ -36,4 +36,6 @@ defmodule PostgrexWal.Messages.Commit do
       commit_timestamp: Util.decode_timestamp(timestamp)
     }
   end
+
+  def identifier, do: ?C
 end

@@ -46,4 +46,6 @@ defmodule PostgrexWal.Messages.Delete do
       old_tuple_data: Util.decode_tuple_data(tuple_data)
     }
   end
+
+  def identifier, do: ?D
 end

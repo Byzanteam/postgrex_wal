@@ -42,4 +42,6 @@ defmodule PostgrexWal.Messages.Truncate do
       relation_oids: relation_oids
     }
   end
+
+  def identifier, do: ?T
 end

@@ -33,7 +33,6 @@ defmodule PostgrexWal.Message do
     Message,
     Origin,
     Relation,
-    Streamable,
     StreamAbort,
     StreamCommit,
     StreamStart,
@@ -88,6 +87,14 @@ defmodule PostgrexWal.Message do
 
   @spec streamable?(byte()) :: boolean()
   def streamable?(key) do
-    key in Streamable.identifiers()
+    key in [
+      Delete.identifier(),
+      Insert.identifier(),
+      Message.identifier(),
+      Relation.identifier(),
+      Truncate.identifier(),
+      Update.identifier(),
+      Type.identifier()
+    ]
   end
 end

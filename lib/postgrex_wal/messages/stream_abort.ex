@@ -23,4 +23,6 @@ defmodule PostgrexWal.Messages.StreamAbort do
       sub_transaction_id: sub_transaction_id
     }
   end
+
+  def identifier, do: ?A
 end

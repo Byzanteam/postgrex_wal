@@ -35,4 +35,6 @@ defmodule PostgrexWal.Messages.Origin do
       name: String.trim_trailing(name, "\0")
     }
   end
+
+  def identifier, do: ?O
 end

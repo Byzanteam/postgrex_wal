@@ -64,4 +64,6 @@ defmodule PostgrexWal.Messages.Update do
       {key, old_decoded_tuple_data}
     ])
   end
+
+  def identifier, do: ?U
 end

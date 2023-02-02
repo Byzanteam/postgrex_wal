@@ -3,7 +3,7 @@ defmodule PostgrexWal.PgProducer do
   use TypedStruct
   require Logger
 
-  alias PostgrexWal.Messages.Commit
+  alias PostgrexWal.Messages.{Commit, Util}
 
   @moduledoc """
   A PostgreSQL wal events producer for Broadway.
@@ -75,22 +75,26 @@ defmodule PostgrexWal.PgProducer do
   Broadway.NoopAcknowledger.init() produce: {Broadway.NoopAcknowledger, nil, nil}
   Broadway.CallerAcknowledger.init({pid, ref}, term) produce: {Broadway.CallerAcknowledger, {#PID<0.275.0>, ref}, term}
   """
-  def handle_info({:message, %Commit{} = message}, state) do
-    event = %Broadway.Message{
-      data: message,
-      acknowledger: {__MODULE__, state.pg_source, :ack_data}
-    }
+  def handle_info({:events, events}, state) do
+    noop_acker = Broadway.NoopAcknowledger.init()
+    op_acker = {__MODULE__, state.pg_source, :ack_data}
 
-    {:noreply, [event], state}
-  end
+    events =
+      for event <- events do
+        message = Util.decode(event)
 
-  def handle_info({:message, message}, state) do
-    event = %Broadway.Message{
-      data: message,
-      acknowledger: Broadway.NoopAcknowledger.init()
-    }
+        acker =
+          if is_struct(message, Commit),
+            do: op_acker,
+            else: noop_acker
 
-    {:noreply, [event], state}
+        %Broadway.Message{
+          data: message,
+          acknowledger: acker
+        }
+      end
+
+    {:noreply, events, state}
   end
 
   @doc """

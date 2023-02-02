@@ -17,7 +17,7 @@ defmodule PostgrexWal.Messages.Truncate do
   Int32 (Oid)
   OID of the relation corresponding to the ID in the relation message. This field is repeated for each relation.
   """
-  use PostgrexWal.GenMessage
+  use PostgrexWal.Message
 
   typedstruct enforce: true do
     field :transaction_id, integer(), enforce: false

@@ -7,7 +7,7 @@ defmodule PostgrexWal.Messages.Type do
   and first consult that cache to see if the type OID is defined there. If not, look up the type OID locally.
   """
 
-  use PostgrexWal.GenMessage
+  use PostgrexWal.Message
 
   typedstruct enforce: true do
     field :transaction_id, integer(), enforce: false

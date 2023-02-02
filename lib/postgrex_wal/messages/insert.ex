@@ -18,12 +18,12 @@ defmodule PostgrexWal.Messages.Insert do
   TupleData message part representing the contents of new tuple.
   """
 
-  use PostgrexWal.GenMessage
+  use PostgrexWal.Message
 
   typedstruct enforce: true do
     field :transaction_id, integer(), enforce: false
     field :relation_oid, integer()
-    field :tuple_data, [GenMessage.tuple_data()]
+    field :tuple_data, [Message.tuple_data()]
   end
 
   @impl true

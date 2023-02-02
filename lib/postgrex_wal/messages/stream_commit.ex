@@ -38,6 +38,5 @@ defmodule PostgrexWal.Messages.StreamCommit do
     }
   end
 
-  @impl true
   def identifier, do: ?c
 end

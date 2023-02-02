@@ -34,6 +34,5 @@ defmodule PostgrexWal.Messages.Insert do
     }
   end
 
-  @impl true
   def identifier, do: ?I
 end

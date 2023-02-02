@@ -36,6 +36,5 @@ defmodule PostgrexWal.Messages.Origin do
     }
   end
 
-  @impl true
   def identifier, do: ?O
 end

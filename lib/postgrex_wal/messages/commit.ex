@@ -37,6 +37,5 @@ defmodule PostgrexWal.Messages.Commit do
     }
   end
 
-  @impl true
   def identifier, do: ?C
 end

@@ -66,6 +66,5 @@ defmodule PostgrexWal.Messages.Update do
     ])
   end
 
-  @impl true
   def identifier, do: ?U
 end

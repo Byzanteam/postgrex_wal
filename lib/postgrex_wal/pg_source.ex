@@ -14,10 +14,11 @@ defmodule PostgrexWal.PgSource do
   typedstruct enforce: true do
     field :publication_name, String.t()
     field :slot_name, String.t()
-    field :subscriber, Process.dest()
     field :max_lsn, integer(), default: 0
     field :step, step(), default: :disconnected
-    field :in_stream?, boolean(), default: false
+    field :subscriber, pid(), default: nil
+    field :events, list(), default: []
+    field :in_stream, boolean(), default: false
   end
 
   @typep opts() :: [
@@ -29,7 +30,7 @@ defmodule PostgrexWal.PgSource do
            {:database, String.t()},
            {:username, String.t()},
            {:password, String.t()},
-           {:subscriber, Process.dest()}
+           {:subscriber, pid()}
          ]
   @spec start_link(opts()) :: {:ok, pid()} | {:error, P.Error.t() | term()}
   def start_link(opts) do
@@ -37,7 +38,7 @@ defmodule PostgrexWal.PgSource do
 
     PR.start_link(
       __MODULE__,
-      struct!(__MODULE__, init_opts),
+      struct(__MODULE__, init_opts),
       opts ++ [auto_reconnect: true]
     )
   end
@@ -46,6 +47,11 @@ defmodule PostgrexWal.PgSource do
   def ack(server, lsn) when is_binary(lsn) do
     {:ok, lsn} = PR.decode_lsn(lsn)
     PR.call(server, {:ack, lsn})
+  end
+
+  @spec subscribe(PR.server()) :: :ok
+  def subscribe(server) do
+    PR.call(server, :subscribe)
   end
 
   # Callbacks
@@ -128,10 +134,16 @@ defmodule PostgrexWal.PgSource do
   """
 
   @impl true
-  def handle_data(<<?w, _wal_start::64, _wal_end::64, _clock::64, payload::binary>>, state) do
-    {message, state} = decode_wal(payload, state)
-    send(state.subscriber, {:message, message})
-    {:noreply, state}
+  # _::192 composed of _wal_start::64, _wal_end::64, _clock::64
+  def handle_data(<<?w, _::192, payload::binary>>, %{subscriber: nil} = state) do
+    {payload, state} = in_stream_preprocess(payload, state)
+    {:noreply, %{state | events: [payload | state.events]}}
+  end
+
+  def handle_data(<<?w, _::192, payload::binary>>, state) do
+    {payload, state} = in_stream_preprocess(payload, state)
+    send(state.subscriber, {:events, Enum.reverse([payload | state.events])})
+    {:noreply, %{state | events: []}}
   end
 
   def handle_data(<<?k, _wal_end::64, _clock::64, reply>>, state) do
@@ -150,6 +162,13 @@ defmodule PostgrexWal.PgSource do
   end
 
   @impl true
+  def handle_call(:subscribe, from, state) do
+    {pid, _} = from
+    Process.monitor(pid)
+    PR.reply(from, :ok)
+    {:noreply, %{state | subscriber: pid}}
+  end
+
   def handle_call({:ack, lsn}, from, %{max_lsn: max_lsn} = state) when lsn > max_lsn do
     PR.reply(from, :ok)
     Logger.debug("pg_source ack: #{lsn}")
@@ -161,6 +180,16 @@ defmodule PostgrexWal.PgSource do
     {:noreply, [], state}
   end
 
+  @impl true
+  def handle_info({:DOWN, _ref, :process, pid, _reason}, %{subscriber: pid} = state) do
+    {:noreply, %{state | subscriber: nil}}
+  end
+
+  def handle_info(data, state) do
+    Logger.warning("handle_info/2 unknown data: #{inspect(data)}")
+    {:noreply, state}
+  end
+
   defp ack_message(lsn) when is_integer(lsn) do
     <<?r, lsn + 1::64, lsn + 1::64, lsn + 1::64, current_time()::64, 0>>
   end
@@ -168,28 +197,42 @@ defmodule PostgrexWal.PgSource do
   @epoch DateTime.to_unix(~U[2000-01-01 00:00:00Z], :microsecond)
   defp current_time, do: System.os_time(:microsecond) - @epoch
 
-  defp decode_wal(<<key::8, _rest::binary>> = payload, state) do
-    alias PostgrexWal.Messages.Util
+  # ?A => StreamAbort,
+  # ?B => Begin,
+  # ?C => Commit,
+  # ?D => Delete,
+  # ?E => StreamStop,
+  # ?I => Insert,
+  # ?M => Message,
+  # ?O => Origin,
+  # ?R => Relation,
+  # ?S => StreamStart,
+  # ?T => Truncate,
+  # ?U => Update,
+  # ?Y => Type,
+  # ?c => StreamCommit
+  defp in_stream_preprocess(payload, state) do
+    key = :binary.first(payload)
 
     in_stream? =
-      cond do
-        Util.stream_start?(key) ->
-          state.in_stream? && Logger.error("stream flag consecutively true")
+      case key do
+        ?S ->
+          state.in_stream && Logger.error("stream flag consecutively true")
           true
 
-        Util.stream_stop?(key) ->
-          state.in_stream? || Logger.error("stream flag consecutively false")
+        ?E ->
+          state.in_stream || Logger.error("stream flag consecutively false")
           false
 
-        true ->
-          state.in_stream?
+        _ ->
+          state.in_stream
       end
 
     payload =
-      if in_stream? and Util.streamable?(key),
+      if in_stream? and key in [?D, ?I, ?M, ?R, ?T, ?U, ?Y],
         do: {:in_stream, payload},
         else: payload
 
-    {Util.decode(payload), %{state | in_stream?: in_stream?}}
+    {payload, %{state | in_stream: in_stream?}}
   end
 end

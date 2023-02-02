@@ -74,4 +74,19 @@ defmodule PostgrexWal.Message do
   for {key, module} <- @modules do
     def decode(<<unquote(key)::8, payload::binary>>), do: unquote(module).decode(payload)
   end
+
+  @spec stream_start?(byte()) :: boolean()
+  def stream_start?(key) do
+    key == ?S
+  end
+
+  @spec stream_stop?(byte()) :: boolean()
+  def stream_stop?(key) do
+    key == ?E
+  end
+
+  @spec streamable?(byte()) :: boolean()
+  def streamable?(key) do
+    key in [?D, ?I, ?M, ?R, ?T, ?U, ?Y]
+  end
 end

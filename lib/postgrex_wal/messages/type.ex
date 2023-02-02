@@ -45,5 +45,6 @@ defmodule PostgrexWal.Messages.Type do
     }
   end
 
+  @impl true
   def identifier, do: ?T
 end

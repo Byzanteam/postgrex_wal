@@ -31,5 +31,6 @@ defmodule PostgrexWal.Messages.Begin do
     }
   end
 
+  @impl true
   def identifier, do: ?B
 end

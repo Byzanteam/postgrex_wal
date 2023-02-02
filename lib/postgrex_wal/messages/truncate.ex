@@ -43,5 +43,6 @@ defmodule PostgrexWal.Messages.Truncate do
     }
   end
 
+  @impl true
   def identifier, do: ?T
 end

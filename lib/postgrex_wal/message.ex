@@ -13,6 +13,7 @@ defmodule PostgrexWal.Message do
   """
 
   @callback decode(message :: binary()) :: struct()
+  @callback identifier() :: byte()
 
   defmacro __using__(_opts) do
     quote do
@@ -42,13 +43,6 @@ defmodule PostgrexWal.Message do
     Update
   }
 
-  @doc """
-  The logical replication protocol sends individual transactions one by one.
-  This means that all messages between a pair of Begin and Commit messages belong to the same transaction.
-  It also sends changes of large in-progress transactions between a pair of Stream Start and Stream Stop messages.
-  The last stream of such a transaction contains Stream Commit or Stream Abort message.
-  """
-
   @modules %{
     ?A => StreamAbort,
     ?B => Begin,
@@ -65,6 +59,13 @@ defmodule PostgrexWal.Message do
     ?Y => Type,
     ?c => StreamCommit
   }
+
+  @doc """
+  The logical replication protocol sends individual transactions one by one.
+  This means that all messages between a pair of Begin and Commit messages belong to the same transaction.
+  It also sends changes of large in-progress transactions between a pair of Stream Start and Stream Stop messages.
+  The last stream of such a transaction contains Stream Commit or Stream Abort message.
+  """
 
   @spec decode(event :: {:in_transaction, binary()} | binary()) :: struct()
   def decode({:in_stream, <<key::8, transaction_id::32, payload::binary>>}) do

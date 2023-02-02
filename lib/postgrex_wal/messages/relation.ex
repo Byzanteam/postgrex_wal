@@ -82,5 +82,6 @@ defmodule PostgrexWal.Messages.Relation do
     }
   end
 
+  @impl true
   def identifier, do: ?R
 end

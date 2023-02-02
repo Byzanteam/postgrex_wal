@@ -47,5 +47,6 @@ defmodule PostgrexWal.Messages.Delete do
     }
   end
 
+  @impl true
   def identifier, do: ?D
 end

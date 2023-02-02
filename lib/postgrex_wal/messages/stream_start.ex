@@ -24,5 +24,6 @@ defmodule PostgrexWal.Messages.StreamStart do
     }
   end
 
+  @impl true
   def identifier, do: ?S
 end

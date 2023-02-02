@@ -24,5 +24,6 @@ defmodule PostgrexWal.Messages.StreamAbort do
     }
   end
 
+  @impl true
   def identifier, do: ?A
 end

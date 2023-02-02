@@ -18,7 +18,7 @@ defmodule PostgrexWal.PgSource do
     field :step, step(), default: :disconnected
     field :subscriber, pid(), default: nil
     field :events, list(), default: []
-    field :in_stream, boolean(), default: false
+    field :in_stream?, boolean(), default: false
   end
 
   @typep opts() :: [
@@ -136,12 +136,12 @@ defmodule PostgrexWal.PgSource do
   @impl true
   # _::192 composed of _wal_start::64, _wal_end::64, _clock::64
   def handle_data(<<?w, _::192, payload::binary>>, %{subscriber: nil} = state) do
-    {payload, state} = in_stream_preprocess(payload, state)
+    {payload, state} = wrap_in_stream(payload, state)
     {:noreply, %{state | events: [payload | state.events]}}
   end
 
   def handle_data(<<?w, _::192, payload::binary>>, state) do
-    {payload, state} = in_stream_preprocess(payload, state)
+    {payload, state} = wrap_in_stream(payload, state)
     send(state.subscriber, {:events, Enum.reverse([payload | state.events])})
     {:noreply, %{state | events: []}}
   end
@@ -197,33 +197,19 @@ defmodule PostgrexWal.PgSource do
   @epoch DateTime.to_unix(~U[2000-01-01 00:00:00Z], :microsecond)
   defp current_time, do: System.os_time(:microsecond) - @epoch
 
-  # ?A => StreamAbort,
-  # ?B => Begin,
-  # ?C => Commit,
-  # ?D => Delete,
-  # ?E => StreamStop,
-  # ?I => Insert,
-  # ?M => Message,
-  # ?O => Origin,
-  # ?R => Relation,
-  # ?S => StreamStart,
-  # ?T => Truncate,
-  # ?U => Update,
-  # ?Y => Type,
-  # ?c => StreamCommit
-  defp in_stream_preprocess(<<key::8, _rest::binary>> = payload, state) do
+  defp wrap_in_stream(<<key::8, _rest::binary>> = payload, state) do
     in_stream? =
       case key do
         ?S ->
-          state.in_stream && Logger.error("stream flag consecutively true")
+          state.in_stream? && Logger.error("stream flag consecutively true")
           true
 
         ?E ->
-          state.in_stream || Logger.error("stream flag consecutively false")
+          state.in_stream? || Logger.error("stream flag consecutively false")
           false
 
         _ ->
-          state.in_stream
+          state.in_stream?
       end
 
     payload =
@@ -231,6 +217,6 @@ defmodule PostgrexWal.PgSource do
         do: {:in_stream, payload},
         else: payload
 
-    {payload, %{state | in_stream: in_stream?}}
+    {payload, %{state | in_stream?: in_stream?}}
   end
 end

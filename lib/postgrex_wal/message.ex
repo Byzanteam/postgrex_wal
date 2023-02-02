@@ -12,80 +12,16 @@ defmodule PostgrexWal.Message do
   https://www.postgresql.org/docs/current/protocol-logicalrep-message-formats.html
   """
 
-  alias PostgrexWal.Messages.{
-    Begin,
-    Commit,
-    Delete,
-    Insert,
-    Message,
-    Origin,
-    Relation,
-    StreamAbort,
-    StreamCommit,
-    StreamStart,
-    StreamStop,
-    Truncate,
-    Type,
-    Update
-  }
+  @callback decode(message :: binary()) :: struct()
+  @callback identifier() :: byte()
+  @type tuple_data() :: nil | :unchanged_toast | {:text, binary()} | {:binary, bitstring()}
 
-  @doc """
-  The logical replication protocol sends individual transactions one by one.
-  This means that all messages between a pair of Begin and Commit messages belong to the same transaction.
-  It also sends changes of large in-progress transactions between a pair of Stream Start and Stream Stop messages.
-  The last stream of such a transaction contains Stream Commit or Stream Abort message.
-  """
-
-  @spec decode(event :: {:in_transaction, binary()} | binary()) :: struct()
-  def decode({:in_stream, <<key::8, transaction_id::32, payload::binary>>}) do
-    decode(<<key::8>> <> payload) |> struct(transaction_id: transaction_id)
+  defmacro __using__(_opts) do
+    quote do
+      @behaviour PostgrexWal.Message
+      use TypedStruct
+      alias PostgrexWal.Message
+      alias PostgrexWal.Messages.Util
+    end
   end
-
-  @modules [
-    Begin,
-    Commit,
-    Delete,
-    Insert,
-    Message,
-    Origin,
-    Relation,
-    StreamAbort,
-    StreamCommit,
-    StreamStart,
-    StreamStop,
-    Truncate,
-    Type,
-    Update
-  ]
-
-  for m <- @modules do
-    def decode(<<unquote(m.identifier())::8, payload::binary>>), do: unquote(m).decode(payload)
-  end
-
-  @spec stream_start?(byte()) :: boolean()
-  def stream_start?(key) do
-    key === StreamStart.identifier()
-  end
-
-  @spec stream_stop?(byte()) :: boolean()
-  def stream_stop?(key) do
-    key === StreamStop.identifier()
-  end
-
-  @streamable_modules [
-    Delete,
-    Insert,
-    Message,
-    Relation,
-    Truncate,
-    Type,
-    Update
-  ]
-
-  @spec streamable?(byte()) :: boolean()
-  for m <- @streamable_modules do
-    def streamable?(unquote(m.identifier())), do: true
-  end
-
-  def streamable?(_key), do: false
 end

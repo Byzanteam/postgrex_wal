@@ -31,23 +31,16 @@ defmodule PostgrexWal.PgSourceRelayer do
   end
 
   @impl true
-  def handle_info({:events, events}, {receiver, buf}) do
-    buf =
-      for e <- events,
-          m = Util.decode(e),
-          !is_struct(m, Relation),
-          reduce: buf do
-        acc ->
-          acc = [m | acc]
-
-          if is_struct(m, Commit) do
-            send(receiver, Enum.reverse(acc))
-            []
-          else
-            acc
-          end
-      end
-
+  def handle_info({:message, %Relation{} = _message}, {receiver, buf}) do
     {:noreply, {receiver, buf}}
+  end
+
+  def handle_info({:message, %Commit{} = message}, {receiver, buf}) do
+    send(receiver, Enum.reverse([message | buf]))
+    {:noreply, {receiver, []}}
+  end
+
+  def handle_info({:message, message}, {receiver, buf}) do
+    {:noreply, {receiver, [message | buf]}}
   end
 end

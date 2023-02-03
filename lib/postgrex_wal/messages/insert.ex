@@ -30,7 +30,7 @@ defmodule PostgrexWal.Messages.Insert do
   def decode(<<relation_oid::32, ?N, tuple_data::binary>>) do
     %__MODULE__{
       relation_oid: relation_oid,
-      tuple_data: Util.decode_tuple_data(tuple_data)
+      tuple_data: MessageHelper.decode_tuple_data(tuple_data)
     }
   end
 

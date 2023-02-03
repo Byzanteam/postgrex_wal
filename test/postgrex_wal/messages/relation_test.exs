@@ -1,7 +1,6 @@
 defmodule PostgrexWal.Messages.RelationTest do
   use ExUnit.Case, async: true
-  alias PostgrexWal.Messages.Relation
-  alias PostgrexWal.Messages.Relation.Column
+  alias PostgrexWal.Messages.{Relation, Relation.Column}
 
   @event <<0, 0, 89, 103, 112, 117, 98, 108, 105, 99, 0, 117, 115, 101, 114, 115, 0, 102, 0, 7, 1,
            105, 100, 0, 0, 0, 0, 20, 255, 255, 255, 255, 1, 110, 97, 109, 101, 0, 0, 0, 4, 19,

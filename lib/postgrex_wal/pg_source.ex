@@ -21,15 +21,15 @@ defmodule PostgrexWal.PgSource do
   end
 
   @typep opts() :: [
-           {:name, GenServer.name()},
            {:publication_name, String.t()},
            {:slot_name, String.t()},
+           {:subscriber, Process.dest()},
+           {:name, GenServer.name()},
            {:host, String.t()},
            {:port, String.t()},
            {:database, String.t()},
            {:username, String.t()},
-           {:password, String.t()},
-           {:subscriber, Process.dest()}
+           {:password, String.t()}
          ]
   @spec start_link(opts()) :: {:ok, pid()} | {:error, P.Error.t() | term()}
   def start_link(opts) do

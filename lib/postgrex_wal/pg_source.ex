@@ -14,10 +14,9 @@ defmodule PostgrexWal.PgSource do
   typedstruct enforce: true do
     field :publication_name, String.t()
     field :slot_name, String.t()
+    field :subscriber, Process.dest()
     field :max_lsn, integer(), default: 0
     field :step, step(), default: :disconnected
-    field :subscriber, pid(), default: nil
-    field :events, list(), default: []
     field :in_stream?, boolean(), default: false
   end
 
@@ -30,7 +29,7 @@ defmodule PostgrexWal.PgSource do
            {:database, String.t()},
            {:username, String.t()},
            {:password, String.t()},
-           {:subscriber, pid()}
+           {:subscriber, Process.dest()}
          ]
   @spec start_link(opts()) :: {:ok, pid()} | {:error, P.Error.t() | term()}
   def start_link(opts) do
@@ -38,7 +37,7 @@ defmodule PostgrexWal.PgSource do
 
     PR.start_link(
       __MODULE__,
-      struct(__MODULE__, init_opts),
+      struct!(__MODULE__, init_opts),
       opts ++ [auto_reconnect: true]
     )
   end
@@ -129,16 +128,10 @@ defmodule PostgrexWal.PgSource do
   """
 
   @impl true
-  # _::192 composed of _wal_start::64, _wal_end::64, _clock::64
-  def handle_data(<<?w, _::192, payload::binary>>, %{subscriber: nil} = state) do
-    {payload, state} = wrap_in_stream(payload, state)
-    {:noreply, %{state | events: [payload | state.events]}}
-  end
-
-  def handle_data(<<?w, _::192, payload::binary>>, state) do
-    {payload, state} = wrap_in_stream(payload, state)
-    send(state.subscriber, {:events, Enum.reverse([payload | state.events])})
-    {:noreply, %{state | events: []}}
+  def handle_data(<<?w, _wal_start::64, _wal_end::64, _clock::64, payload::binary>>, state) do
+    {message, state} = decode_wal(payload, state)
+    send(state.subscriber, {:message, message})
+    {:noreply, state}
   end
 
   def handle_data(<<?k, _wal_end::64, _clock::64, reply>>, state) do
@@ -175,7 +168,7 @@ defmodule PostgrexWal.PgSource do
   @epoch DateTime.to_unix(~U[2000-01-01 00:00:00Z], :microsecond)
   defp current_time, do: System.os_time(:microsecond) - @epoch
 
-  defp wrap_in_stream(<<key::8, _rest::binary>> = payload, state) do
+  defp decode_wal(<<key::8, _rest::binary>> = payload, state) do
     alias PostgrexWal.Messages.Util
 
     in_stream? =
@@ -197,6 +190,6 @@ defmodule PostgrexWal.PgSource do
         do: {:in_stream, payload},
         else: payload
 
-    {payload, %{state | in_stream?: in_stream?}}
+    {Util.decode(payload), %{state | in_stream?: in_stream?}}
   end
 end

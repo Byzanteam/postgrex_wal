@@ -13,6 +13,8 @@ defmodule PostgrexWal.Message do
   """
 
   @callback decode(message :: binary()) :: struct()
+  @callback identifier() :: byte()
+  @type tuple_data() :: nil | :unchanged_toast | {:text, binary()} | {:binary, bitstring()}
 
   defmacro __using__(_opts) do
     quote do
@@ -21,57 +23,5 @@ defmodule PostgrexWal.Message do
       alias PostgrexWal.Message
       alias PostgrexWal.Messages.Util
     end
-  end
-
-  @type tuple_data() :: nil | :unchanged_toast | {:text, binary()} | {:binary, bitstring()}
-
-  alias PostgrexWal.Messages.{
-    Begin,
-    Commit,
-    Delete,
-    Insert,
-    Message,
-    Origin,
-    Relation,
-    StreamAbort,
-    StreamCommit,
-    StreamStart,
-    StreamStop,
-    Truncate,
-    Type,
-    Update
-  }
-
-  @doc """
-  The logical replication protocol sends individual transactions one by one.
-  This means that all messages between a pair of Begin and Commit messages belong to the same transaction.
-  It also sends changes of large in-progress transactions between a pair of Stream Start and Stream Stop messages.
-  The last stream of such a transaction contains Stream Commit or Stream Abort message.
-  """
-
-  @modules %{
-    ?A => StreamAbort,
-    ?B => Begin,
-    ?C => Commit,
-    ?D => Delete,
-    ?E => StreamStop,
-    ?I => Insert,
-    ?M => Message,
-    ?O => Origin,
-    ?R => Relation,
-    ?S => StreamStart,
-    ?T => Truncate,
-    ?U => Update,
-    ?Y => Type,
-    ?c => StreamCommit
-  }
-
-  @spec decode(event :: {:in_transaction, binary()} | binary()) :: struct()
-  def decode({:in_transaction, <<key::8, transaction_id::32, payload::binary>>}) do
-    decode(<<key::8>> <> payload) |> struct(transaction_id: transaction_id)
-  end
-
-  for {key, module} <- @modules do
-    def decode(<<unquote(key)::8, payload::binary>>), do: unquote(module).decode(payload)
   end
 end

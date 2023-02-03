@@ -5,7 +5,6 @@ defmodule PostgrexWal.PgSourceRelayer do
   require Logger
 
   alias PostgrexWal.{
-    Message,
     Messages.Commit,
     Messages.Relation,
     PgSource
@@ -20,29 +19,27 @@ defmodule PostgrexWal.PgSourceRelayer do
   # Callbacks
 
   @impl true
-  def init({pg_source, receiver}) do
-    PgSource.subscribe(pg_source)
-    {:ok, {receiver, []}}
+  def init({receiver, opts}) do
+    {:ok, {receiver, []}, {:continue, {:start_pg_source, opts}}}
   end
 
   @impl true
-  def handle_info({:events, events}, {receiver, buf}) do
-    buf =
-      for e <- events,
-          m = Message.decode(e),
-          !is_struct(m, Relation),
-          reduce: buf do
-        acc ->
-          acc = [m | acc]
+  def handle_continue({:start_pg_source, opts}, state) do
+    PgSource.start_link(opts ++ [subscriber: self()])
+    {:noreply, state}
+  end
 
-          if is_struct(m, Commit) do
-            send(receiver, Enum.reverse(acc))
-            []
-          else
-            acc
-          end
-      end
-
+  @impl true
+  def handle_info({:message, %Relation{} = _message}, {receiver, buf}) do
     {:noreply, {receiver, buf}}
+  end
+
+  def handle_info({:message, %Commit{} = message}, {receiver, buf}) do
+    send(receiver, Enum.reverse([message | buf]))
+    {:noreply, {receiver, []}}
+  end
+
+  def handle_info({:message, message}, {receiver, buf}) do
+    {:noreply, {receiver, [message | buf]}}
   end
 end

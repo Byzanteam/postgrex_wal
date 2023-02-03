@@ -1,6 +1,6 @@
 defmodule PostgrexWal.Messages.DeleteTest do
   use ExUnit.Case, async: true
-  alias PostgrexWal.Messages.Delete
+  alias PostgrexWal.Messages.{Delete, Util}
 
   @event <<0, 0, 89, 103, 79, 0, 7, 116, 0, 0, 0, 9, 57, 56, 48, 49, 57, 49, 48, 50, 57, 116, 0,
            0, 0, 8, 116, 105, 116, 108, 101, 50, 50, 50, 116, 0, 0, 0, 1, 50, 110, 110, 110, 110>>
@@ -64,7 +64,7 @@ defmodule PostgrexWal.Messages.DeleteTest do
                relation_oid: 22_887,
                transaction_id: 123
              },
-             PostgrexWal.Message.decode({:in_transaction, <<?D, 123::32, @event>>})
+             Util.decode({:in_stream, <<?D, 123::32, @event>>})
            )
   end
 end

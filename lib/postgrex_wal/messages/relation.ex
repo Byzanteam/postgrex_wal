@@ -81,4 +81,7 @@ defmodule PostgrexWal.Messages.Relation do
       columns: Column.decode(columns)
     }
   end
+
+  @impl true
+  def identifier, do: ?R
 end

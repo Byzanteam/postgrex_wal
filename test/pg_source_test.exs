@@ -1,5 +1,5 @@
 defmodule PgSourceTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias PostgrexWal.{PgSource, PgSourceRelayer, PSQL}
   alias PostgrexWal.Messages.{Begin, Commit, Insert}
@@ -262,16 +262,13 @@ defmodule PgSourceTest do
   end
 
   defp start_repl!(context) do
-    source_pid =
-      start_supervised!({PgSource, context.opts ++ [name: source_id(context)]},
-        id: source_id(context)
-      )
-
-    start_supervised!({PgSourceRelayer, {source_pid, self()}}, id: relayer_id(context))
+    start_supervised!(
+      {PgSourceRelayer, {self(), context.opts ++ [name: source_id(context)]}},
+      id: relayer_id(context)
+    )
   end
 
   defp stop_repl!(context) do
-    stop_supervised!(source_id(context))
     stop_supervised!(relayer_id(context))
   end
 
@@ -286,10 +283,10 @@ defmodule PgSourceTest do
     end
   end
 
-  defp source_id(context), do: :"source-#{context.module}-#{context.test}"
-  defp relayer_id(context), do: :"relayer-#{context.module}-#{context.test}"
+  defp source_id(context), do: :"source-#{case_identity(context)}"
+  defp relayer_id(context), do: :"relayer-#{case_identity(context)}"
 
   defp case_identity(context) do
-    "#{context.module |> Module.split() |> Enum.map_join(&Macro.underscore/1)}_#{context.line}"
+    "#{context.module |> Module.split() |> Enum.map_join("__", &Macro.underscore/1)}_#{context.line}"
   end
 end

@@ -30,8 +30,8 @@ defmodule PostgrexWal.PgSourceRelayer do
   end
 
   @impl true
-  def handle_info({:message, %Relation{} = _message}, state) do
-    {:noreply, state}
+  def handle_info({:message, %Relation{} = _message}, {receiver, buf}) do
+    {:noreply, {receiver, buf}}
   end
 
   def handle_info({:message, %Commit{} = message}, {receiver, buf}) do

@@ -3,7 +3,7 @@ defmodule PostgrexWal.PgProducer do
   use TypedStruct
   require Logger
 
-  alias PostgrexWal.Messages.{Commit, Util}
+  alias PostgrexWal.Messages.Commit
 
   @moduledoc """
   A PostgreSQL wal events producer for Broadway.

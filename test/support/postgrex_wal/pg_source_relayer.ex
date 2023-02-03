@@ -7,7 +7,6 @@ defmodule PostgrexWal.PgSourceRelayer do
   alias PostgrexWal.{
     Messages.Commit,
     Messages.Relation,
-    Messages.Util,
     PgSource
   }
 

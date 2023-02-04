@@ -6,20 +6,20 @@ defmodule PostgrexWal.PgSourceUtil do
   require Logger
 
   @modules %{
-    StreamAbort => ?A,
     Begin => ?B,
     Commit => ?C,
     Delete => ?D,
-    StreamStop => ?E,
     Insert => ?I,
     Message => ?M,
     Origin => ?O,
     Relation => ?R,
+    StreamAbort => ?A,
+    StreamCommit => ?c,
     StreamStart => ?S,
+    StreamStop => ?E,
     Truncate => ?T,
-    Update => ?U,
     Type => ?Y,
-    StreamCommit => ?c
+    Update => ?U
   }
 
   @doc """
@@ -63,8 +63,7 @@ defmodule PostgrexWal.PgSourceUtil do
     def decode(<<unquote(key)::8, payload::binary>>), do: unquote(m).decode(payload)
   end
 
-  @streamable_modules [Delete, Insert, Message, Relation, Truncate, Update, Type]
-
+  @streamable_modules [Delete, Insert, Message, Relation, Truncate, Type, Update]
   for {_module, key} <- Map.take(@modules, @streamable_modules) do
     defp streamable?(unquote(key)), do: true
   end

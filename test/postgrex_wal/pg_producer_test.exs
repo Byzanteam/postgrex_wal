@@ -1,4 +1,4 @@
-defmodule PgProducerTest do
+defmodule PostgrexWal.PgProducerTest do
   use ExUnit.Case, async: false
 
   alias PostgrexWal.Messages.Insert

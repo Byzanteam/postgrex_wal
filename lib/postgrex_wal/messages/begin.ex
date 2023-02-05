@@ -25,12 +25,9 @@ defmodule PostgrexWal.Messages.Begin do
   @impl true
   def decode(<<lsn::64, timestamp::64, transaction_id::32>>) do
     %__MODULE__{
-      final_lsn: Util.decode_lsn(lsn),
-      commit_timestamp: Util.decode_timestamp(timestamp),
+      final_lsn: MessageUtil.decode_lsn(lsn),
+      commit_timestamp: MessageUtil.decode_timestamp(timestamp),
       transaction_id: transaction_id
     }
   end
-
-  @impl true
-  def identifier, do: ?B
 end

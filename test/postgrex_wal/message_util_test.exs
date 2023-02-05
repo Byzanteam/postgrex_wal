@@ -1,12 +1,12 @@
-defmodule PostgrexWal.Messages.UtilTest do
+defmodule PostgrexWal.MessageUtilTest do
   use ExUnit.Case, async: true
-  alias PostgrexWal.Messages.Util
+  alias PostgrexWal.MessageUtil
 
   test "decode_lsn/1 behaves as expected" do
-    assert "0/2E3FBE8" == "0/2E3FBE8" |> encode_lsn() |> Util.decode_lsn()
-    assert 48_495_592 == 48_495_592 |> Util.decode_lsn() |> encode_lsn()
+    assert "0/2E3FBE8" == "0/2E3FBE8" |> encode_lsn() |> MessageUtil.decode_lsn()
+    assert 48_495_592 == 48_495_592 |> MessageUtil.decode_lsn() |> encode_lsn()
     assert 48_495_592 == encode_lsn("0/2E3FBE8")
-    assert "0/2E3FBE8" == Util.decode_lsn(48_495_592)
+    assert "0/2E3FBE8" == MessageUtil.decode_lsn(48_495_592)
   end
 
   @spec encode_lsn(lsn :: String.t()) :: integer

@@ -36,15 +36,12 @@ defmodule PostgrexWal.Messages.Type do
   """
   @impl true
   def decode(<<type_oid::32, namespace_and_name::binary>>) do
-    [namespace, name, _] = Util.binary_split(namespace_and_name, 3)
+    [namespace, name, _] = MessageUtil.binary_split(namespace_and_name, 3)
 
     %__MODULE__{
       type_oid: type_oid,
-      namespace: Util.decode_namespace(namespace),
+      namespace: MessageUtil.decode_namespace(namespace),
       type_name: name
     }
   end
-
-  @impl true
-  def identifier, do: ?Y
 end

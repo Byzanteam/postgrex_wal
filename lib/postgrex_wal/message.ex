@@ -13,15 +13,13 @@ defmodule PostgrexWal.Message do
   """
 
   @callback decode(message :: binary()) :: struct()
-  @callback identifier() :: byte()
   @type tuple_data() :: nil | :unchanged_toast | {:text, binary()} | {:binary, bitstring()}
 
   defmacro __using__(_opts) do
     quote do
       @behaviour PostgrexWal.Message
       use TypedStruct
-      alias PostgrexWal.Message
-      alias PostgrexWal.Messages.Util
+      alias PostgrexWal.{Message, MessageUtil}
     end
   end
 end

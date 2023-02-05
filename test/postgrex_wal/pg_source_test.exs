@@ -1,4 +1,4 @@
-defmodule PgSourceTest do
+defmodule PostgrexWal.PgSourceTest do
   use ExUnit.Case, async: false
 
   alias PostgrexWal.{PgSource, PgSourceRelayer, PSQL}

@@ -31,11 +31,8 @@ defmodule PostgrexWal.Messages.Origin do
   @impl true
   def decode(<<lsn::64, name::binary>>) do
     %__MODULE__{
-      commit_lsn: Util.decode_lsn(lsn),
+      commit_lsn: MessageUtil.decode_lsn(lsn),
       name: String.trim_trailing(name, "\0")
     }
   end
-
-  @impl true
-  def identifier, do: ?O
 end

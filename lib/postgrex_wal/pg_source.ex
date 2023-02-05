@@ -2,9 +2,9 @@ defmodule PostgrexWal.PgSource do
   @moduledoc """
   A data-souce (pg replication events) which a GenStage producer could continuously ingest events from.
   """
-
   alias Postgrex, as: P
   alias Postgrex.ReplicationConnection, as: PR
+  alias PostgrexWal.PgSourceUtil
 
   use PR, restart: :permanent, shutdown: 10_000
   use TypedStruct
@@ -21,15 +21,15 @@ defmodule PostgrexWal.PgSource do
   end
 
   @typep opts() :: [
-           {:name, GenServer.name()},
            {:publication_name, String.t()},
            {:slot_name, String.t()},
+           {:subscriber, Process.dest()},
+           {:name, GenServer.name()},
            {:host, String.t()},
            {:port, String.t()},
            {:database, String.t()},
            {:username, String.t()},
-           {:password, String.t()},
-           {:subscriber, Process.dest()}
+           {:password, String.t()}
          ]
   @spec start_link(opts()) :: {:ok, pid()} | {:error, P.Error.t() | term()}
   def start_link(opts) do
@@ -129,7 +129,7 @@ defmodule PostgrexWal.PgSource do
 
   @impl true
   def handle_data(<<?w, _wal_start::64, _wal_end::64, _clock::64, payload::binary>>, state) do
-    {message, state} = decode_wal(payload, state)
+    {message, state} = PgSourceUtil.decode_wal(payload, state)
     send(state.subscriber, {:message, message})
     {:noreply, state}
   end
@@ -167,29 +167,4 @@ defmodule PostgrexWal.PgSource do
 
   @epoch DateTime.to_unix(~U[2000-01-01 00:00:00Z], :microsecond)
   defp current_time, do: System.os_time(:microsecond) - @epoch
-
-  defp decode_wal(<<key::8, _rest::binary>> = payload, state) do
-    alias PostgrexWal.Messages.Util
-
-    in_stream? =
-      cond do
-        Util.stream_start?(key) ->
-          state.in_stream? && Logger.error("stream flag consecutively true")
-          true
-
-        Util.stream_stop?(key) ->
-          state.in_stream? || Logger.error("stream flag consecutively false")
-          false
-
-        true ->
-          state.in_stream?
-      end
-
-    payload =
-      if in_stream? and Util.streamable?(key),
-        do: {:in_stream, payload},
-        else: payload
-
-    {Util.decode(payload), %{state | in_stream?: in_stream?}}
-  end
 end

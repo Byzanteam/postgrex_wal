@@ -36,16 +36,13 @@ defmodule PostgrexWal.Messages.Message do
     [
       prefix,
       <<n::32, content::binary-size(n)>>
-    ] = Util.binary_split(rest)
+    ] = MessageUtil.binary_split(rest)
 
     %__MODULE__{
       flags: [{:transactional, flags == 1}],
-      lsn: Util.decode_lsn(lsn),
+      lsn: MessageUtil.decode_lsn(lsn),
       prefix: prefix,
       content: content
     }
   end
-
-  @impl true
-  def identifier, do: ?M
 end

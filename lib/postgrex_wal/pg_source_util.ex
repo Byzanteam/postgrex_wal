@@ -29,7 +29,8 @@ defmodule PostgrexWal.PgSourceUtil do
   The last stream of such a transaction contains Stream Commit or Stream Abort message.
   """
 
-  def decode_wal(<<key::8, _rest::binary>> = payload, state) do
+  @spec decode_wal(binary(), PostgrexWal.PgSource.t()) :: {struct(), PostgrexWal.PgSource.t()}
+  def decode_wal(<<key::8, rest::binary>> = event, state) do
     {stream_start, stream_stop} = {@modules[StreamStart], @modules[StreamStop]}
 
     in_stream? =
@@ -46,21 +47,20 @@ defmodule PostgrexWal.PgSourceUtil do
           state.in_stream?
       end
 
-    payload =
-      if in_stream? and streamable?(key),
-        do: {:in_stream, payload},
-        else: payload
+    message =
+      if in_stream? and streamable?(key) do
+        <<transaction_id::32, rest::binary>> = rest
+        decode(<<key::8>> <> rest) |> struct(transaction_id: transaction_id)
+      else
+        decode(event)
+      end
 
-    {decode(payload), %{state | in_stream?: in_stream?}}
-  end
-
-  def decode({:in_stream, <<key::8, transaction_id::32, payload::binary>>}) do
-    decode(<<key::8>> <> payload) |> struct(transaction_id: transaction_id)
+    {message, %{state | in_stream?: in_stream?}}
   end
 
   for {module, key} <- @modules do
     m = Module.concat(PostgrexWal.Messages, module)
-    def decode(<<unquote(key)::8, payload::binary>>), do: unquote(m).decode(payload)
+    defp decode(<<unquote(key)::8, payload::binary>>), do: unquote(m).decode(payload)
   end
 
   @streamable_modules [Delete, Insert, Message, Relation, Truncate, Type, Update]

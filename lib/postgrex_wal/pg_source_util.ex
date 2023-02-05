@@ -29,17 +29,17 @@ defmodule PostgrexWal.PgSourceUtil do
   The last stream of such a transaction contains Stream Commit or Stream Abort message.
   """
 
+  @stream_start @modules[StreamStart]
+  @stream_stop @modules[StreamStop]
   @spec decode_wal(binary(), PostgrexWal.PgSource.t()) :: {struct(), PostgrexWal.PgSource.t()}
   def decode_wal(<<key::8, rest::binary>> = event, state) do
-    {stream_start, stream_stop} = {@modules[StreamStart], @modules[StreamStop]}
-
     in_stream? =
       case key do
-        ^stream_start ->
+        @stream_start ->
           state.in_stream? && Logger.error("stream flag consecutively true")
           true
 
-        ^stream_stop ->
+        @stream_stop ->
           state.in_stream? || Logger.error("stream flag consecutively false")
           false
 

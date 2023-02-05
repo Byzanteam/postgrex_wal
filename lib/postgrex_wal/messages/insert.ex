@@ -33,7 +33,4 @@ defmodule PostgrexWal.Messages.Insert do
       tuple_data: MessageUtil.decode_tuple_data(tuple_data)
     }
   end
-
-  @impl true
-  def identifier, do: ?I
 end

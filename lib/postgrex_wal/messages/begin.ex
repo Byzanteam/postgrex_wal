@@ -30,7 +30,4 @@ defmodule PostgrexWal.Messages.Begin do
       transaction_id: transaction_id
     }
   end
-
-  @impl true
-  def identifier, do: ?B
 end

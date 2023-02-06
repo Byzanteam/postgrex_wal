@@ -33,21 +33,21 @@ defmodule PostgrexWal.PgSourceUtil do
   """
 
   @spec decode_wal(binary(), PgSource.t()) :: {struct(), PgSource.t()}
-  def decode_wal(<<@stream_start::8, _rest::binary>> = event, state) do
+  def decode_wal(<<@stream_start, _rest::binary>> = event, state) do
     if state.in_stream?, do: raise("stream flag consecutively true")
     {decode(event), %{state | in_stream?: true}}
   end
 
-  def decode_wal(<<@stream_stop::8, _rest::binary>> = event, state) do
+  def decode_wal(<<@stream_stop, _rest::binary>> = event, state) do
     unless state.in_stream?, do: raise("stream flag consecutively false")
     {decode(event), %{state | in_stream?: false}}
   end
 
   @streamable_modules [Delete, Insert, Message, Relation, Truncate, Type, Update]
   @streamable_keys @modules |> Map.take(@streamable_modules) |> Map.values()
-  def decode_wal(<<key::8, transaction_id::32, rest::binary>>, %{in_stream?: true} = state)
+  def decode_wal(<<key, transaction_id::32, rest::binary>>, %{in_stream?: true} = state)
       when key in @streamable_keys do
-    message = decode(<<key::8>> <> rest) |> struct!(transaction_id: transaction_id)
+    message = decode(<<key, rest::binary>>) |> struct!(transaction_id: transaction_id)
     {message, state}
   end
 
@@ -55,6 +55,6 @@ defmodule PostgrexWal.PgSourceUtil do
 
   for {module, key} <- @modules do
     m = Module.concat(PostgrexWal.Messages, module)
-    defp decode(<<unquote(key)::8, payload::binary>>), do: unquote(m).decode(payload)
+    defp decode(<<unquote(key), payload::binary>>), do: unquote(m).decode(payload)
   end
 end

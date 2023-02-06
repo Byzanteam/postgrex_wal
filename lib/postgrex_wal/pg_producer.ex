@@ -101,8 +101,8 @@ defmodule PostgrexWal.PgProducer do
   end
 
   @impl true
-  def handle_demand(incoming_demand, state) do
-    state = %{state | pending_demand: state.pending_demand + incoming_demand}
+  def handle_demand(incoming_demand, %{pending_demand: p} = state) do
+    state = %{state | pending_demand: p + incoming_demand}
     dispatch_events([], state)
   end
 
@@ -129,16 +129,10 @@ defmodule PostgrexWal.PgProducer do
     {:noreply, Enum.reverse(events), state}
   end
 
-  defp dispatch_events(events, state) do
+  defp dispatch_events(events, %{pending_demand: p, current_size: s} = state) do
     case :queue.out(state.queue) do
       {{:value, event}, queue} ->
-        state = %{
-          state
-          | pending_demand: state.pending_demand - 1,
-            queue: queue,
-            current_size: state.current_size - 1
-        }
-
+        state = %{state | pending_demand: p - 1, queue: queue, current_size: s - 1}
         dispatch_events([event | events], state)
 
       {:empty, _queue} ->

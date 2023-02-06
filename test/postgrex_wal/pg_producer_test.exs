@@ -105,6 +105,6 @@ defmodule PostgrexWal.PgProducerTest do
   defp source_id(context), do: :"source-#{context.module}-#{context.test}"
 
   defp case_identity(context) do
-    "#{context.module |> Module.split() |> Enum.map_join(&Macro.underscore/1)}_#{context.line}"
+    "#{context.module |> Module.split() |> Enum.map_join("__", &Macro.underscore/1)}_#{context.line}"
   end
 end

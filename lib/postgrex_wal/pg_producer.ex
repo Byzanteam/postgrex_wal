@@ -52,9 +52,9 @@ defmodule PostgrexWal.PgProducer do
     field :pg_source, pid(), default: nil
     field :queue, :queue.queue(), default: :queue.new()
     field :pending_demand, non_neg_integer(), default: 0
-    field :max_size, non_neg_integer(), default: 10
+    field :max_size, non_neg_integer(), default: 10_000
     field :current_size, non_neg_integer(), default: 0
-    field :over_flowed?, boolean(), default: false
+    field :overflow?, boolean(), default: false
   end
 
   @impl true
@@ -71,7 +71,7 @@ defmodule PostgrexWal.PgProducer do
     {:noreply, [], %{state | pg_source: pid}}
   end
 
-  def handle_info(:over_flowed_exit = reason, state) do
+  def handle_info(:overflow_exit = reason, state) do
     {:stop, reason, state}
   end
 
@@ -80,19 +80,18 @@ defmodule PostgrexWal.PgProducer do
   Broadway.CallerAcknowledger.init({pid, ref}, term) produce: {Broadway.CallerAcknowledger, {#PID<0.275.0>, ref}, term}
   """
 
-  def handle_info({:message, _}, %{over_flowed?: true} = state) do
+  def handle_info({:message, _}, %{overflow?: true} = state) do
     {:noreply, [], state}
   end
 
-  def handle_info({:message, message}, %{current_size: s, max_size: max} = state)
-      when s + 1 < max do
+  def handle_info({:message, m}, %{current_size: s, max_size: max} = state) when s + 1 < max do
     acker =
-      if is_struct(message, Commit),
+      if is_struct(m, Commit),
         do: {__MODULE__, {:pg_source, state.pg_source}, :ack_data},
         else: Broadway.NoopAcknowledger.init()
 
     event = %Broadway.Message{
-      data: message,
+      data: m,
       acknowledger: acker
     }
 
@@ -101,7 +100,7 @@ defmodule PostgrexWal.PgProducer do
   end
 
   def handle_info({:message, _}, state) do
-    {:noreply, [], %{state | over_flowed?: true}}
+    {:noreply, [], %{state | overflow?: true}}
   end
 
   @impl true
@@ -140,7 +139,7 @@ defmodule PostgrexWal.PgProducer do
         dispatch_events([event | events], state)
 
       {:empty, _queue} ->
-        if state.over_flowed?, do: send(self(), :over_flowed_exit)
+        if state.overflow?, do: send(self(), :overflow_exit)
         {:noreply, Enum.reverse(events), state}
     end
   end

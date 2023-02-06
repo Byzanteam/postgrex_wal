@@ -50,6 +50,11 @@ defmodule PostgrexWal.PgProducer do
 
   typedstruct do
     field :pg_source, pid(), default: nil
+    field :queue, :queue.queue(), default: :queue.new()
+    field :pending_demand, non_neg_integer(), default: 0
+    field :max_size, non_neg_integer(), default: 10
+    field :current_size, non_neg_integer(), default: 0
+    field :over_flowed?, boolean(), default: false
   end
 
   @impl true
@@ -58,11 +63,6 @@ defmodule PostgrexWal.PgProducer do
     Logger.info("pg_producer init...")
     send(self(), {:start_pg_source, opts})
     {:producer, %__MODULE__{}}
-  end
-
-  @impl true
-  def handle_demand(_demand, state) do
-    {:noreply, [], state}
   end
 
   @impl true
@@ -75,22 +75,35 @@ defmodule PostgrexWal.PgProducer do
   Broadway.NoopAcknowledger.init() produce: {Broadway.NoopAcknowledger, nil, nil}
   Broadway.CallerAcknowledger.init({pid, ref}, term) produce: {Broadway.CallerAcknowledger, {#PID<0.275.0>, ref}, term}
   """
-  def handle_info({:message, %Commit{} = message}, state) do
-    event = %Broadway.Message{
-      data: message,
-      acknowledger: {__MODULE__, state.pg_source, :ack_data}
-    }
 
-    {:noreply, [event], state}
+  def handle_info({:message, _}, %{over_flowed?: true} = state) do
+    {:noreply, [], state}
   end
 
-  def handle_info({:message, message}, state) do
+  def handle_info({:message, message}, %{current_size: s, max_size: max} = state)
+      when s + 1 < max do
+    acker =
+      if is_struct(message, Commit),
+        do: {__MODULE__, state.pg_source, :ack_data},
+        else: Broadway.NoopAcknowledger.init()
+
     event = %Broadway.Message{
       data: message,
-      acknowledger: Broadway.NoopAcknowledger.init()
+      acknowledger: acker
     }
 
-    {:noreply, [event], state}
+    state = %{state | queue: :queue.in(event, state.queue), current_size: s + 1}
+    dispatch_events([], state)
+  end
+
+  def handle_info({:message, _}, state) do
+    {:noreply, [], %{state | over_flowed?: true}}
+  end
+
+  @impl true
+  def handle_demand(incoming_demand, state) do
+    state = %{state | pending_demand: state.pending_demand + incoming_demand}
+    dispatch_events([], state)
   end
 
   @doc """
@@ -110,5 +123,28 @@ defmodule PostgrexWal.PgProducer do
       end)
 
     lsn && PostgrexWal.PgSource.ack(pg_source, lsn)
+  end
+
+  defp dispatch_events(events, %{pending_demand: 0} = state) do
+    {:noreply, Enum.reverse(events), state}
+  end
+
+  defp dispatch_events(events, state) do
+    case :queue.out(state.queue) do
+      {{:value, event}, queue} ->
+        state = %{
+          state
+          | pending_demand: state.pending_demand - 1,
+            queue: queue,
+            current_size: state.current_size - 1
+        }
+
+        dispatch_events([event | events], state)
+
+      {:empty, _queue} ->
+        if state.over_flowed?,
+          do: {:stop, :over_flowed, state},
+          else: {:noreply, Enum.reverse(events), state}
+    end
   end
 end

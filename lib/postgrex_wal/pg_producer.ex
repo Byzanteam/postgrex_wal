@@ -61,8 +61,9 @@ defmodule PostgrexWal.PgProducer do
   # opts has been injected with {broadway: Keyword.t()} by Broadway behaviour.
   def init(opts) do
     Logger.info("pg_producer init...")
+    {init_opts, opts} = Keyword.split(opts, [:max_size])
     send(self(), {:start_pg_source, opts})
-    {:producer, %__MODULE__{}}
+    {:producer, struct!(__MODULE__, init_opts)}
   end
 
   @impl true
@@ -105,7 +106,7 @@ defmodule PostgrexWal.PgProducer do
 
   @impl true
   def handle_demand(incoming_demand, %{pending_demand: p} = state) do
-    state = %{state | pending_demand: p + incoming_demand}
+    state = %{state | pending_demand: incoming_demand + p}
     dispatch_events([], state)
   end
 

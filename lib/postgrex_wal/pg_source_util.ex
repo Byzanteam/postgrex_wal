@@ -51,9 +51,7 @@ defmodule PostgrexWal.PgSourceUtil do
     {message, state}
   end
 
-  def decode_wal(event, state) do
-    {decode(event), state}
-  end
+  def decode_wal(event, state), do: {decode(event), state}
 
   for {module, key} <- @modules do
     m = Module.concat(PostgrexWal.Messages, module)

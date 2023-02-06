@@ -45,7 +45,6 @@ defmodule PostgrexWal.PgProducer do
           message |> IO.inspect()
         end
       end
-
   """
 
   typedstruct do
@@ -73,18 +72,18 @@ defmodule PostgrexWal.PgProducer do
   end
 
   def handle_info(:overflowed_exit = reason, state) do
+    Logger.error("PgProducer restart due to overflowed!")
     {:stop, reason, state}
+  end
+
+  def handle_info({:message, _}, %{overflowed?: true} = state) do
+    {:noreply, [], state}
   end
 
   @doc """
   Broadway.NoopAcknowledger.init() produce: {Broadway.NoopAcknowledger, nil, nil}
   Broadway.CallerAcknowledger.init({pid, ref}, term) produce: {Broadway.CallerAcknowledger, {#PID<0.275.0>, ref}, term}
   """
-
-  def handle_info({:message, _}, %{overflowed?: true} = state) do
-    {:noreply, [], state}
-  end
-
   def handle_info({:message, m}, %{current_size: s, max_size: max} = state) when s + 1 < max do
     acker =
       if is_struct(m, Commit),

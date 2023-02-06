@@ -54,7 +54,7 @@ defmodule PostgrexWal.PgProducer do
     field :pending_demand, non_neg_integer(), default: 0
     field :max_size, non_neg_integer(), default: 10_000
     field :current_size, non_neg_integer(), default: 0
-    field :overflow?, boolean(), default: false
+    field :overflowed?, boolean(), default: false
   end
 
   @impl true
@@ -72,7 +72,7 @@ defmodule PostgrexWal.PgProducer do
     {:noreply, [], %{state | pg_source: pid}}
   end
 
-  def handle_info(:overflow_exit = reason, state) do
+  def handle_info(:overflowed_exit = reason, state) do
     {:stop, reason, state}
   end
 
@@ -81,7 +81,7 @@ defmodule PostgrexWal.PgProducer do
   Broadway.CallerAcknowledger.init({pid, ref}, term) produce: {Broadway.CallerAcknowledger, {#PID<0.275.0>, ref}, term}
   """
 
-  def handle_info({:message, _}, %{overflow?: true} = state) do
+  def handle_info({:message, _}, %{overflowed?: true} = state) do
     {:noreply, [], state}
   end
 
@@ -101,7 +101,7 @@ defmodule PostgrexWal.PgProducer do
   end
 
   def handle_info({:message, _}, state) do
-    {:noreply, [], %{state | overflow?: true}}
+    {:noreply, [], %{state | overflowed?: true}}
   end
 
   @impl true
@@ -140,7 +140,7 @@ defmodule PostgrexWal.PgProducer do
         dispatch_events([event | events], state)
 
       {:empty, _queue} ->
-        if state.overflow?, do: send(self(), :overflow_exit)
+        if state.overflowed?, do: send(self(), :overflowed_exit)
         {:noreply, Enum.reverse(events), state}
     end
   end

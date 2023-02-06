@@ -6,13 +6,6 @@ defmodule PostgrexWal.PgSourceUtil do
   require Logger
   alias PostgrexWal.PgSource
 
-  @doc """
-  The logical replication protocol sends individual transactions one by one.
-  This means that all messages between a pair of Begin and Commit messages belong to the same transaction.
-  It also sends changes of large in-progress transactions between a pair of Stream Start and Stream Stop messages.
-  The last stream of such a transaction contains Stream Commit or Stream Abort message.
-  """
-
   @modules %{
     Begin => ?B,
     Commit => ?C,
@@ -32,14 +25,21 @@ defmodule PostgrexWal.PgSourceUtil do
   @stream_start @modules[StreamStart]
   @stream_stop @modules[StreamStop]
 
+  @doc """
+  The logical replication protocol sends individual transactions one by one.
+  This means that all messages between a pair of Begin and Commit messages belong to the same transaction.
+  It also sends changes of large in-progress transactions between a pair of Stream Start and Stream Stop messages.
+  The last stream of such a transaction contains Stream Commit or Stream Abort message.
+  """
+
   @spec decode_wal(binary(), PgSource.t()) :: {struct(), PgSource.t()}
   def decode_wal(<<@stream_start::8, _rest::binary>> = event, state) do
-    if state.in_stream?, do: Logger.error("stream flag consecutively true")
+    if state.in_stream?, do: raise("stream flag consecutively true")
     {decode(event), %{state | in_stream?: true}}
   end
 
   def decode_wal(<<@stream_stop::8, _rest::binary>> = event, state) do
-    unless state.in_stream?, do: Logger.error("stream flag consecutively false")
+    unless state.in_stream?, do: raise("stream flag consecutively false")
     {decode(event), %{state | in_stream?: false}}
   end
 

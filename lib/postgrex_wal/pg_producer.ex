@@ -88,7 +88,7 @@ defmodule PostgrexWal.PgProducer do
       when s + 1 < max do
     acker =
       if is_struct(message, Commit),
-        do: {__MODULE__, state.pg_source, :ack_data},
+        do: {__MODULE__, {:pg_source, state.pg_source}, :ack_data},
         else: Broadway.NoopAcknowledger.init()
 
     event = %Broadway.Message{
@@ -118,7 +118,7 @@ defmodule PostgrexWal.PgProducer do
   """
   @behaviour Broadway.Acknowledger
   @impl true
-  def ack(pg_source, successful_messages, _failed_messages) do
+  def ack({:pg_source, pg_source}, successful_messages, _failed_messages) do
     lsn =
       successful_messages
       |> Enum.reverse()

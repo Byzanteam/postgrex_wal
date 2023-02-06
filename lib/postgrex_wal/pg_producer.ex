@@ -71,6 +71,10 @@ defmodule PostgrexWal.PgProducer do
     {:noreply, [], %{state | pg_source: pid}}
   end
 
+  def handle_info(:over_flowed_exit = reason, state) do
+    {:stop, reason, state}
+  end
+
   @doc """
   Broadway.NoopAcknowledger.init() produce: {Broadway.NoopAcknowledger, nil, nil}
   Broadway.CallerAcknowledger.init({pid, ref}, term) produce: {Broadway.CallerAcknowledger, {#PID<0.275.0>, ref}, term}
@@ -132,13 +136,12 @@ defmodule PostgrexWal.PgProducer do
   defp dispatch_events(events, %{pending_demand: p, current_size: s} = state) do
     case :queue.out(state.queue) do
       {{:value, event}, queue} ->
-        state = %{state | pending_demand: p - 1, queue: queue, current_size: s - 1}
+        state = %{state | pending_demand: p - 1, current_size: s - 1, queue: queue}
         dispatch_events([event | events], state)
 
       {:empty, _queue} ->
-        if state.over_flowed?,
-          do: {:stop, :over_flowed, state},
-          else: {:noreply, Enum.reverse(events), state}
+        if state.over_flowed?, do: send(self(), :over_flowed_exit)
+        {:noreply, Enum.reverse(events), state}
     end
   end
 end

@@ -3,7 +3,7 @@ defmodule PostgrexWal.PgProducer do
   use TypedStruct
   require Logger
 
-  alias PostgrexWal.Messages.Commit
+  alias PostgrexWal.{Messages.Commit, PgSource}
 
   @moduledoc """
   A PostgreSQL wal events producer for Broadway.
@@ -67,7 +67,7 @@ defmodule PostgrexWal.PgProducer do
 
   @impl true
   def handle_info({:start_pg_source, opts}, state) do
-    {:ok, pid} = PostgrexWal.PgSource.start_link(opts ++ [subscriber: self()])
+    {:ok, pid} = PgSource.start_link(opts ++ [subscriber: self()])
     {:noreply, [], %{state | pg_source: pid}}
   end
 
@@ -127,7 +127,7 @@ defmodule PostgrexWal.PgProducer do
         is_struct(m.data, Commit) && m.data.end_lsn
       end)
 
-    lsn && PostgrexWal.PgSource.ack(pg_source, lsn)
+    lsn && PgSource.ack(pg_source, lsn)
   end
 
   defp dispatch_events(state, events \\ [])

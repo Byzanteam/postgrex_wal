@@ -2,6 +2,7 @@ defmodule PostgrexWal.PgSource do
   @moduledoc """
   A data-souce (pg replication events) which a GenStage producer could continuously ingest events from.
   """
+
   alias Postgrex, as: P
   alias Postgrex.ReplicationConnection, as: PR
   alias PostgrexWal.PgSourceUtil
@@ -134,14 +135,12 @@ defmodule PostgrexWal.PgSource do
     {:noreply, state}
   end
 
-  def handle_data(<<?k, _wal_end::64, _clock::64, reply>>, state) do
-    messages =
-      case reply do
-        1 -> [ack_message(state.max_lsn)]
-        0 -> []
-      end
+  def handle_data(<<?k, _wal_end::64, _clock::64, 0>>, state) do
+    {:noreply, [], state}
+  end
 
-    {:noreply, messages, state}
+  def handle_data(<<?k, _wal_end::64, _clock::64, 1>>, state) do
+    {:noreply, [ack_message(state.max_lsn)], state}
   end
 
   def handle_data(data, state) do

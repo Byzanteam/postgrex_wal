@@ -4,7 +4,7 @@ defmodule PostgrexWal.PgSourceUtil do
   """
 
   require Logger
-  alias PostgrexWal.PgSource
+  alias PostgrexWal.{PgSource, StreamBoundaryError}
 
   @modules %{
     Begin => ?B,
@@ -34,12 +34,12 @@ defmodule PostgrexWal.PgSourceUtil do
 
   @spec decode_wal(binary(), PgSource.t()) :: {struct(), PgSource.t()}
   def decode_wal(<<@stream_start, _rest::binary>> = event, state) do
-    if state.in_stream?, do: raise("stream flag consecutively true")
+    if state.in_stream?, do: raise(StreamBoundaryError, "adjacent true")
     {decode(event), %{state | in_stream?: true}}
   end
 
   def decode_wal(<<@stream_stop, _rest::binary>> = event, state) do
-    unless state.in_stream?, do: raise("stream flag consecutively false")
+    unless state.in_stream?, do: raise(StreamBoundaryError, "adjacent false")
     {decode(event), %{state | in_stream?: false}}
   end
 

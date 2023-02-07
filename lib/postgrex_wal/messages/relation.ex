@@ -30,7 +30,7 @@ defmodule PostgrexWal.Messages.Relation do
     def decode(columns, acc \\ [])
     def decode(<<>>, acc), do: Enum.reverse(acc)
 
-    def decode(<<flags::8, rest::binary>>, acc) do
+    def decode(<<flags, rest::binary>>, acc) do
       [
         column_name,
         <<type_oid::32, type_modifier::32, rest::binary>>
@@ -119,7 +119,7 @@ defmodule PostgrexWal.Messages.Relation do
     [
       namespace,
       relation_name,
-      <<replica_identity_setting::8, number_of_columns::16, columns::binary>>
+      <<replica_identity_setting, number_of_columns::16, columns::binary>>
     ] = MessageUtil.binary_split(rest, 3)
 
     %__MODULE__{

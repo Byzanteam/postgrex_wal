@@ -17,7 +17,7 @@ defmodule PostgrexWal.Messages.StreamStart do
   end
 
   @impl true
-  def decode(<<transaction_id::32, flags::8>>) do
+  def decode(<<transaction_id::32, flags>>) do
     %__MODULE__{
       transaction_id: transaction_id,
       flags: [{:first_segment, flags == 1}]

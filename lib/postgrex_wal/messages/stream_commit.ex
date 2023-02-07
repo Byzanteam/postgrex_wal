@@ -29,7 +29,7 @@ defmodule PostgrexWal.Messages.StreamCommit do
   end
 
   @impl true
-  def decode(<<transaction_id::32, _flags::8, lsn::64, end_lsn::64, timestamp::64>>) do
+  def decode(<<transaction_id::32, _flags, lsn::64, end_lsn::64, timestamp::64>>) do
     %__MODULE__{
       transaction_id: transaction_id,
       lsn: MessageUtil.decode_lsn(lsn),

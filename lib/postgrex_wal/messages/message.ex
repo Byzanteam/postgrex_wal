@@ -32,7 +32,7 @@ defmodule PostgrexWal.Messages.Message do
   end
 
   @impl true
-  def decode(<<flags::8, lsn::64, rest::binary>>) do
+  def decode(<<flags, lsn::64, rest::binary>>) do
     [
       prefix,
       <<n::32, content::binary-size(n)>>

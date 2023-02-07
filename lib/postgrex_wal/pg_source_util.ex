@@ -32,7 +32,7 @@ defmodule PostgrexWal.PgSourceUtil do
   The last stream of such a transaction contains Stream Commit or Stream Abort message.
   """
 
-  @spec decode_wal(binary(), PgSource.t()) :: {struct(), PgSource.t()}
+  @spec decode_wal(binary(), PgSource.t()) :: {PostgrexWal.Message.t(), PgSource.t()}
   def decode_wal(<<@stream_start, _rest::binary>> = event, state) do
     if state.in_stream?, do: raise(StreamBoundaryError, "adjacent true")
     {decode(event), %{state | in_stream?: true}}

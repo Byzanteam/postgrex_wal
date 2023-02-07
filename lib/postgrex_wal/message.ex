@@ -12,8 +12,42 @@ defmodule PostgrexWal.Message do
   https://www.postgresql.org/docs/current/protocol-logicalrep-message-formats.html
   """
 
-  @callback decode(message :: binary()) :: struct()
+  alias PostgrexWal.Messages.{
+    Begin,
+    Commit,
+    Delete,
+    Insert,
+    Message,
+    Origin,
+    Relation,
+    StreamAbort,
+    StreamCommit,
+    StreamStart,
+    StreamStop,
+    Truncate,
+    Type,
+    Update
+  }
+
+  @type t() ::
+          Begin.t()
+          | Commit.t()
+          | Delete.t()
+          | Insert.t()
+          | Message.t()
+          | Origin.t()
+          | Relation.t()
+          | StreamAbort.t()
+          | StreamCommit.t()
+          | StreamStart.t()
+          | StreamStop.t()
+          | Truncate.t()
+          | Type.t()
+          | Update.t()
+
   @type tuple_data() :: nil | :unchanged_toast | {:text, binary()} | {:binary, bitstring()}
+
+  @callback decode(binary()) :: t()
 
   defmacro __using__(_opts) do
     quote do

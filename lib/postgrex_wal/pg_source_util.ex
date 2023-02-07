@@ -48,7 +48,7 @@ defmodule PostgrexWal.PgSourceUtil do
   def decode_wal(<<key, transaction_id::32, rest::binary>>, %{in_stream?: true} = state)
       when key in @streamable_keys do
     {
-      decode(<<key, rest::binary>>) |> struct!(transaction_id: transaction_id),
+      decode(<<key>> <> rest) |> struct!(transaction_id: transaction_id),
       state
     }
   end

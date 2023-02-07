@@ -13,6 +13,7 @@ defmodule PostgrexWal.PgSource do
 
   @typep step() :: :disconnected | :streaming
   typedstruct enforce: true do
+    @typedoc "PgSource's state"
     field :publication_name, String.t()
     field :slot_name, String.t()
     field :subscriber, Process.dest()

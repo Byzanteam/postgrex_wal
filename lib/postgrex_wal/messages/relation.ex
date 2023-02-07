@@ -1,12 +1,4 @@
 defmodule PostgrexWal.Messages.Relation do
-  @moduledoc """
-  Relation messages identify column types by their OIDs.
-  In the case of a built-in type, it is assumed that the client can look up that type OID locally, so no additional data is needed.
-  For a non-built-in type OID, a Type message will be sent before the Relation message, to provide the type name associated with that OID.
-  Thus, a client that needs to specifically identify the types of relation columns should cache the contents of Type messages,
-  and first consult that cache to see if the type OID is defined there. If not, look up the type OID locally.
-  """
-
   defmodule Column do
     @moduledoc """
     columns message.
@@ -58,6 +50,14 @@ defmodule PostgrexWal.Messages.Relation do
       )
     end
   end
+
+  @moduledoc """
+  Relation messages identify column types by their OIDs.
+  In the case of a built-in type, it is assumed that the client can look up that type OID locally, so no additional data is needed.
+  For a non-built-in type OID, a Type message will be sent before the Relation message, to provide the type name associated with that OID.
+  Thus, a client that needs to specifically identify the types of relation columns should cache the contents of Type messages,
+  and first consult that cache to see if the type OID is defined there. If not, look up the type OID locally.
+  """
 
   use PostgrexWal.Message
 
@@ -113,6 +113,7 @@ defmodule PostgrexWal.Messages.Relation do
   Int32
   Type modifier of the column (atttypmod).
   """
+
   @impl true
   def decode(<<relation_oid::32, rest::binary>>) do
     [

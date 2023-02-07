@@ -100,14 +100,14 @@ defmodule PostgrexWal.PgProducer do
       acknowledger: acker
     }
 
-    state = %{state | queue: :queue.in(event, state.queue), current_size: s + 1}
-    dispatch_events([], state)
+    %{state | queue: :queue.in(event, state.queue), current_size: s + 1}
+    |> dispatch_events()
   end
 
   @impl true
   def handle_demand(incoming_demand, %{pending_demand: p} = state) do
-    state = %{state | pending_demand: incoming_demand + p}
-    dispatch_events([], state)
+    %{state | pending_demand: incoming_demand + p}
+    |> dispatch_events()
   end
 
   @doc """
@@ -130,15 +130,17 @@ defmodule PostgrexWal.PgProducer do
     lsn && PostgrexWal.PgSource.ack(pg_source, lsn)
   end
 
-  defp dispatch_events(events, %{pending_demand: 0} = state) do
+  defp dispatch_events(state, events \\ [])
+
+  defp dispatch_events(%{pending_demand: 0} = state, events) do
     {:noreply, Enum.reverse(events), state}
   end
 
-  defp dispatch_events(events, %{pending_demand: p, current_size: s} = state) do
+  defp dispatch_events(%{pending_demand: p, current_size: s} = state, events) do
     case :queue.out(state.queue) do
       {{:value, event}, queue} ->
-        state = %{state | pending_demand: p - 1, current_size: s - 1, queue: queue}
-        dispatch_events([event | events], state)
+        %{state | pending_demand: p - 1, current_size: s - 1, queue: queue}
+        |> dispatch_events([event | events])
 
       {:empty, _queue} ->
         if state.overflowed?, do: send(self(), :overflowed_exit)

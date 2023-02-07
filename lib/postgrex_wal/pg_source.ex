@@ -158,7 +158,7 @@ defmodule PostgrexWal.PgSource do
 
   def handle_call({:ack, _lsn}, from, state) do
     PR.reply(from, :ok)
-    {:noreply, [], state}
+    {:noreply, state}
   end
 
   defp ack_message(lsn) when is_integer(lsn) do

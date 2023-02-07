@@ -76,31 +76,32 @@ defmodule PostgrexWal.PgProducer do
     {:stop, reason, state}
   end
 
-  def handle_info({:message, _}, %{overflowed?: true} = state) do
-    {:noreply, [], state}
-  end
-
   @doc """
   Broadway.NoopAcknowledger.init() produce: {Broadway.NoopAcknowledger, nil, nil}
   Broadway.CallerAcknowledger.init({pid, ref}, term) produce: {Broadway.CallerAcknowledger, {#PID<0.275.0>, ref}, term}
   """
-  def handle_info({:message, m}, %{current_size: s, max_size: max} = state) when s + 1 < max do
+
+  def handle_info({:message, _}, %{overflowed?: true} = state) do
+    {:noreply, [], state}
+  end
+
+  def handle_info({:message, _}, %{current_size: max, max_size: max} = state) do
+    {:noreply, [], %{state | overflowed?: true}}
+  end
+
+  def handle_info({:message, message}, %{current_size: s} = state) do
     acker =
-      if is_struct(m, Commit),
+      if is_struct(message, Commit),
         do: {__MODULE__, {:pg_source, state.pg_source}, :ack_data},
         else: Broadway.NoopAcknowledger.init()
 
     event = %Broadway.Message{
-      data: m,
+      data: message,
       acknowledger: acker
     }
 
     state = %{state | queue: :queue.in(event, state.queue), current_size: s + 1}
     dispatch_events([], state)
-  end
-
-  def handle_info({:message, _}, state) do
-    {:noreply, [], %{state | overflowed?: true}}
   end
 
   @impl true
@@ -115,6 +116,7 @@ defmodule PostgrexWal.PgProducer do
   will be max_demand - min_demand.
   Since the default values are 10 and 5 respectively, we will be acknowledging in groups of 5.
   """
+
   @behaviour Broadway.Acknowledger
   @impl true
   def ack({:pg_source, pg_source}, successful_messages, _failed_messages) do

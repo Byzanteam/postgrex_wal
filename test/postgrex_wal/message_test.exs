@@ -1,4 +1,4 @@
-defmodule PostgrexWal.PgSourceUtilTest do
+defmodule PostgrexWal.MessageTest do
   use ExUnit.Case, async: true
   alias PostgrexWal.Messages.{Delete, Message, Type}
 

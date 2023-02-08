@@ -32,6 +32,7 @@ defmodule PostgrexWal.Message do
     Update: ?U
   }
 
+  @module_prefix PostgrexWal.Messages
   @streamable_modules [:Delete, :Insert, :Message, :Relation, :Truncate, :Type, :Update]
   @stream_start @modules[:StreamStart]
   @stream_stop @modules[:StreamStop]
@@ -40,7 +41,7 @@ defmodule PostgrexWal.Message do
   content =
     @modules
     |> Enum.map(fn {module, _key} ->
-      m = Module.concat(PostgrexWal.Messages, module)
+      m = Module.concat(@module_prefix, module)
       quote do: unquote(m).t()
     end)
     |> Enum.reduce(fn type, acc -> quote do: unquote(type) | unquote(acc) end)
@@ -90,7 +91,7 @@ defmodule PostgrexWal.Message do
 
   @spec decode(event) :: message when event: binary(), message: t()
   for {module, key} <- @modules do
-    m = Module.concat(PostgrexWal.Messages, module)
+    m = Module.concat(@module_prefix, module)
     def decode(<<unquote(key), payload::binary>>), do: unquote(m).decode(payload)
   end
 end

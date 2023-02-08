@@ -49,7 +49,7 @@ defmodule PostgrexWal.PgProducer do
 
   typedstruct do
     @typedoc "Producer's state"
-    field :pg_source, pid(), default: nil
+    field :pg_source, pid()
     field :queue, :queue.queue(), default: :queue.new()
     field :pending_demand, non_neg_integer(), default: 0
     field :max_size, non_neg_integer(), default: 10_000

@@ -53,7 +53,7 @@ defmodule PostgrexWal.PgSource do
 
   @impl true
   def init(state) do
-    Logger.info("pg_source init...")
+    Logger.debug("pg_source init...")
     {:ok, state}
   end
 
@@ -144,7 +144,7 @@ defmodule PostgrexWal.PgSource do
   end
 
   def handle_data(data, state) do
-    Logger.warning("handle_data/2 unknown data: #{inspect(data)}")
+    Logger.info("handle_data/2 unknown data: #{inspect(data)}")
     {:noreply, state}
   end
 

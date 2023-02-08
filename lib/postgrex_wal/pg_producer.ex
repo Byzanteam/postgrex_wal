@@ -60,7 +60,7 @@ defmodule PostgrexWal.PgProducer do
   @impl true
   # opts has been injected with {broadway: Keyword.t()} by Broadway behaviour.
   def init(opts) do
-    Logger.info("pg_producer init...")
+    Logger.debug("pg_producer init...")
     {init_opts, opts} = Keyword.split(opts, [:max_size])
     send(self(), {:start_pg_source, opts})
     {:producer, struct!(__MODULE__, init_opts)}
@@ -73,7 +73,7 @@ defmodule PostgrexWal.PgProducer do
   end
 
   def handle_info(:overflowed_exit = reason, state) do
-    Logger.error("PgProducer restart due to overflowed!")
+    Logger.info("PgProducer restart due to overflowed!")
     {:stop, reason, state}
   end
 

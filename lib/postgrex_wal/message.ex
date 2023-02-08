@@ -34,8 +34,8 @@ defmodule PostgrexWal.Message do
 
   @module_prefix PostgrexWal.Messages
   @streamable_modules [:Delete, :Insert, :Message, :Relation, :Truncate, :Type, :Update]
-  @stream_start @modules[:StreamStart]
-  @stream_stop @modules[:StreamStop]
+  @stream_start_key @modules[:StreamStart]
+  @stream_stop_key @modules[:StreamStop]
   @streamable_keys @modules |> Map.take(@streamable_modules) |> Map.values()
 
   content =
@@ -69,12 +69,12 @@ defmodule PostgrexWal.Message do
 
   @spec decode_wal(event, state) :: {message, state}
         when event: binary(), state: PostgrexWal.PgSource.t(), message: t()
-  def decode_wal(<<@stream_start, _rest::binary>> = event, state) do
+  def decode_wal(<<@stream_start_key, _rest::binary>> = event, state) do
     if state.in_stream?, do: raise(StreamBoundaryError, "adjacent true")
     {decode(event), %{state | in_stream?: true}}
   end
 
-  def decode_wal(<<@stream_stop, _rest::binary>> = event, state) do
+  def decode_wal(<<@stream_stop_key, _rest::binary>> = event, state) do
     unless state.in_stream?, do: raise(StreamBoundaryError, "adjacent false")
     {decode(event), %{state | in_stream?: false}}
   end

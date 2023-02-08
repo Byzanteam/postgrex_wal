@@ -5,7 +5,6 @@ defmodule PostgrexWal.PgSource do
 
   alias Postgrex, as: P
   alias Postgrex.ReplicationConnection, as: PR
-  alias PostgrexWal.PgSourceUtil
 
   use PR, restart: :permanent, shutdown: 10_000
   use TypedStruct
@@ -131,7 +130,7 @@ defmodule PostgrexWal.PgSource do
 
   @impl true
   def handle_data(<<?w, _wal_start::64, _wal_end::64, _clock::64, payload::binary>>, state) do
-    {message, state} = PgSourceUtil.decode_wal(payload, state)
+    {message, state} = PostgrexWal.Message.decode_wal(payload, state)
     send(state.subscriber, {:message, message})
     {:noreply, state}
   end

@@ -12,42 +12,44 @@ defmodule PostgrexWal.Message do
   https://www.postgresql.org/docs/current/protocol-logicalrep-message-formats.html
   """
 
-  alias PostgrexWal.Messages.{
-    Begin,
-    Commit,
-    Delete,
-    Insert,
-    Message,
-    Origin,
-    Relation,
-    StreamAbort,
-    StreamCommit,
-    StreamStart,
-    StreamStop,
-    Truncate,
-    Type,
-    Update
+  require Logger
+  alias PostgrexWal.StreamBoundaryError
+
+  @modules %{
+    Begin: ?B,
+    Commit: ?C,
+    Delete: ?D,
+    Insert: ?I,
+    Message: ?M,
+    Origin: ?O,
+    Relation: ?R,
+    StreamAbort: ?A,
+    StreamCommit: ?c,
+    StreamStart: ?S,
+    StreamStop: ?E,
+    Truncate: ?T,
+    Type: ?Y,
+    Update: ?U
   }
 
-  @type t() ::
-          Begin.t()
-          | Commit.t()
-          | Delete.t()
-          | Insert.t()
-          | Message.t()
-          | Origin.t()
-          | Relation.t()
-          | StreamAbort.t()
-          | StreamCommit.t()
-          | StreamStart.t()
-          | StreamStop.t()
-          | Truncate.t()
-          | Type.t()
-          | Update.t()
+  @streamable_modules [:Delete, :Insert, :Message, :Relation, :Truncate, :Type, :Update]
+  @stream_start @modules[:StreamStart]
+  @stream_stop @modules[:StreamStop]
+  @streamable_keys @modules |> Map.take(@streamable_modules) |> Map.values()
 
+  content =
+    @modules
+    |> Enum.map(fn {module, _key} ->
+      m = Module.concat(PostgrexWal.Messages, module)
+      quote do: unquote(m).t()
+    end)
+    |> Enum.reduce(fn type, acc -> quote do: unquote(type) | unquote(acc) end)
+
+  # define @type t()
+  @type t() :: unquote(content)
   @type tuple_data() :: nil | :unchanged_toast | {:text, binary()} | {:binary, bitstring()}
 
-  @callback decode(binary()) :: t()
+  @callback decode(event) :: message when event: binary(), message: t()
 
   defmacro __using__(_opts) do
     quote do
@@ -55,5 +57,40 @@ defmodule PostgrexWal.Message do
       use TypedStruct
       alias PostgrexWal.{Message, MessageUtil}
     end
+  end
+
+  @doc """
+  The logical replication protocol sends individual transactions one by one.
+  This means that all messages between a pair of Begin and Commit messages belong to the same transaction.
+  It also sends changes of large in-progress transactions between a pair of Stream Start and Stream Stop messages.
+  The last stream of such a transaction contains Stream Commit or Stream Abort message.
+  """
+
+  @spec decode_wal(event, state) :: {message, state}
+        when event: binary(), state: PostgrexWal.PgSource.t(), message: t()
+  def decode_wal(<<@stream_start, _rest::binary>> = event, state) do
+    if state.in_stream?, do: raise(StreamBoundaryError, "adjacent true")
+    {decode(event), %{state | in_stream?: true}}
+  end
+
+  def decode_wal(<<@stream_stop, _rest::binary>> = event, state) do
+    unless state.in_stream?, do: raise(StreamBoundaryError, "adjacent false")
+    {decode(event), %{state | in_stream?: false}}
+  end
+
+  def decode_wal(<<key, transaction_id::32, rest::binary>>, %{in_stream?: true} = state)
+      when key in @streamable_keys do
+    {
+      decode(<<key>> <> rest) |> struct!(transaction_id: transaction_id),
+      state
+    }
+  end
+
+  def decode_wal(event, state), do: {decode(event), state}
+
+  @spec decode(event) :: message when event: binary(), message: t()
+  for {module, key} <- @modules do
+    m = Module.concat(PostgrexWal.Messages, module)
+    def decode(<<unquote(key), payload::binary>>), do: unquote(m).decode(payload)
   end
 end

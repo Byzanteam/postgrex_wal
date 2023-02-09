@@ -6,7 +6,7 @@ defmodule PostgrexWal.MessageUtil do
   alias PostgrexWal.Message
 
   @pg_epoch ~U[2000-01-01 00:00:00.000000Z]
-  @spec decode_timestamp(microsecond_offset :: integer) :: DateTime.t()
+  @spec decode_timestamp(integer()) :: DateTime.t()
   def decode_timestamp(microsecond_offset) when is_integer(microsecond_offset) do
     DateTime.add(@pg_epoch, microsecond_offset, :microsecond)
   end
@@ -21,18 +21,18 @@ defmodule PostgrexWal.MessageUtil do
   2. A string of two hexadecimal numbers of up to eight digits each, separated by a slash. e.g. 1/F73E0220.
      This is the form accepted by Postgrex.ReplicationConnection.start_replication/2.
   """
-  @spec decode_lsn(lsn :: integer) :: String.t()
+  @spec decode_lsn(integer()) :: String.t()
   def decode_lsn(lsn) when is_integer(lsn) do
     <<xlog_file_id::32, xlog_offset::32>> = <<lsn::64>>
     Integer.to_string(xlog_file_id, 16) <> "/" <> Integer.to_string(xlog_offset, 16)
   end
 
-  @spec binary_split(binary, integer, binary) :: list(binary)
+  @spec binary_split(binary(), integer(), binary()) :: list(binary())
   def binary_split(binary, parts \\ 2, delimeter \\ <<0>>) do
     String.split(binary, delimeter, parts: parts)
   end
 
-  @spec decode_tuple_data(tuple_data :: binary) :: [Message.tuple_data()]
+  @spec decode_tuple_data(binary()) :: [Message.tuple_data()]
   def decode_tuple_data(tuple_data) do
     {<<>>, decoded_tuple_data} = split_tuple_data(tuple_data)
     decoded_tuple_data
@@ -72,7 +72,7 @@ defmodule PostgrexWal.MessageUtil do
   The value of the column, either in binary or in text format. (As specified in the preceding format byte). n is the above length.
   """
 
-  @spec split_tuple_data(tuple_data :: binary) :: {binary, [Message.tuple_data()]}
+  @spec split_tuple_data(binary()) :: {binary(), [Message.tuple_data()]}
   def split_tuple_data(<<number_of_columns::16, data::binary>>) do
     do_decode(data, number_of_columns, [])
   end
@@ -106,7 +106,7 @@ defmodule PostgrexWal.MessageUtil do
   end
 
   @doc "Namespace (empty string for pg_catalog)."
-  @spec decode_namespace(binary) :: binary
+  @spec decode_namespace(binary()) :: binary()
   def decode_namespace(""), do: "pg_catalog"
   def decode_namespace(namespace), do: namespace
 
@@ -117,7 +117,24 @@ defmodule PostgrexWal.MessageUtil do
     ?i => :index
   }
 
-  @spec decode_replica_identity_setting(integer) :: atom
+  @doc """
+  REPLICA IDENTITY
+  This form changes the information which is written to the write-ahead log to identify rows which are updated or deleted. In most cases, the old value of each column is only logged if it differs from the new value; however, if the old value is stored externally, it is always logged regardless of whether it changed. This option has no effect except when logical replication is in use.
+
+  DEFAULT
+  Records the old values of the columns of the primary key, if any. This is the default for non-system tables.
+
+  USING INDEX index_name
+  Records the old values of the columns covered by the named index, that must be unique, not partial, not deferrable, and include only columns marked NOT NULL. If this index is dropped, the behavior is the same as NOTHING.
+
+  FULL
+  Records the old values of all columns in the row.
+
+  NOTHING
+  Records no information about the old row. This is the default for system tables.
+  """
+
+  @spec decode_replica_identity_setting(byte()) :: atom()
   for {key, name} <- @replica_identity_settings do
     def decode_replica_identity_setting(unquote(key)), do: unquote(name)
   end

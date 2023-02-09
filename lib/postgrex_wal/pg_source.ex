@@ -2,9 +2,9 @@ defmodule PostgrexWal.PgSource do
   @moduledoc """
   A data-souce (pg replication events) which a GenStage producer could continuously ingest events from.
   """
+
   alias Postgrex, as: P
   alias Postgrex.ReplicationConnection, as: PR
-  alias PostgrexWal.PgSourceUtil
 
   use PR, restart: :permanent, shutdown: 10_000
   use TypedStruct
@@ -12,6 +12,7 @@ defmodule PostgrexWal.PgSource do
 
   @typep step() :: :disconnected | :streaming
   typedstruct enforce: true do
+    @typedoc "PgSource's state"
     field :publication_name, String.t()
     field :slot_name, String.t()
     field :subscriber, Process.dest()
@@ -42,9 +43,13 @@ defmodule PostgrexWal.PgSource do
     )
   end
 
-  @spec ack(PR.server(), String.t()) :: :ok
+  @spec ack(PR.server(), String.t() | non_neg_integer()) :: :ok
   def ack(server, lsn) when is_binary(lsn) do
     {:ok, lsn} = PR.decode_lsn(lsn)
+    PR.call(server, {:ack, lsn})
+  end
+
+  def ack(server, lsn) when is_integer(lsn) do
     PR.call(server, {:ack, lsn})
   end
 
@@ -52,7 +57,7 @@ defmodule PostgrexWal.PgSource do
 
   @impl true
   def init(state) do
-    Logger.info("pg_source init...")
+    Logger.debug("pg_source init...")
     {:ok, state}
   end
 
@@ -129,23 +134,21 @@ defmodule PostgrexWal.PgSource do
 
   @impl true
   def handle_data(<<?w, _wal_start::64, _wal_end::64, _clock::64, payload::binary>>, state) do
-    {message, state} = PgSourceUtil.decode_wal(payload, state)
+    {message, state} = PostgrexWal.Message.decode_wal(payload, state)
     send(state.subscriber, {:message, message})
     {:noreply, state}
   end
 
-  def handle_data(<<?k, _wal_end::64, _clock::64, reply>>, state) do
-    messages =
-      case reply do
-        1 -> [ack_message(state.max_lsn)]
-        0 -> []
-      end
+  def handle_data(<<?k, _wal_end::64, _clock::64, 0>>, state) do
+    {:noreply, [], state}
+  end
 
-    {:noreply, messages, state}
+  def handle_data(<<?k, _wal_end::64, _clock::64, 1>>, state) do
+    {:noreply, [ack_message(state.max_lsn)], state}
   end
 
   def handle_data(data, state) do
-    Logger.warning("handle_data/2 unknown data: #{inspect(data)}")
+    Logger.info("handle_data/2 unknown data: #{inspect(data)}")
     {:noreply, state}
   end
 
@@ -158,7 +161,7 @@ defmodule PostgrexWal.PgSource do
 
   def handle_call({:ack, _lsn}, from, state) do
     PR.reply(from, :ok)
-    {:noreply, [], state}
+    {:noreply, state}
   end
 
   defp ack_message(lsn) when is_integer(lsn) do

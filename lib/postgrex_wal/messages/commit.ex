@@ -28,7 +28,7 @@ defmodule PostgrexWal.Messages.Commit do
   end
 
   @impl true
-  def decode(<<_flag::8, lsn::64, end_lsn::64, timestamp::64>>) do
+  def decode(<<_flag, lsn::64, end_lsn::64, timestamp::64>>) do
     %__MODULE__{
       flags: [],
       lsn: MessageUtil.decode_lsn(lsn),

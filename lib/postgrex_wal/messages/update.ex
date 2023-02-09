@@ -59,7 +59,7 @@ defmodule PostgrexWal.Messages.Update do
     {<<?N, new_tuple_data::binary>>, old_decoded_tuple_data} =
       MessageUtil.split_tuple_data(tuple_data)
 
-    struct(__MODULE__, [
+    struct!(__MODULE__, [
       {:relation_oid, relation_oid},
       {:tuple_data, MessageUtil.decode_tuple_data(new_tuple_data)},
       {key, old_decoded_tuple_data}

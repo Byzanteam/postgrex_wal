@@ -33,7 +33,7 @@ defmodule PostgrexWal.Messages.Truncate do
   }
 
   @impl true
-  def decode(<<number_of_relations::32, options::8, relations::binary>>) do
+  def decode(<<number_of_relations::32, options, relations::binary>>) do
     relation_oids = for <<column_id::32 <- relations>>, do: column_id
 
     %__MODULE__{

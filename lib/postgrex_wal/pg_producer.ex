@@ -125,7 +125,7 @@ defmodule PostgrexWal.PgProducer do
       for %{data: %{end_lsn: lsn}} <- successful_messages, reduce: 0 do
         acc ->
           {:ok, lsn} = Postgrex.ReplicationConnection.decode_lsn(lsn)
-          (lsn > acc && lsn) || acc
+          if lsn > acc, do: lsn, else: acc
       end
 
     max_lsn > 0 && PgSource.ack(pg_source, max_lsn)

@@ -117,6 +117,23 @@ defmodule PostgrexWal.MessageUtil do
     ?i => :index
   }
 
+  @doc """
+  REPLICA IDENTITY
+  This form changes the information which is written to the write-ahead log to identify rows which are updated or deleted. In most cases, the old value of each column is only logged if it differs from the new value; however, if the old value is stored externally, it is always logged regardless of whether it changed. This option has no effect except when logical replication is in use.
+
+  DEFAULT
+  Records the old values of the columns of the primary key, if any. This is the default for non-system tables.
+
+  USING INDEX index_name
+  Records the old values of the columns covered by the named index, that must be unique, not partial, not deferrable, and include only columns marked NOT NULL. If this index is dropped, the behavior is the same as NOTHING.
+
+  FULL
+  Records the old values of all columns in the row.
+
+  NOTHING
+  Records no information about the old row. This is the default for system tables.
+  """
+
   @spec decode_replica_identity_setting(integer) :: atom
   for {key, name} <- @replica_identity_settings do
     def decode_replica_identity_setting(unquote(key)), do: unquote(name)

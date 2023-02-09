@@ -43,9 +43,13 @@ defmodule PostgrexWal.PgSource do
     )
   end
 
-  @spec ack(PR.server(), String.t()) :: :ok
+  @spec ack(PR.server(), String.t() | non_neg_integer()) :: :ok
   def ack(server, lsn) when is_binary(lsn) do
     {:ok, lsn} = PR.decode_lsn(lsn)
+    PR.call(server, {:ack, lsn})
+  end
+
+  def ack(server, lsn) when is_integer(lsn) do
     PR.call(server, {:ack, lsn})
   end
 

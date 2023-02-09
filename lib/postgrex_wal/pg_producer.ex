@@ -3,7 +3,7 @@ defmodule PostgrexWal.PgProducer do
   use TypedStruct
   require Logger
 
-  alias PostgrexWal.{Messages.Commit, PgSource}
+  alias PostgrexWal.PgSource
 
   @moduledoc """
   A PostgreSQL wal events producer for Broadway.
@@ -92,7 +92,7 @@ defmodule PostgrexWal.PgProducer do
 
   def handle_info({:message, message}, %{current_size: s} = state) do
     acker =
-      if is_struct(message, Commit),
+      if is_map_key(message, :end_lsn),
         do: {__MODULE__, {:pg_source, state.pg_source}, :ack_data},
         else: Broadway.NoopAcknowledger.init()
 
@@ -121,14 +121,14 @@ defmodule PostgrexWal.PgProducer do
   @behaviour Broadway.Acknowledger
   @impl true
   def ack({:pg_source, pg_source}, successful_messages, _failed_messages) do
-    lsn =
-      successful_messages
-      |> Enum.reverse()
-      |> Enum.find_value(fn m ->
-        is_struct(m.data, Commit) && m.data.end_lsn
-      end)
+    max_lsn =
+      for %{data: %{end_lsn: lsn}} <- successful_messages, reduce: 0 do
+        acc ->
+          {:ok, lsn} = Postgrex.ReplicationConnection.decode_lsn(lsn)
+          (lsn > acc && lsn) || acc
+      end
 
-    lsn && PgSource.ack(pg_source, lsn)
+    max_lsn > 0 && PgSource.ack(pg_source, max_lsn)
   end
 
   defp dispatch_events(state, events \\ [])

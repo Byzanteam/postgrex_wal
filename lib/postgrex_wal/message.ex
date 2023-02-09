@@ -15,7 +15,7 @@ defmodule PostgrexWal.Message do
   require Logger
   alias PostgrexWal.StreamBoundaryError
 
-  @modules %{
+  @modules [
     Begin: ?B,
     Commit: ?C,
     Delete: ?D,
@@ -30,24 +30,25 @@ defmodule PostgrexWal.Message do
     Truncate: ?T,
     Type: ?Y,
     Update: ?U
-  }
+  ]
 
   @module_prefix PostgrexWal.Messages
   @streamable_modules [:Delete, :Insert, :Message, :Relation, :Truncate, :Type, :Update]
   @stream_start_key @modules[:StreamStart]
   @stream_stop_key @modules[:StreamStop]
-  @streamable_keys @modules |> Map.take(@streamable_modules) |> Map.values()
+  @streamable_keys @modules |> Keyword.take(@streamable_modules) |> Keyword.values()
 
-  content =
+  expr =
     @modules
     |> Enum.map(fn {module, _key} ->
       m = Module.concat(@module_prefix, module)
       quote do: unquote(m).t()
     end)
-    |> Enum.reduce(fn type, acc -> quote do: unquote(type) | unquote(acc) end)
+    |> Enum.reduce(fn type, acc ->
+      quote do: unquote(type) | unquote(acc)
+    end)
 
-  # define @type t()
-  @type t() :: unquote(content)
+  @type t() :: unquote(expr)
   @type tuple_data() :: nil | :unchanged_toast | {:text, binary()} | {:binary, bitstring()}
 
   @callback decode(event) :: message when event: binary(), message: t()

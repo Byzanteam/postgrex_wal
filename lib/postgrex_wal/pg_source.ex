@@ -72,7 +72,7 @@ defmodule PostgrexWal.PgSource do
     {
       :stream,
       "START_REPLICATION SLOT #{state.slot_name} LOGICAL 0/0 (proto_version '2', publication_names '#{state.publication_name}')",
-      [],
+      [max_messages: 10_000],
       %{state | step: :streaming}
     }
   end
@@ -135,7 +135,7 @@ defmodule PostgrexWal.PgSource do
   @impl true
   def handle_data(<<?w, _wal_start::64, _wal_end::64, _clock::64, payload::binary>>, state) do
     {message, state} = PostgrexWal.Message.decode_wal(payload, state)
-    send(state.subscriber, {:message, message})
+    GenStage.call(state.subscriber, {:message, message})
     {:noreply, state}
   end
 

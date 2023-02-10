@@ -89,13 +89,13 @@ defmodule PostgrexWal.PgProducerTest do
   end
 
   @transaction_size 200_000
-  test "should consume huge quantity messages", context do
+  test "should consume huge quantity messages in one transaction", context do
     start_my_broadway(context)
-    insert_huge_quantity_users(context, @transaction_size)
+    insert_huge_quantity_users(context.table_name, @transaction_size)
 
-    for no <- 1..@transaction_size do
-      v = "#{no}"
-      assert_receive(%Message{data: %Insert{tuple_data: [text: ^v]}})
+    for i <- 1..@transaction_size do
+      uid = "#{i}"
+      assert_receive(%Message{data: %Insert{tuple_data: [text: ^uid]}})
     end
   end
 
@@ -112,21 +112,21 @@ defmodule PostgrexWal.PgProducerTest do
     start_my_broadway(context)
   end
 
-  defp insert_users(context, nos) do
-    for no <- List.wrap(nos) do
-      PSQL.cmd("INSERT INTO #{context.table_name} (id) VALUES (#{no});")
+  defp insert_users(context, uids) do
+    for uid <- List.wrap(uids) do
+      PSQL.cmd("INSERT INTO #{context.table_name} (id) VALUES (#{uid});")
     end
   end
 
-  defp insert_huge_quantity_users(context, size) do
+  defp insert_huge_quantity_users(table_name, size) do
     insert_users = fn conn ->
-      query = Postgrex.prepare!(conn, "", "INSERT INTO #{context.table_name} (id) VALUES ($1)")
-      for no <- 1..size, do: Postgrex.execute(conn, query, [no])
+      query = Postgrex.prepare!(conn, "", "INSERT INTO #{table_name} (id) VALUES ($1)")
+      for i <- 1..size, do: Postgrex.execute(conn, query, [i])
       Postgrex.close(conn, query)
     end
 
     {:ok, pid} = Postgrex.start_link(PSQL.pg_env())
-    {:ok, _res} = Postgrex.transaction(pid, insert_users, timeout: :infinity)
+    Postgrex.transaction(pid, insert_users, timeout: :infinity)
   end
 
   defp source_id(context), do: :"source-#{context.module}-#{context.test}"

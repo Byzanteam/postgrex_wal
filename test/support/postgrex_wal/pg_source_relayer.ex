@@ -30,16 +30,16 @@ defmodule PostgrexWal.PgSourceRelayer do
   end
 
   @impl true
-  def handle_info({:message, %Relation{} = _message}, state) do
-    {:noreply, state}
+  def handle_call({:message, %Relation{} = _message}, _from, state) do
+    {:reply, :ok, state}
   end
 
-  def handle_info({:message, %Commit{} = message}, {receiver, buf}) do
+  def handle_call({:message, %Commit{} = message}, _from, {receiver, buf}) do
     send(receiver, Enum.reverse([message | buf]))
-    {:noreply, {receiver, []}}
+    {:reply, :ok, {receiver, []}}
   end
 
-  def handle_info({:message, message}, {receiver, buf}) do
-    {:noreply, {receiver, [message | buf]}}
+  def handle_call({:message, message}, _from, {receiver, buf}) do
+    {:reply, :ok, {receiver, [message | buf]}}
   end
 end

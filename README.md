@@ -37,17 +37,21 @@ Configure Broadway with one or more producers using `PostgrexWal.PgProducer`:
           module: {
             PostgrexWal.PgProducer,
             name: :my_pg_source,
-            publication_name: "my_pub",
-            slot_name: "my_slot",
-            username: "postgres",
-            database: "postgres",
-            password: "postgres",
-            host: "localhost",
+            publication_name: "your_pub",
+            slot_name: "your_slot",
+            username: "your_username",
+            database: "your_db",
+            password: "your_pass",
+            hostname: "localhost",
             port: "5432"
           }
         ],
         processors: [
-          default: [max_demand: 1]
+          default: [
+            max_demand: 1_000, 
+            min_demand: 500, 
+            concurrency: 1
+          ]
         ]
       )
     end

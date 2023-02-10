@@ -17,7 +17,11 @@ defmodule PostgrexWal.PgProducerTest do
           concurrency: 1
         ],
         processors: [
-          default: [concurrency: 1]
+          default: [
+            max_demand: 1_000,
+            min_demand: 500,
+            concurrency: 1
+          ]
         ],
         context: %{tester: tester}
       )
@@ -83,6 +87,16 @@ defmodule PostgrexWal.PgProducerTest do
     refute_receive %Broadway.Message{data: %Insert{tuple_data: [text: "3"]}}
   end
 
+  @transaction_size 200_000
+  test "should consume huge quantity messages", context do
+    start_my_broadway(context)
+    insert_huge_quantity_users(context)
+
+    for no <- 1..@transaction_size,
+        v = "#{no}",
+        do: assert_receive(%Broadway.Message{data: %Insert{tuple_data: [text: ^v]}})
+  end
+
   defp start_my_broadway(context) do
     start_supervised!({MyBroadway, context.opts}, id: source_id(context))
   end
@@ -100,6 +114,17 @@ defmodule PostgrexWal.PgProducerTest do
     for no <- List.wrap(nos) do
       PSQL.cmd("INSERT INTO #{context.table_name} (id) VALUES (#{no});")
     end
+  end
+
+  defp insert_huge_quantity_users(context, size \\ @transaction_size) do
+    insert_users = fn conn ->
+      query = Postgrex.prepare!(conn, "", "INSERT INTO #{context.table_name} (id) VALUES ($1)")
+      for no <- 1..size, do: Postgrex.execute(conn, query, [no])
+      Postgrex.close(conn, query)
+    end
+
+    {:ok, pid} = Postgrex.start_link(PSQL.pg_env())
+    {:ok, _res} = Postgrex.transaction(pid, insert_users, timeout: :infinity)
   end
 
   defp source_id(context), do: :"source-#{context.module}-#{context.test}"

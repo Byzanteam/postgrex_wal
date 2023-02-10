@@ -28,16 +28,16 @@ defmodule PostgrexWal.PSQL do
 
   def pg_env do
     [
-      username: System.get_env("PG_USERNAME", "postgres"),
+      hostname: System.get_env("PG_HOST", "localhost"),
+      port: System.get_env("PG_PORT", "5432"),
       database: System.get_env("PG_DATABASE", "postgres"),
-      host: System.get_env("PG_HOST", "localhost"),
-      password: System.get_env("PG_PASSWORD", "postgres"),
-      port: System.get_env("PG_PORT", "5432")
+      username: System.get_env("PG_USERNAME", "postgres"),
+      password: System.get_env("PG_PASSWORD", "postgres")
     ]
   end
 
   def database_url do
     e = pg_env()
-    "postgres://#{e[:username]}:#{e[:password]}@#{e[:host]}:#{e[:port]}/#{e[:database]}"
+    "postgres://#{e[:username]}:#{e[:password]}@#{e[:hostname]}:#{e[:port]}/#{e[:database]}"
   end
 end

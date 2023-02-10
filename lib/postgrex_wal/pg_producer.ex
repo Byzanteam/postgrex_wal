@@ -77,7 +77,7 @@ defmodule PostgrexWal.PgProducer do
     {:stop, reason, state}
   end
 
-  def handle_info({:replay_pg_source, from}, state) do
+  def handle_info({:reply_pg_source, from}, state) do
     GenStage.reply(from, :ok)
     {:noreply, [], state}
   end

@@ -77,20 +77,33 @@ defmodule PostgrexWal.PgProducer do
     {:stop, reason, state}
   end
 
+  def handle_info({:replay_pg_source, from}, state) do
+    GenStage.reply(from, :ok)
+    {:noreply, [], state}
+  end
+
   @doc """
   Broadway.NoopAcknowledger.init() produce: {Broadway.NoopAcknowledger, nil, nil}
   Broadway.CallerAcknowledger.init({pid, ref}, term) produce: {Broadway.CallerAcknowledger, {#PID<0.275.0>, ref}, term}
   """
 
-  def handle_info({:message, _}, %{overflowed?: true} = state) do
-    {:noreply, [], state}
+  @impl true
+  def handle_call({:message, _}, _from, %{overflowed?: true} = state) do
+    {:reply, :ok, [], state}
   end
 
-  def handle_info({:message, _}, %{current_size: max, max_size: max} = state) do
-    {:noreply, [], %{state | overflowed?: true}}
+  def handle_call({:message, _}, _from, %{current_size: max, max_size: max} = state) do
+    {:reply, :ok, [], %{state | overflowed?: true}}
   end
 
-  def handle_info({:message, message}, %{current_size: s} = state) do
+  @slowdown_time 100
+  def handle_call({:message, message}, from, %{current_size: s} = state) do
+    if s > div(state.max_size, 2) do
+      Process.send_after(self(), {:reply_pg_source, from}, @slowdown_time)
+    else
+      GenStage.reply(from, :ok)
+    end
+
     acker =
       if is_map_key(message, :end_lsn),
         do: {__MODULE__, {:pg_source, state.pg_source}, :ack_data},

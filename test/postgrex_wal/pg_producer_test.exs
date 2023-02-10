@@ -1,6 +1,7 @@
 defmodule PostgrexWal.PgProducerTest do
   use ExUnit.Case, async: false
 
+  alias Broadway.Message
   alias PostgrexWal.Messages.Insert
   alias PostgrexWal.PSQL
 
@@ -69,32 +70,33 @@ defmodule PostgrexWal.PgProducerTest do
   test "should receive broadway message", context do
     start_my_broadway(context)
     insert_users(context, 1)
-    assert_receive %Broadway.Message{data: %Insert{tuple_data: [text: "1"]}}
+    assert_receive %Message{data: %Insert{tuple_data: [text: "1"]}}
   end
 
   test "should receive previously un-acked message", context do
     insert_users(context, 2)
     start_my_broadway(context)
-    assert_receive %Broadway.Message{data: %Insert{tuple_data: [text: "2"]}}
+    assert_receive %Message{data: %Insert{tuple_data: [text: "2"]}}
   end
 
   test "should auto-ack message", context do
     start_my_broadway(context)
     insert_users(context, 3)
-    assert_receive %Broadway.Message{data: %Insert{tuple_data: [text: "3"]}}
+    assert_receive %Message{data: %Insert{tuple_data: [text: "3"]}}
 
     restart_my_broadway(context)
-    refute_receive %Broadway.Message{data: %Insert{tuple_data: [text: "3"]}}
+    refute_receive %Message{data: %Insert{tuple_data: [text: "3"]}}
   end
 
   @transaction_size 200_000
   test "should consume huge quantity messages", context do
     start_my_broadway(context)
-    insert_huge_quantity_users(context)
+    insert_huge_quantity_users(context, @transaction_size)
 
-    for no <- 1..@transaction_size,
-        v = "#{no}",
-        do: assert_receive(%Broadway.Message{data: %Insert{tuple_data: [text: ^v]}})
+    for no <- 1..@transaction_size do
+      v = "#{no}"
+      assert_receive(%Message{data: %Insert{tuple_data: [text: ^v]}})
+    end
   end
 
   defp start_my_broadway(context) do
@@ -116,7 +118,7 @@ defmodule PostgrexWal.PgProducerTest do
     end
   end
 
-  defp insert_huge_quantity_users(context, size \\ @transaction_size) do
+  defp insert_huge_quantity_users(context, size) do
     insert_users = fn conn ->
       query = Postgrex.prepare!(conn, "", "INSERT INTO #{context.table_name} (id) VALUES ($1)")
       for no <- 1..size, do: Postgrex.execute(conn, query, [no])

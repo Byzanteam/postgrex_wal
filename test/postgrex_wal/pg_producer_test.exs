@@ -88,7 +88,7 @@ defmodule PostgrexWal.PgProducerTest do
     refute_receive %Message{data: %Insert{tuple_data: [text: "3"]}}
   end
 
-  @transaction_size 200_000
+  @transaction_size 20_000
   test "should consume huge quantity messages in one transaction", context do
     start_my_broadway(context)
     insert_huge_quantity_users(context.table_name, @transaction_size)

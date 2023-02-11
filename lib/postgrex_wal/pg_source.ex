@@ -1,4 +1,44 @@
 defmodule PostgrexWal.PgSource do
+  defmodule Util do
+    @moduledoc "PgSource auxiliary functions"
+
+    alias PostgrexWal.{Message, PgSource}
+    alias PostgrexWal.StreamBoundaryError
+
+    @stream_start_key Message.stream_start_key()
+    @stream_stop_key Message.stream_stop_key()
+    @streamable_keys Message.streamable_keys()
+
+    @doc """
+    The logical replication protocol sends individual transactions one by one.
+    This means that all messages between a pair of Begin and Commit messages belong to the same transaction.
+    It also sends changes of large in-progress transactions between a pair of Stream Start and Stream Stop messages.
+    The last stream of such a transaction contains Stream Commit or Stream Abort message.
+    """
+
+    @spec decode_wal(event, state) :: {message, state}
+          when event: binary(), state: PgSource.t(), message: Message.t()
+    def decode_wal(<<@stream_start_key, _rest::binary>> = event, state) do
+      if state.in_stream?, do: raise(StreamBoundaryError, "adjacent true")
+      {Message.decode(event), %{state | in_stream?: true}}
+    end
+
+    def decode_wal(<<@stream_stop_key, _rest::binary>> = event, state) do
+      unless state.in_stream?, do: raise(StreamBoundaryError, "adjacent false")
+      {Message.decode(event), %{state | in_stream?: false}}
+    end
+
+    def decode_wal(<<key, transaction_id::32, rest::binary>>, %{in_stream?: true} = state)
+        when key in @streamable_keys do
+      {
+        Message.decode(<<key>> <> rest) |> struct!(transaction_id: transaction_id),
+        state
+      }
+    end
+
+    def decode_wal(event, state), do: {Message.decode(event), state}
+  end
+
   @moduledoc """
   A data-souce (pg replication events) which a GenStage producer could continuously ingest events from.
   """
@@ -134,7 +174,7 @@ defmodule PostgrexWal.PgSource do
 
   @impl true
   def handle_data(<<?w, _wal_start::64, _wal_end::64, _clock::64, payload::binary>>, state) do
-    {message, state} = PostgrexWal.Message.decode_wal(payload, state)
+    {message, state} = Util.decode_wal(payload, state)
     GenStage.call(state.subscriber, {:message, message})
     {:noreply, state}
   end

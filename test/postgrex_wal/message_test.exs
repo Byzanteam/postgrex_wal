@@ -1,13 +1,14 @@
 defmodule PostgrexWal.MessageTest do
   use ExUnit.Case, async: true
   alias PostgrexWal.Messages.{Delete, Message, Type}
+  alias PostgrexWal.PgSource.Util
 
   @delete_event <<?D, 123::32, 0, 0, 89, 103, 79, 0, 7, 116, 0, 0, 0, 9, 57, 56, 48, 49, 57, 49,
                   48, 50, 57, 116, 0, 0, 0, 8, 116, 105, 116, 108, 101, 50, 50, 50, 116, 0, 0, 0,
                   1, 50, 110, 110, 110, 110>>
 
   test "decode steamed delete event" do
-    {message, _state} = PostgrexWal.Message.decode_wal(@delete_event, %{in_stream?: true})
+    {message, _state} = Util.decode_wal(@delete_event, %{in_stream?: true})
 
     assert match?(
              %Delete{
@@ -32,7 +33,7 @@ defmodule PostgrexWal.MessageTest do
                    0, 0, 0, 0, 4, 116, 101, 115, 116>>
 
   test "decode steamed message event" do
-    {message, _state} = PostgrexWal.Message.decode_wal(@message_event, %{in_stream?: true})
+    {message, _state} = Util.decode_wal(@message_event, %{in_stream?: true})
 
     assert match?(
              %Message{
@@ -50,7 +51,7 @@ defmodule PostgrexWal.MessageTest do
                 121, 112, 101, 0>>
 
   test "decode steamed type event" do
-    {message, _state} = PostgrexWal.Message.decode_wal(@type_event, %{in_stream?: true})
+    {message, _state} = Util.decode_wal(@type_event, %{in_stream?: true})
 
     assert match?(
              %Type{

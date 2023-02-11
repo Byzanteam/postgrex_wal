@@ -30,7 +30,7 @@ defmodule PostgrexWal.PgProducer do
                 username: "postgres",
                 database: "postgres",
                 password: "postgres",
-                host: "localhost",
+                hostname: "localhost",
                 port: "5432"
               }
             ],
@@ -96,10 +96,10 @@ defmodule PostgrexWal.PgProducer do
     {:reply, :ok, [], %{state | overflowed?: true}}
   end
 
-  @slowdown_time 100
+  @delay_time 100
   def handle_call({:message, message}, from, %{current_size: s} = state) do
     if s > div(state.max_size, 2) do
-      Process.send_after(self(), {:reply_pg_source, from}, @slowdown_time)
+      Process.send_after(self(), {:reply_pg_source, from}, @delay_time)
     else
       GenStage.reply(from, :ok)
     end

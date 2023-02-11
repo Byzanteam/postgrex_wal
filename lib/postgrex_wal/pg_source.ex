@@ -26,7 +26,7 @@ defmodule PostgrexWal.PgSource do
            {:slot_name, String.t()},
            {:subscriber, Process.dest()},
            {:name, GenServer.name()},
-           {:host, String.t()},
+           {:hostname, String.t()},
            {:port, String.t()},
            {:database, String.t()},
            {:username, String.t()},

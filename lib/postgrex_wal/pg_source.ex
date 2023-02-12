@@ -2,12 +2,12 @@ defmodule PostgrexWal.PgSource do
   defmodule Util do
     @moduledoc "PgSource auxiliary functions"
 
-    alias PostgrexWal.{Message, PgSource}
-    alias PostgrexWal.StreamBoundaryError
+    import PostgrexWal.Message
+    alias PostgrexWal.{Message, PgSource, StreamBoundaryError}
 
-    @stream_start_key Message.stream_start_key()
-    @stream_stop_key Message.stream_stop_key()
-    @streamable_keys Message.streamable_keys()
+    @stream_start_key stream_start_key()
+    @stream_stop_key stream_stop_key()
+    @streamable_keys streamable_keys()
 
     @doc """
     The logical replication protocol sends individual transactions one by one.
@@ -16,27 +16,30 @@ defmodule PostgrexWal.PgSource do
     The last stream of such a transaction contains Stream Commit or Stream Abort message.
     """
 
-    @spec decode_wal(event, state) :: {message, state}
-          when event: binary(), state: PgSource.t(), message: Message.t()
+    @type event() :: binary()
+    @type state() :: PgSource.t()
+    @type message :: Message.t()
+
+    @spec decode_wal(event(), state()) :: {message(), state()}
     def decode_wal(<<@stream_start_key, _rest::binary>> = event, state) do
       if state.in_stream?, do: raise(StreamBoundaryError, "adjacent true")
-      {Message.decode(event), %{state | in_stream?: true}}
+      {decode(event), %{state | in_stream?: true}}
     end
 
     def decode_wal(<<@stream_stop_key, _rest::binary>> = event, state) do
       unless state.in_stream?, do: raise(StreamBoundaryError, "adjacent false")
-      {Message.decode(event), %{state | in_stream?: false}}
+      {decode(event), %{state | in_stream?: false}}
     end
 
     def decode_wal(<<key, transaction_id::32, rest::binary>>, %{in_stream?: true} = state)
         when key in @streamable_keys do
       {
-        Message.decode(<<key>> <> rest) |> struct!(transaction_id: transaction_id),
+        decode(<<key>> <> rest) |> struct!(transaction_id: transaction_id),
         state
       }
     end
 
-    def decode_wal(event, state), do: {Message.decode(event), state}
+    def decode_wal(event, state), do: {decode(event), state}
   end
 
   @moduledoc """

@@ -107,12 +107,13 @@ defmodule PostgrexWal.PgSource do
   conflict even when the standby is disconnected.
   """
 
+  @max_messages 10_000
   @impl true
-  def handle_connect(state) do
+  def handle_connect(%{slot_name: s, publication_name: p} = state) do
     {
       :stream,
-      "START_REPLICATION SLOT #{state.slot_name} LOGICAL 0/0 (proto_version '2', publication_names '#{state.publication_name}')",
-      [max_messages: 10_000],
+      "START_REPLICATION SLOT #{s} LOGICAL 0/0 (proto_version '2', publication_names '#{p}')",
+      [max_messages: @max_messages],
       %{state | step: :streaming}
     }
   end
@@ -175,7 +176,7 @@ defmodule PostgrexWal.PgSource do
   @impl true
   def handle_data(<<?w, _wal_start::64, _wal_end::64, _clock::64, payload::binary>>, state) do
     {message, state} = Util.decode_wal(payload, state)
-    GenStage.call(state.subscriber, {:message, message})
+    GenServer.call(state.subscriber, {:message, message})
     {:noreply, state}
   end
 

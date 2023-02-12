@@ -46,8 +46,9 @@ defmodule PostgrexWal.Message do
 
   @type t() :: unquote(expr)
   @type tuple_data() :: nil | :unchanged_toast | {:text, binary()} | {:binary, bitstring()}
+  @type event() :: binary()
 
-  @callback decode(event) :: message when event: binary(), message: t()
+  @callback decode(event()) :: t()
 
   defmacro __using__(_opts) do
     quote do
@@ -57,11 +58,16 @@ defmodule PostgrexWal.Message do
     end
   end
 
+  @spec stream_start_key() :: byte()
   def stream_start_key, do: @modules[:StreamStart]
+
+  @spec stream_stop_key() :: byte()
   def stream_stop_key, do: @modules[:StreamStop]
+
+  @spec streamable_keys() :: list(byte())
   def streamable_keys, do: @modules |> Map.take(@streamable_modules) |> Map.values()
 
-  @spec decode(event) :: message when event: binary(), message: t()
+  @spec decode(event()) :: t()
   for {module, key} <- @modules do
     m = Module.concat(@module_prefix, module)
     def decode(<<unquote(key), payload::binary>>), do: unquote(m).decode(payload)

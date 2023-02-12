@@ -14,13 +14,13 @@ defmodule PostgrexWal.PgProducerTest do
       Broadway.start_link(__MODULE__,
         name: __MODULE__,
         producer: [
-          module: {PostgrexWal.PgProducer, opts},
+          module: {PostgrexWal.PgProducer, opts ++ [max_size: 200]},
           concurrency: 1
         ],
         processors: [
           default: [
-            max_demand: 1_000,
-            min_demand: 500,
+            max_demand: 10,
+            min_demand: 5,
             concurrency: 1
           ]
         ],
@@ -88,12 +88,12 @@ defmodule PostgrexWal.PgProducerTest do
     refute_receive %Message{data: %Insert{tuple_data: [text: "3"]}}
   end
 
-  @transaction_size 20_000
+  @user_count 500
   test "should consume huge quantity messages in one transaction", context do
     start_my_broadway(context)
-    insert_huge_quantity_users(context.table_name, @transaction_size)
+    insert_huge_quantity_users(context.table_name)
 
-    for i <- 1..@transaction_size do
+    for i <- 1..@user_count do
       uid = "#{i}"
       assert_receive(%Message{data: %Insert{tuple_data: [text: ^uid]}})
     end
@@ -118,10 +118,10 @@ defmodule PostgrexWal.PgProducerTest do
     end
   end
 
-  defp insert_huge_quantity_users(table_name, size) do
+  defp insert_huge_quantity_users(table_name) do
     insert_users = fn conn ->
       query = Postgrex.prepare!(conn, "", "INSERT INTO #{table_name} (id) VALUES ($1)")
-      for i <- 1..size, do: Postgrex.execute(conn, query, [i])
+      for i <- 1..@user_count, do: Postgrex.execute(conn, query, [i])
       Postgrex.close(conn, query)
     end
 

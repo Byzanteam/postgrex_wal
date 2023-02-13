@@ -11,27 +11,25 @@ defmodule PostgrexWal.PgProducerTest do
     def start_link(opts) do
       {tester, opts} = Keyword.pop!(opts, :tester)
 
-      Broadway.start_link(__MODULE__,
+      broadway_opts = [
         name: __MODULE__,
         producer: [
           module: {PostgrexWal.PgProducer, opts ++ [max_size: 200]},
           concurrency: 1
         ],
         processors: [
-          default: [
-            max_demand: 10,
-            min_demand: 5,
-            concurrency: 1
-          ]
+          default: [max_demand: 10, min_demand: 5, concurrency: 1]
         ],
         context: %{tester: tester}
-      )
+      ]
+
+      Broadway.start_link(__MODULE__, broadway_opts)
     end
 
     @impl true
     def handle_message(_processor_name, message, context) do
+      # return message
       send(context.tester, message)
-      message
     end
   end
 

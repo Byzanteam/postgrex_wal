@@ -98,6 +98,10 @@ defmodule PostgrexWal.PgProducer do
 
   @delay_time 100
   def handle_call({:message, message}, from, %{current_size: s} = state) do
+    # When PgSource sends data too fast, more than half the buffer capacity,
+    # it needs to limit the rate.
+    # Once the messages in the buffer are consumed below half their capacity,
+    # PgSource resumes without limiting the rate.
     if s > div(state.max_size, 2) do
       Process.send_after(self(), {:reply_pg_source, from}, @delay_time)
     else

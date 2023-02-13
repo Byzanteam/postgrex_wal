@@ -5,9 +5,9 @@ defmodule PostgrexWal.PgSource do
     import PostgrexWal.Message
     alias PostgrexWal.{Message, PgSource, StreamBoundaryError}
 
-    @stream_start_key stream_start_key()
-    @stream_stop_key stream_stop_key()
-    @streamable_keys streamable_keys()
+    @stream_start_key Message.__stream_start_key__()
+    @stream_stop_key Message.__stream_stop_key__()
+    @streamable_keys Message.__streamable_keys__()
 
     @doc """
     The logical replication protocol sends individual transactions one by one.

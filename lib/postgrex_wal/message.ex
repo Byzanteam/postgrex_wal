@@ -58,14 +58,14 @@ defmodule PostgrexWal.Message do
     end
   end
 
-  @spec stream_start_key() :: byte()
-  def stream_start_key, do: @modules[:StreamStart]
+  @spec __stream_start_key__() :: byte()
+  def __stream_start_key__, do: @modules[:StreamStart]
 
-  @spec stream_stop_key() :: byte()
-  def stream_stop_key, do: @modules[:StreamStop]
+  @spec __stream_stop_key__() :: byte()
+  def __stream_stop_key__, do: @modules[:StreamStop]
 
-  @spec streamable_keys() :: list(byte())
-  def streamable_keys, do: @modules |> Map.take(@streamable_modules) |> Map.values()
+  @spec __streamable_keys__() :: list(byte())
+  def __streamable_keys__, do: @modules |> Map.take(@streamable_modules) |> Map.values()
 
   @spec decode(event()) :: t()
   for {module, key} <- @modules do

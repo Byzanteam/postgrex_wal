@@ -67,6 +67,8 @@ defmodule PostgrexWal.PgSource do
   conflict even when the standby is disconnected.
   """
 
+  # The maximum number of replications messages that can be accumulated from the wire
+  # until they are relayed to handle_data/2. Defaults to 500.
   @max_messages 10_000
   @impl true
   def handle_connect(%{slot_name: s, publication_name: p} = state) do

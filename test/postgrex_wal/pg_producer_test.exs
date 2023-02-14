@@ -1,6 +1,7 @@
 defmodule PostgrexWal.PgProducerTest do
   use ExUnit.Case, async: false
 
+  alias Broadway.Message
   alias PostgrexWal.Messages.Insert
   alias PostgrexWal.PSQL
 
@@ -10,23 +11,25 @@ defmodule PostgrexWal.PgProducerTest do
     def start_link(opts) do
       {tester, opts} = Keyword.pop!(opts, :tester)
 
-      Broadway.start_link(__MODULE__,
+      broadway_opts = [
         name: __MODULE__,
         producer: [
-          module: {PostgrexWal.PgProducer, opts},
+          module: {PostgrexWal.PgProducer, opts ++ [max_size: 200]},
           concurrency: 1
         ],
         processors: [
-          default: [concurrency: 1]
+          default: [max_demand: 10, min_demand: 5, concurrency: 1]
         ],
         context: %{tester: tester}
-      )
+      ]
+
+      Broadway.start_link(__MODULE__, broadway_opts)
     end
 
     @impl true
     def handle_message(_processor_name, message, context) do
+      # return message
       send(context.tester, message)
-      message
     end
   end
 
@@ -65,22 +68,33 @@ defmodule PostgrexWal.PgProducerTest do
   test "should receive broadway message", context do
     start_my_broadway(context)
     insert_users(context, 1)
-    assert_receive %Broadway.Message{data: %Insert{tuple_data: [text: "1"]}}
+    assert_receive %Message{data: %Insert{tuple_data: [text: "1"]}}
   end
 
   test "should receive previously un-acked message", context do
     insert_users(context, 2)
     start_my_broadway(context)
-    assert_receive %Broadway.Message{data: %Insert{tuple_data: [text: "2"]}}
+    assert_receive %Message{data: %Insert{tuple_data: [text: "2"]}}
   end
 
   test "should auto-ack message", context do
     start_my_broadway(context)
     insert_users(context, 3)
-    assert_receive %Broadway.Message{data: %Insert{tuple_data: [text: "3"]}}
+    assert_receive %Message{data: %Insert{tuple_data: [text: "3"]}}
 
     restart_my_broadway(context)
-    refute_receive %Broadway.Message{data: %Insert{tuple_data: [text: "3"]}}
+    refute_receive %Message{data: %Insert{tuple_data: [text: "3"]}}
+  end
+
+  @user_count 500
+  test "should consume huge quantity messages in one transaction", context do
+    start_my_broadway(context)
+    insert_huge_quantity_users(context.table_name)
+
+    for i <- 1..@user_count do
+      uid = "#{i}"
+      assert_receive(%Message{data: %Insert{tuple_data: [text: ^uid]}})
+    end
   end
 
   defp start_my_broadway(context) do
@@ -96,10 +110,21 @@ defmodule PostgrexWal.PgProducerTest do
     start_my_broadway(context)
   end
 
-  defp insert_users(context, nos) do
-    for no <- List.wrap(nos) do
-      PSQL.cmd("INSERT INTO #{context.table_name} (id) VALUES (#{no});")
+  defp insert_users(context, uids) do
+    for uid <- List.wrap(uids) do
+      PSQL.cmd("INSERT INTO #{context.table_name} (id) VALUES (#{uid});")
     end
+  end
+
+  defp insert_huge_quantity_users(table_name) do
+    insert_users = fn conn ->
+      query = Postgrex.prepare!(conn, "", "INSERT INTO #{table_name} (id) VALUES ($1)")
+      for i <- 1..@user_count, do: Postgrex.execute(conn, query, [i])
+      Postgrex.close(conn, query)
+    end
+
+    {:ok, pid} = Postgrex.start_link(PSQL.pg_env())
+    Postgrex.transaction(pid, insert_users, timeout: :infinity)
   end
 
   defp source_id(context), do: :"source-#{context.module}-#{context.test}"

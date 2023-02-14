@@ -15,7 +15,7 @@ defmodule PostgrexWal.Message do
   require Logger
   alias PostgrexWal.StreamBoundaryError
 
-  @modules [
+  @modules %{
     Begin: ?B,
     Commit: ?C,
     Delete: ?D,
@@ -30,13 +30,13 @@ defmodule PostgrexWal.Message do
     Truncate: ?T,
     Type: ?Y,
     Update: ?U
-  ]
+  }
 
   @module_prefix PostgrexWal.Messages
   @streamable_modules [:Delete, :Insert, :Message, :Relation, :Truncate, :Type, :Update]
   @stream_start_key @modules[:StreamStart]
   @stream_stop_key @modules[:StreamStop]
-  @streamable_keys @modules |> Keyword.take(@streamable_modules) |> Keyword.values()
+  @streamable_keys @modules |> Map.take(@streamable_modules) |> Map.values()
 
   expr =
     @modules
@@ -50,8 +50,9 @@ defmodule PostgrexWal.Message do
 
   @type t() :: unquote(expr)
   @type tuple_data() :: nil | :unchanged_toast | {:text, binary()} | {:binary, bitstring()}
+  @type event() :: binary()
 
-  @callback decode(event) :: message when event: binary(), message: t()
+  @callback decode(event()) :: t()
 
   defmacro __using__(_opts) do
     quote do
@@ -61,6 +62,12 @@ defmodule PostgrexWal.Message do
     end
   end
 
+  @spec decode(event()) :: t()
+  for {module, key} <- @modules do
+    m = Module.concat(@module_prefix, module)
+    def decode(<<unquote(key), payload::binary>>), do: unquote(m).decode(payload)
+  end
+
   @doc """
   The logical replication protocol sends individual transactions one by one.
   This means that all messages between a pair of Begin and Commit messages belong to the same transaction.
@@ -68,8 +75,8 @@ defmodule PostgrexWal.Message do
   The last stream of such a transaction contains Stream Commit or Stream Abort message.
   """
 
-  @spec decode_wal(event, state) :: {message, state}
-        when event: binary(), state: PostgrexWal.PgSource.t(), message: t()
+  @type state() :: PostgrexWal.PgSource.t()
+  @spec decode_wal(event(), state()) :: {t(), state()}
   def decode_wal(<<@stream_start_key, _rest::binary>> = event, state) do
     if state.in_stream?, do: raise(StreamBoundaryError, "adjacent true")
     {decode(event), %{state | in_stream?: true}}
@@ -89,10 +96,4 @@ defmodule PostgrexWal.Message do
   end
 
   def decode_wal(event, state), do: {decode(event), state}
-
-  @spec decode(event) :: message when event: binary(), message: t()
-  for {module, key} <- @modules do
-    m = Module.concat(@module_prefix, module)
-    def decode(<<unquote(key), payload::binary>>), do: unquote(m).decode(payload)
-  end
 end

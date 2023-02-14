@@ -160,10 +160,10 @@ defmodule PostgrexWal.PgSourceTest do
       assert_receive [
         %Begin{},
         %Insert{tuple_data: [text: "1"]},
-        %Commit{end_lsn: final_lsn}
+        %Commit{end_lsn: end_lsn}
       ]
 
-      PgSource.ack(source_id(context), final_lsn)
+      PgSource.ack(source_id(context), end_lsn)
     end
 
     test "events that are not received previously", context do
@@ -239,10 +239,10 @@ defmodule PostgrexWal.PgSourceTest do
     assert_receive [
       %Begin{},
       %Insert{tuple_data: [text: "1"]},
-      %Commit{end_lsn: final_lsn}
+      %Commit{end_lsn: end_lsn}
     ]
 
-    PgSource.ack(source_id(context), final_lsn)
+    PgSource.ack(source_id(context), end_lsn)
 
     restart_repl!(context)
 

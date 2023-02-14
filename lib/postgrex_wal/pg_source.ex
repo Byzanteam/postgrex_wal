@@ -26,7 +26,7 @@ defmodule PostgrexWal.PgSource do
            {:slot_name, String.t()},
            {:subscriber, Process.dest()},
            {:name, GenServer.name()},
-           {:host, String.t()},
+           {:hostname, String.t()},
            {:port, String.t()},
            {:database, String.t()},
            {:username, String.t()},
@@ -67,12 +67,15 @@ defmodule PostgrexWal.PgSource do
   conflict even when the standby is disconnected.
   """
 
+  # The maximum number of replications messages that can be accumulated from the wire
+  # until they are relayed to handle_data/2. Defaults to 500.
+  @max_messages 10_000
   @impl true
-  def handle_connect(state) do
+  def handle_connect(%{slot_name: s, publication_name: p} = state) do
     {
       :stream,
-      "START_REPLICATION SLOT #{state.slot_name} LOGICAL 0/0 (proto_version '2', publication_names '#{state.publication_name}')",
-      [],
+      "START_REPLICATION SLOT #{s} LOGICAL 0/0 (proto_version '2', publication_names '#{p}')",
+      [max_messages: @max_messages],
       %{state | step: :streaming}
     }
   end
@@ -135,7 +138,7 @@ defmodule PostgrexWal.PgSource do
   @impl true
   def handle_data(<<?w, _wal_start::64, _wal_end::64, _clock::64, payload::binary>>, state) do
     {message, state} = PostgrexWal.Message.decode_wal(payload, state)
-    send(state.subscriber, {:message, message})
+    GenServer.call(state.subscriber, {:message, message})
     {:noreply, state}
   end
 

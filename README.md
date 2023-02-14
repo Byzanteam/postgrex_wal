@@ -37,17 +37,22 @@ Configure Broadway with one or more producers using `PostgrexWal.PgProducer`:
           module: {
             PostgrexWal.PgProducer,
             name: :my_pg_source,
-            publication_name: "my_pub",
-            slot_name: "my_slot",
-            username: "postgres",
-            database: "postgres",
-            password: "postgres",
-            host: "localhost",
+            publication_name: "your_pub",
+            slot_name: "your_slot",
+            username: "your_username",
+            database: "your_db",
+            password: "your_pass",
+            hostname: "localhost",
             port: "5432"
-          }
+          },
+          concurrency: 1
         ],
         processors: [
-          default: [max_demand: 1]
+          default: [
+            max_demand: 1_000, 
+            min_demand: 500, 
+            concurrency: 1
+          ]
         ]
       )
     end
@@ -58,6 +63,12 @@ Configure Broadway with one or more producers using `PostgrexWal.PgProducer`:
     end
   end
 ```
+
+## Limits
+
+* Because the logical replication only replicates the DML, changes to the DDL do not appear in the message.
+* Logical replication does not deliver the `Tosted value`, so the Tosted value can only be identified as "toast" in the
+  decoded message, and the actual value is not in the message.
 
 ## Running tests
 
@@ -90,17 +101,17 @@ Please note that the user **must be a replication role**.
 ```elixir
   def pg_env do
     [
-      username: System.get_env("PG_USERNAME", "postgres"),
+      hostname: System.get_env("PG_HOST", "localhost"),
+      port: System.get_env("PG_PORT", "5432"),
       database: System.get_env("PG_DATABASE", "postgres"),
-      host: System.get_env("PG_HOST", "localhost"),
-      password: System.get_env("PG_PASSWORD", "postgres"),
-      port: System.get_env("PG_PORT", "5432")
+      username: System.get_env("PG_USERNAME", "postgres"),
+      password: System.get_env("PG_PASSWORD", "postgres")
     ]
   end
 
   def database_url do
     e = pg_env()
-    "postgres://#{e[:username]}:#{e[:password]}@#{e[:host]}:#{e[:port]}/#{e[:database]}"
+    "postgres://#{e[:username]}:#{e[:password]}@#{e[:hostname]}:#{e[:port]}/#{e[:database]}"
   end
 ```
 

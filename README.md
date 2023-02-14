@@ -64,6 +64,12 @@ Configure Broadway with one or more producers using `PostgrexWal.PgProducer`:
   end
 ```
 
+## Limits
+
+* Because the logical replication only replicates the DML, changes to the DDL do not appear in the message.
+* Logical replication does not deliver the `Tosted value`, so the Tosted value can only be identified as "toast" in the
+  decoded message, and the actual value is not in the message.
+
 ## Running tests
 
 ### Step 1: You need to configure the wal level in PostgreSQL to logical.

@@ -91,8 +91,7 @@ defmodule PostgrexWal.PgProducerTest do
     start_my_broadway(context)
     insert_huge_quantity_users(context.table_name)
 
-    for i <- 1..@user_count do
-      uid = "#{i}"
+    for i <- 1..@user_count, uid = "#{i}" do
       assert_receive(%Message{data: %Insert{tuple_data: [text: ^uid]}})
     end
   end

@@ -11,8 +11,8 @@ runs:
   steps:
     - uses: erlef/setup-beam@v1
       with:
-        otp-version: 25.0
-        elixir-version: 1.14.0-otp-25
+        otp-version: ${{ env.OTP_VERSION }}
+        elixir-version: ${{ env.ELIXIR_VERSION }}
 
     - id: cache
       uses: actions/cache@v3

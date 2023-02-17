@@ -39,14 +39,10 @@ defmodule PostgrexWal.Message do
   @streamable_keys @modules |> Map.take(@streamable_modules) |> Map.values()
 
   expr =
-    @modules
-    |> Enum.map(fn {module, _key} ->
-      m = Module.concat(@module_prefix, module)
-      quote do: unquote(m).t()
-    end)
-    |> Enum.reduce(fn type, acc ->
-      quote do: unquote(type) | unquote(acc)
-    end)
+    for {m, _} <- @modules, module = Module.concat(@module_prefix, m), reduce: nil do
+      nil -> quote do: unquote(module).t()
+      acc -> quote do: unquote(module).t() | unquote(acc)
+    end
 
   @type t() :: unquote(expr)
   @type tuple_data() :: nil | :unchanged_toast | {:text, binary()} | {:binary, bitstring()}
